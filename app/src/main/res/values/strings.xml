@@ -7,6 +7,7 @@
     <string name="nav_home">Home</string>
     <string name="nav_quran">Quran</string>
     <string name="nav_prayer">Prayer</string>
+    <string name="nav_hadith">Hadith</string>
     <string name="nav_more">More</string>
 
     <!-- Home -->
@@ -114,4 +115,117 @@
     <string name="search_quran_hint">Search ayahs…</string>
     <string name="search_results_count">%1$d results</string>
     <string name="search_no_results">No results found</string>
+
+    <!-- Hadith -->
+    <string name="hadith_title">Hadith Collections</string>
+    <string name="hadith_total">%1$d hadiths</string>
+    <string name="hadith_search_hint">Search hadith…</string>
+    <string name="hadith_number">Hadith #%1$d</string>
+    <string name="hadith_grade_sahih">Sahih</string>
+    <string name="hadith_arabic">Arabic</string>
+    <string name="hadith_bangla">Bangla Translation</string>
+    <string name="hadith_collections">Collections</string>
+
+    <!-- Qada -->
+    <string name="qada_title">Qada Tracker</string>
+    <string name="qada_subtitle">Track your missed prayers</string>
+    <string name="qada_add_missed">Add Missed</string>
+    <string name="qada_mark_completed">Mark Completed</string>
+    <string name="qada_remaining">%1$d remaining</string>
+    <string name="qada_no_entries">No qada entries yet. Tap \"Add Missed\" to start tracking.</string>
+    <string name="qada_reset_confirm">Reset all qada entries?</string>
+
+    <!-- Tracker -->
+    <string name="tracker_title">Daily Tracker</string>
+    <string name="tracker_today">Today</string>
+    <string name="tracker_prayers_done">Prayers done</string>
+    <string name="tracker_zikr_count">Zikr count</string>
+    <string name="tracker_ayahs_read">Ayahs read</string>
+    <string name="tracker_hadiths_read">Hadiths read</string>
+    <string name="tracker_streak">Prayer streak: %1$d days</string>
+
+    <!-- Profile -->
+    <string name="profile_title">Profile</string>
+    <string name="profile_user_name">Your Name</string>
+    <string name="profile_edit_name">Edit name</string>
+    <string name="profile_stats">Stats</string>
+    <string name="profile_total_zikr">Total Zikr</string>
+    <string name="profile_total_ayahs">Ayahs Read</string>
+    <string name="profile_total_hadiths">Hadiths Read</string>
+    <string name="profile_khatam_progress">Quran Khatam</string>
+    <string name="profile_bookmarks">Bookmarks</string>
+    <string name="profile_share">Share Progress</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_quran_appearance">Quran Appearance</string>
+    <string name="settings_font_size">Font size</string>
+    <string name="settings_background">Background</string>
+    <string name="settings_show_arabic">Show Arabic</string>
+    <string name="settings_show_bangla">Show Bangla</string>
+    <string name="settings_show_english">Show English</string>
+    <string name="settings_audio">Audio</string>
+    <string name="settings_reciter">Reciter</string>
+    <string name="settings_auto_pause">Auto pause timer</string>
+    <string name="settings_bn_audio">Bangla meaning audio</string>
+    <string name="settings_word_audio">Word-by-word audio</string>
+    <string name="settings_tafsir">Tafsir</string>
+    <string name="settings_tafsir_source">Default tafsir source</string>
+    <string name="settings_cache">Cache</string>
+    <string name="settings_cache_size">Cache size: %1$s</string>
+    <string name="settings_clear_cache">Clear cache</string>
+    <string name="settings_cache_cleared">Cache cleared</string>
+
+    <!-- Bookmarks -->
+    <string name="bookmarks_title">Bookmarks</string>
+    <string name="bookmarks_empty">No bookmarks yet. Tap the bookmark icon on any ayah to save it here.</string>
+    <string name="bookmarks_remove">Remove</string>
+
+    <!-- Tafsir -->
+    <string name="tafsir_title">Tafsir</string>
+    <string name="tafsir_loading">Loading tafsir…</string>
+    <string name="tafsir_error">Could not load tafsir. Check your internet connection.</string>
+    <string name="tafsir_change_source">Change source</string>
+    <string name="tafsir_cached">Cached for offline use</string>
+
+    <!-- Khatam -->
+    <string name="khatam_title">Quran Khatam</string>
+    <string name="khatam_start">Start new Khatam</string>
+    <string name="khatam_progress">Progress: %1$.1f%%</string>
+    <string name="khatam_surahs">Surahs completed: %1$d / 114</string>
+    <string name="khatam_ayahs">Ayahs read: %1$d / 6236</string>
+    <string name="khatam_complete">Khatam Complete!</string>
+    <string name="khatam_share">Share Khatam</string>
+    <string name="khatam_share_text">Alhamdulillah! I\'ve completed reading the entire Quran using Islamic Hub app. 🤲</string>
+
+    <!-- More screen -->
+    <string name="more_title">More</string>
+    <string name="more_prayer_times">Prayer Times</string>
+    <string name="more_qibla">Qibla</string>
+    <string name="more_tasbih">Tasbih</string>
+    <string name="more_99_names">99 Names</string>
+    <string name="more_duas">Duas</string>
+    <string name="more_calendar">Calendar</string>
+    <string name="more_hadith">Hadith</string>
+    <string name="more_qada">Qada Tracker</string>
+    <string name="more_tracker">Daily Tracker</string>
+    <string name="more_bookmarks">Bookmarks</string>
+    <string name="more_khatam">Quran Khatam</string>
+    <string name="more_settings">Settings</string>
+    <string name="more_profile">Profile</string>
+
+    <!-- Word-by-word -->
+    <string name="word_by_word_title">Word by Word</string>
+    <string name="word_pronunciation">Pronunciation</string>
+    <string name="word_meaning">Meaning</string>
+    <string name="word_play_audio">Play word audio</string>
+
+    <!-- Common -->
+    <string name="action_back">Back</string>
+    <string name="action_share">Share</string>
+    <string name="action_copy">Copy</string>
+    <string name="action_bookmark">Bookmark</string>
+    <string name="action_remove_bookmark">Remove bookmark</string>
+    <string name="action_tafsir">Tafsir</string>
+    <string name="action_word_by_word">Word by Word</string>
 </resources>

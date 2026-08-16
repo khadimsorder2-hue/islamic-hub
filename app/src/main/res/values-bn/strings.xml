@@ -7,6 +7,7 @@
     <string name="nav_home">হোম</string>
     <string name="nav_quran">কুরআন</string>
     <string name="nav_prayer">নামাজ</string>
+    <string name="nav_hadith">হাদিস</string>
     <string name="nav_more">আরও</string>
 
     <!-- Home -->
@@ -114,4 +115,117 @@
     <string name="search_quran_hint">আয়াত খুঁজুন…</string>
     <string name="search_results_count">%1$dটি ফলাফল</string>
     <string name="search_no_results">কোনো ফলাফল পাওয়া যায়নি</string>
+
+    <!-- Hadith -->
+    <string name="hadith_title">হাদিস সংগ্রহ</string>
+    <string name="hadith_total">%1$dটি হাদিস</string>
+    <string name="hadith_search_hint">হাদিস খুঁজুন…</string>
+    <string name="hadith_number">হাদিস #%1$d</string>
+    <string name="hadith_grade_sahih">সহীহ</string>
+    <string name="hadith_arabic">আরবি</string>
+    <string name="hadith_bangla">বাংলা অনুবাদ</string>
+    <string name="hadith_collections">সংগ্রহসমূহ</string>
+
+    <!-- Qada -->
+    <string name="qada_title">কাযা ট্র্যাকার</string>
+    <string name="qada_subtitle">আপনার ছুটে যাওয়া নামাজ ট্র্যাক করুন</string>
+    <string name="qada_add_missed">কাযা যোগ করুন</string>
+    <string name="qada_mark_completed">আদায় সম্পন্ন চিহ্নিত করুন</string>
+    <string name="qada_remaining">%1$dটি বাকি</string>
+    <string name="qada_no_entries">এখনো কোনো কাযা এন্ট্রি নেই। \"কাযা যোগ করুন\" ট্যাপ করে শুরু করুন।</string>
+    <string name="qada_reset_confirm">সব কাযা এন্ট্রি রিসেট করবেন?</string>
+
+    <!-- Tracker -->
+    <string name="tracker_title">দৈনিক ট্র্যাকার</string>
+    <string name="tracker_today">আজ</string>
+    <string name="tracker_prayers_done">নামাজ আদায়</string>
+    <string name="tracker_zikr_count">জিকির সংখ্যা</string>
+    <string name="tracker_ayahs_read">আয়াত পড়া</string>
+    <string name="tracker_hadiths_read">হাদিস পড়া</string>
+    <string name="tracker_streak">নামাজ স্ট্রিক: %1$d দিন</string>
+
+    <!-- Profile -->
+    <string name="profile_title">প্রোফাইল</string>
+    <string name="profile_user_name">আপনার নাম</string>
+    <string name="profile_edit_name">নাম পরিবর্তন</string>
+    <string name="profile_stats">পরিসংখ্যান</string>
+    <string name="profile_total_zikr">মোট জিকির</string>
+    <string name="profile_total_ayahs">আয়াত পড়া</string>
+    <string name="profile_total_hadiths">হাদিস পড়া</string>
+    <string name="profile_khatam_progress">কুরআন খতম</string>
+    <string name="profile_bookmarks">বুকমার্ক</string>
+    <string name="profile_share">অগ্রগতি শেয়ার করুন</string>
+
+    <!-- Settings -->
+    <string name="settings_title">সেটিংস</string>
+    <string name="settings_quran_appearance">কুরআন চেহারা</string>
+    <string name="settings_font_size">ফন্ট সাইজ</string>
+    <string name="settings_background">ব্যাকগ্রাউন্ড</string>
+    <string name="settings_show_arabic">আরবি দেখান</string>
+    <string name="settings_show_bangla">বাংলা দেখান</string>
+    <string name="settings_show_english">ইংরেজি দেখান</string>
+    <string name="settings_audio">অডিও</string>
+    <string name="settings_reciter">কারী</string>
+    <string name="settings_auto_pause">অটো পজ টাইমার</string>
+    <string name="settings_bn_audio">বাংলা অর্থ অডিও</string>
+    <string name="settings_word_audio">শব্দে শব্দে অডিও</string>
+    <string name="settings_tafsir">তাফসীর</string>
+    <string name="settings_tafsir_source">ডিফল্ট তাফসীর উৎস</string>
+    <string name="settings_cache">ক্যাশ</string>
+    <string name="settings_cache_size">ক্যাশ সাইজ: %1$s</string>
+    <string name="settings_clear_cache">ক্যাশ মুছুন</string>
+    <string name="settings_cache_cleared">ক্যাশ মুছে ফেলা হয়েছে</string>
+
+    <!-- Bookmarks -->
+    <string name="bookmarks_title">বুকমার্ক</string>
+    <string name="bookmarks_empty">এখনো কোনো বুকমার্ক নেই। যেকোনো আয়াতে বুকমার্ক আইকন ট্যাপ করে সংরক্ষণ করুন।</string>
+    <string name="bookmarks_remove">সরান</string>
+
+    <!-- Tafsir -->
+    <string name="tafsir_title">তাফসীর</string>
+    <string name="tafsir_loading">তাফসীর লোড হচ্ছে…</string>
+    <string name="tafsir_error">তাফসীর লোড করা যায়নি। ইন্টারনেট সংযোগ পরীক্ষা করুন।</string>
+    <string name="tafsir_change_source">উৎস পরিবর্তন</string>
+    <string name="tafsir_cached">অফলাইন ব্যবহারের জন্য ক্যাশড</string>
+
+    <!-- Khatam -->
+    <string name="khatam_title">কুরআন খতম</string>
+    <string name="khatam_start">নতুন খতম শুরু</string>
+    <string name="khatam_progress">অগ্রগতি: %1$.1f%%</string>
+    <string name="khatam_surahs">সূরা সম্পন্ন: %1$d / 114</string>
+    <string name="khatam_ayahs">আয়াত পড়া: %1$d / 6236</string>
+    <string name="khatam_complete">খতম সম্পন্ন!</string>
+    <string name="khatam_share">খতম শেয়ার</string>
+    <string name="khatam_share_text">আলহামদুলিল্লাহ! আমি Islamic Hub অ্যাপ দিয়ে সম্পূর্ণ কুরআন খতম করেছি। 🤲</string>
+
+    <!-- More screen -->
+    <string name="more_title">আরও</string>
+    <string name="more_prayer_times">নামাজের সময়</string>
+    <string name="more_qibla">কিবলা</string>
+    <string name="more_tasbih">তসবিহ</string>
+    <string name="more_99_names">৯৯ নাম</string>
+    <string name="more_duas">দোয়া</string>
+    <string name="more_calendar">ক্যালেন্ডার</string>
+    <string name="more_hadith">হাদিস</string>
+    <string name="more_qada">কাযা ট্র্যাকার</string>
+    <string name="more_tracker">দৈনিক ট্র্যাকার</string>
+    <string name="more_bookmarks">বুকমার্ক</string>
+    <string name="more_khatam">কুরআন খতম</string>
+    <string name="more_settings">সেটিংস</string>
+    <string name="more_profile">প্রোফাইল</string>
+
+    <!-- Word-by-word -->
+    <string name="word_by_word_title">শব্দে শব্দে</string>
+    <string name="word_pronunciation">উচ্চারণ</string>
+    <string name="word_meaning">অর্থ</string>
+    <string name="word_play_audio">শব্দের অডিও চালান</string>
+
+    <!-- Common -->
+    <string name="action_back">পেছনে</string>
+    <string name="action_share">শেয়ার</string>
+    <string name="action_copy">কপি</string>
+    <string name="action_bookmark">বুকমার্ক</string>
+    <string name="action_remove_bookmark">বুকমার্ক সরান</string>
+    <string name="action_tafsir">তাফসীর</string>
+    <string name="action_word_by_word">শব্দে শব্দে</string>
 </resources>

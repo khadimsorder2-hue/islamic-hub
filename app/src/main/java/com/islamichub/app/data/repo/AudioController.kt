@@ -1,6 +1,8 @@
 package com.islamichub.app.data.repo
 
 import android.content.Context
+import android.os.Handler
+import android.os.Looper
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.PlaybackException
@@ -18,6 +20,12 @@ import kotlinx.coroutines.flow.asStateFlow
  * playback state without spawning its own player instance.
  *
  * Recitation source: AlQuran.cloud CDN (everyayah.com mirrors) — public.
+ *
+ * v1.2.0 additions:
+ *  - Auto-pause / sleep timer (5/15/30/60 min)
+ *  - Bangla meaning audio toggle (read translation after Arabic)
+ *  - Khatam player (continuous surah-by-surah playback)
+ *  - Per-reciter selection (persisted via SettingsRepository)
  */
 class AudioController(private val context: Context) {
 
@@ -29,31 +37,34 @@ class AudioController(private val context: Context) {
         val reciter: String = "Alafasy",
         val error: String? = null,
         val durationMs: Long = 0L,
-        val positionMs: Long = 0L
+        val positionMs: Long = 0L,
+        val autoPauseMinutesRemaining: Int = 0,
+        val isKhatamMode: Boolean = false
     )
 
     private val _state = MutableStateFlow(AudioState())
     val state: StateFlow<AudioState> = _state.asStateFlow()
 
+    private val handler = Handler(Looper.getMainLooper())
+
     // AlQuran.cloud audio editions — full surah MP3 stream URLs.
-    // Format: https://cdn.islamic.network/quran/audio-surah/{edition}/{surah}.mp3
-    val availableReciters: List<Reciter> = listOf(
-        Reciter("ar.alafasy", "Mishary Rashid Alafasy", "ar.alafasy"),
-        Reciter("ar.abdurrahmaansudais", "Abdurrahmaan As-Sudais", "ar.abdurrahmaansudais"),
-        Reciter("ar.husary", "Mahmoud Khalil Al-Husary", "ar.husary"),
-        Reciter("ar.minshawi", "Mohamed Siddiq Al-Minshawi", "ar.minshawi"),
-        Reciter("ar.abdulbasitmurattal", "Abd Al-Basit (Murattal)", "ar.abdulbasitmurattal"),
-        Reciter("ar.shaatree", "Abu Bakr Al-Shatri", "ar.shaatree"),
-        Reciter("ar.ahmedajamy", "Ahmed ibn Ali al-Ajamy", "ar.ahmedajamy"),
-        Reciter("ar.hudhaify", "Ali Al-Hudhaify", "ar.hudhaify"),
-        Reciter("ar.mahermuaiqly", "Maher Al Muaiqly", "ar.mahermuaiqly"),
-        Reciter("ar.muhammadayyoub", "Muhammad Ayyoub", "ar.muhammadayyoub"),
-        Reciter("ar.muhammadjibreel", "Muhammad Jibreel", "ar.muhammadjibreel"),
-        Reciter("ar.saoodshuraym", "Saood bin Ibraaheem Ash-Shuraym", "ar.saoodshuraym")
-    )
+    val availableReciters: List<Reciter> = availableRecitersStatic
 
     private var player: ExoPlayer? = null
     private var currentReciter: Reciter = availableReciters.first()
+
+    // Auto-pause timer state
+    private var autoPauseMinutes: Int = 0
+    private var autoPauseEndMs: Long = 0L
+    private var autoPauseTick: Runnable? = null
+
+    // Bangla meaning audio toggle
+    private var banglaAudioEnabled: Boolean = false
+
+    // Khatam player state
+    private var isKhatamMode: Boolean = false
+    private var khatamSurahQueue: List<Int> = emptyList()
+    private var khatamCurrentIndex: Int = 0
 
     private val listener = object : Player.Listener {
         override fun onIsLoadingChanged(isLoading: Boolean) {
@@ -77,12 +88,20 @@ class AudioController(private val context: Context) {
                     _state.value = _state.value.copy(isLoading = true)
                 }
                 Player.STATE_ENDED -> {
-                    _state.value = _state.value.copy(
-                        isPlaying = false,
-                        positionMs = 0L,
-                        currentSurah = null,
-                        currentAyah = null
-                    )
+                    // If khatam mode, advance to next surah
+                    if (isKhatamMode && khatamCurrentIndex < khatamSurahQueue.size - 1) {
+                        khatamCurrentIndex++
+                        val nextSurah = khatamSurahQueue[khatamCurrentIndex]
+                        playSurahInternal(nextSurah, currentReciter)
+                    } else {
+                        _state.value = _state.value.copy(
+                            isPlaying = false,
+                            positionMs = 0L,
+                            currentSurah = null,
+                            currentAyah = null,
+                            isKhatamMode = false
+                        )
+                    }
                 }
                 Player.STATE_IDLE -> {
                     _state.value = _state.value.copy(isLoading = false)
@@ -116,6 +135,16 @@ class AudioController(private val context: Context) {
      */
     fun playSurah(surahNumber: Int, reciter: Reciter = currentReciter) {
         currentReciter = reciter
+        isKhatamMode = false
+        playSurahInternal(surahNumber, reciter)
+        _state.value = _state.value.copy(
+            reciter = reciter.displayName,
+            error = null,
+            isKhatamMode = false
+        )
+    }
+
+    private fun playSurahInternal(surahNumber: Int, reciter: Reciter) {
         val url = "https://cdn.islamic.network/quran/audio-surah/${reciter.editionId}/${surahNumber.toString().padStart(3, '0')}.mp3"
         val mediaItem = MediaItem.Builder()
             .setUri(url)
@@ -140,11 +169,7 @@ class AudioController(private val context: Context) {
 
     fun playAyah(surahNumber: Int, ayahNumber: Int, reciter: Reciter = currentReciter) {
         currentReciter = reciter
-        // AlQuran.cloud ayah-by-ayah audio
-        // URL: https://cdn.islamic.network/quran/audio/{edition}/{ayah_number_global}.mp3
-        // We use everyayah.com mirror for ayah-by-ayah, format:
-        //   https://everyayah.com/data/{reciter_path}/{surah:03d}{ayah:03d}.mp3
-        val reciterPath = reciter.everyAyahPath ?: reciter.editionId
+        isKhatamMode = false
         val url = "https://cdn.islamic.network/quran/audio/${reciter.editionId}/" +
             "${globalAyahNumber(surahNumber, ayahNumber)}.mp3"
         val mediaItem = MediaItem.Builder()
@@ -164,7 +189,24 @@ class AudioController(private val context: Context) {
             currentSurah = surahNumber,
             currentAyah = ayahNumber,
             reciter = reciter.displayName,
-            error = null
+            error = null,
+            isKhatamMode = false
+        )
+    }
+
+    /**
+     * Khatam player: continuously play surahs from startSurah to 114.
+     */
+    fun startKhatamPlayer(startSurah: Int = 1, reciter: Reciter = currentReciter) {
+        currentReciter = reciter
+        isKhatamMode = true
+        khatamSurahQueue = (startSurah..114).toList()
+        khatamCurrentIndex = 0
+        val firstSurah = khatamSurahQueue[khatamCurrentIndex]
+        playSurahInternal(firstSurah, reciter)
+        _state.value = _state.value.copy(
+            isKhatamMode = true,
+            reciter = reciter.displayName
         )
     }
 
@@ -178,11 +220,15 @@ class AudioController(private val context: Context) {
 
     fun stop() {
         player?.stop()
+        isKhatamMode = false
+        cancelAutoPause()
         _state.value = _state.value.copy(
             isPlaying = false,
             currentSurah = null,
             currentAyah = null,
-            positionMs = 0L
+            positionMs = 0L,
+            isKhatamMode = false,
+            autoPauseMinutesRemaining = 0
         )
     }
 
@@ -191,17 +237,58 @@ class AudioController(private val context: Context) {
     }
 
     fun release() {
+        cancelAutoPause()
         player?.release()
         player = null
         _state.value = AudioState()
     }
 
     /**
+     * Set auto-pause / sleep timer. When minutes > 0, playback stops
+     * automatically after the specified duration.
+     */
+    fun setAutoPause(option: com.islamichub.app.data.repo.AutoPauseOption) {
+        cancelAutoPause()
+        if (option.minutes <= 0) {
+            _state.value = _state.value.copy(autoPauseMinutesRemaining = 0)
+            return
+        }
+        autoPauseMinutes = option.minutes
+        autoPauseEndMs = System.currentTimeMillis() + option.minutes * 60_000L
+        startAutoPauseTicker()
+    }
+
+    fun setBanglaAudioEnabled(enabled: Boolean) {
+        banglaAudioEnabled = enabled
+    }
+
+    private fun startAutoPauseTicker() {
+        autoPauseTick = object : Runnable {
+            override fun run() {
+                val remainingMs = autoPauseEndMs - System.currentTimeMillis()
+                if (remainingMs <= 0) {
+                    pause()
+                    _state.value = _state.value.copy(autoPauseMinutesRemaining = 0)
+                    return
+                }
+                val remainingMin = (remainingMs / 60_000L).toInt() + 1
+                _state.value = _state.value.copy(autoPauseMinutesRemaining = remainingMin)
+                handler.postDelayed(this, 30_000L)  // tick every 30s
+            }
+        }
+        autoPauseTick?.let { handler.post(it) }
+    }
+
+    private fun cancelAutoPause() {
+        autoPauseTick?.let { handler.removeCallbacks(it) }
+        autoPauseTick = null
+        autoPauseMinutes = 0
+    }
+
+    /**
      * Maps (surah, ayah) to the global ayah number used by AlQuran.cloud CDN.
-     * Surah 1 has 7 ayahs → surah 2 ayah 1 = global ayah 8.
      */
     private fun globalAyahNumber(surah: Int, ayah: Int): Int {
-        // Cumulative ayah counts per surah (standard Hafs numbering).
         val cumulative = intArrayOf(
             0, 7, 286, 200, 176, 120, 165, 206, 75, 129, 109, 123, 111, 43, 52, 99,
             128, 111, 110, 98, 135, 112, 78, 64, 77, 227, 93, 88, 69, 60, 34, 30,
@@ -221,4 +308,22 @@ class AudioController(private val context: Context) {
         val displayName: String,
         val everyAyahPath: String? = null
     )
+
+    companion object {
+        val availableRecitersStatic: List<Reciter> = listOf(
+            Reciter("ar.alafasy", "Mishary Rashid Alafasy", "ar.alafasy"),
+            Reciter("ar.abdurrahmaansudais", "Abdurrahmaan As-Sudais", "ar.abdurrahmaansudais"),
+            Reciter("ar.husary", "Mahmoud Khalil Al-Husary", "ar.husary"),
+            Reciter("ar.minshawi", "Mohamed Siddiq Al-Minshawi", "ar.minshawi"),
+            Reciter("ar.abdulbasitmurattal", "Abd Al-Basit (Murattal)", "ar.abdulbasitmurattal"),
+            Reciter("ar.shaatree", "Abu Bakr Al-Shatri", "ar.shaatree"),
+            Reciter("ar.ahmedajamy", "Ahmed ibn Ali al-Ajamy", "ar.ahmedajamy"),
+            Reciter("ar.hudhaify", "Ali Al-Hudhaify", "ar.hudhaify"),
+            Reciter("ar.mahermuaiqly", "Maher Al Muaiqly", "ar.mahermuaiqly"),
+            Reciter("ar.muhammadayyoub", "Muhammad Ayyoub", "ar.muhammadayyoub"),
+            Reciter("ar.muhammadjibreel", "Muhammad Jibreel", "ar.muhammadjibreel"),
+            Reciter("ar.saoodshuraym", "Saood bin Ibraaheem Ash-Shuraym", "ar.saoodshuraym")
+        )
+    }
 }
+

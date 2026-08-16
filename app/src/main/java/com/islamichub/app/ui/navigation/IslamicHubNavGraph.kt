@@ -1,6 +1,5 @@
 package com.islamichub.app.ui.navigation
 
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
@@ -9,10 +8,12 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavGraph.Companion.findStartDestination
-import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -20,17 +21,29 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.islamichub.app.data.AppContainer
+import com.islamichub.app.ui.screens.bookmarks.BookmarksScreen
 import com.islamichub.app.ui.screens.calendar.CalendarScreen
 import com.islamichub.app.ui.screens.dua.DuaDetailScreen
 import com.islamichub.app.ui.screens.dua.DuaListScreen
+import com.islamichub.app.ui.screens.hadith.HadithCollectionScreen
+import com.islamichub.app.ui.screens.hadith.HadithDetailScreen
+import com.islamichub.app.ui.screens.hadith.HadithListScreen
+import com.islamichub.app.ui.screens.hadith.HadithSearchScreen
 import com.islamichub.app.ui.screens.home.HomeScreen
+import com.islamichub.app.ui.screens.khatam.KhatamScreen
+import com.islamichub.app.ui.screens.more.MoreScreen
 import com.islamichub.app.ui.screens.names.NamesScreen
 import com.islamichub.app.ui.screens.prayer.PrayerScreen
+import com.islamichub.app.ui.screens.profile.ProfileScreen
 import com.islamichub.app.ui.screens.qibla.QiblaScreen
+import com.islamichub.app.ui.screens.quran.QariSelectorSheet
 import com.islamichub.app.ui.screens.quran.QuranListScreen
 import com.islamichub.app.ui.screens.quran.QuranReaderScreen
 import com.islamichub.app.ui.screens.quran.QuranSearchScreen
+import com.islamichub.app.ui.screens.settings.SettingsScreen
 import com.islamichub.app.ui.screens.tasbih.TasbihScreen
+import com.islamichub.app.ui.screens.tracker.TrackerScreen
+import com.islamichub.app.ui.screens.qada.QadaScreen
 
 @Composable
 fun IslamicHubNavGraph(container: AppContainer) {
@@ -41,9 +54,11 @@ fun IslamicHubNavGraph(container: AppContainer) {
     val showBottomBar = currentRoute in setOf(
         Screen.Home.route,
         Screen.Quran.route,
-        Screen.Prayer.route,
-        Screen.Qibla.route
+        Screen.Hadith.route,
+        Screen.More.route
     )
+
+    var showQariSelector by remember { mutableStateOf(false) }
 
     Scaffold(
         bottomBar = {
@@ -142,6 +157,102 @@ fun IslamicHubNavGraph(container: AppContainer) {
             composable(Screen.Calendar.route) {
                 CalendarScreen(container = container)
             }
+
+            // ─── Hadith ────────────────────────────────────────────────
+            composable(Screen.Hadith.route) {
+                HadithListScreen(
+                    container = container,
+                    onCollectionClick = { id ->
+                        navController.navigate("hadith_collection/$id")
+                    },
+                    onSearchClick = { navController.navigate(Screen.HadithSearch.route) }
+                )
+            }
+            composable(
+                route = "hadith_collection/{collection}",
+                arguments = listOf(navArgument("collection") { type = NavType.StringType })
+            ) { backStackEntry ->
+                val collectionId = backStackEntry.arguments?.getString("collection").orEmpty()
+                HadithCollectionScreen(
+                    container = container,
+                    collectionId = collectionId,
+                    onBack = { navController.popBackStack() },
+                    onHadithClick = { coll, num ->
+                        navController.navigate(Screen.HadithDetail.createRoute(coll, num))
+                    }
+                )
+            }
+            composable(
+                route = Screen.HadithDetail.route,
+                arguments = listOf(
+                    navArgument("collection") { type = NavType.StringType },
+                    navArgument("hadithNumber") { type = NavType.IntType }
+                )
+            ) { backStackEntry ->
+                val collectionId = backStackEntry.arguments?.getString("collection").orEmpty()
+                val hadithNumber = backStackEntry.arguments?.getInt("hadithNumber") ?: 1
+                HadithDetailScreen(
+                    container = container,
+                    collectionId = collectionId,
+                    hadithNumber = hadithNumber,
+                    onBack = { navController.popBackStack() }
+                )
+            }
+            composable(Screen.HadithSearch.route) {
+                HadithSearchScreen(
+                    container = container,
+                    onBack = { navController.popBackStack() },
+                    onHadithClick = { coll, num ->
+                        navController.navigate(Screen.HadithDetail.createRoute(coll, num))
+                    }
+                )
+            }
+
+            // ─── More screens ─────────────────────────────────────────
+            composable(Screen.More.route) {
+                MoreScreen(onNavigate = { route -> navController.navigate(route) })
+            }
+            composable(Screen.Qada.route) {
+                QadaScreen(container = container, onBack = { navController.popBackStack() })
+            }
+            composable(Screen.Tracker.route) {
+                TrackerScreen(container = container, onBack = { navController.popBackStack() })
+            }
+            composable(Screen.Bookmarks.route) {
+                BookmarksScreen(
+                    container = container,
+                    onBack = { navController.popBackStack() },
+                    onBookmarkClick = { num ->
+                        navController.navigate(Screen.QuranReader.createRoute(num))
+                    }
+                )
+            }
+            composable(Screen.Khatam.route) {
+                KhatamScreen(
+                    container = container,
+                    onBack = { navController.popBackStack() },
+                    onSurahClick = { num ->
+                        navController.navigate(Screen.QuranReader.createRoute(num))
+                    }
+                )
+            }
+            composable(Screen.Profile.route) {
+                ProfileScreen(container = container, onBack = { navController.popBackStack() })
+            }
+            composable(Screen.Settings.route) {
+                SettingsScreen(
+                    container = container,
+                    onBack = { navController.popBackStack() },
+                    onShowQariSelector = { showQariSelector = true }
+                )
+            }
         }
+    }
+
+    if (showQariSelector) {
+        QariSelectorSheet(
+            container = container,
+            onDismiss = { showQariSelector = false }
+        )
     }
 }

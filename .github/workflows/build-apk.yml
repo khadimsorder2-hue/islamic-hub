@@ -53,6 +53,8 @@ jobs:
 
       - name: Build release APK
         run: ./gradlew assembleRelease --no-daemon --stacktrace
+        env:
+          JAVA_TOOL_OPTIONS: "-Xmx4g"
 
       - name: Locate APK
         id: apk
@@ -104,25 +106,42 @@ jobs:
             - Download `islamichub-release.apk` below
             - Tap to install (allow "Install from unknown sources" if prompted)
 
-            ## What's new (v1.1.0)
-            - ✅ **All 114 surahs** with full Arabic text + Bengali + English translation
-            - ✅ **Audio tilawat** (Media3 ExoPlayer) — 12 reciters, play full surah or per-ayah
-            - ✅ **Prayer time notifications** (AlarmManager + boot receiver) — exact alarms, idempotent scheduling
-            - ✅ **Custom keystore signing** for stable APK signatures
-            - ✅ **Premium UI** — Islamic Violet + Warm Ivory + Muted Gold palette, gradient hero cards
-            - ✅ **Quran full-text search** across all 6236 ayahs
-            - ✅ Race-condition-free architecture (single-writer repositories, atomic scheduling)
+            ## What's new (v1.2.0)
+            - ✅ **Hadith collections**: 24,424 hadiths across Bukhari, Muslim, Tirmidhi, Abu Dawud (Arabic + Bangla)
+            - ✅ **Hadith search** (cross-collection, Bangla + Arabic)
+            - ✅ **Qada tracker** — add missed prayers, mark completed, persistent
+            - ✅ **Daily tracker** — prayer checkbox with streak, zikr/ayahs/hadiths read stats
+            - ✅ **Profile screen** — user name, stats, khatam progress, share progress
+            - ✅ **Quran bookmarks** — bookmark any ayah, list view
+            - ✅ **Quran Khatam tracker** — progress through 114 surahs, share khatam
+            - ✅ **Settings screen** — font size, background mode, Arabic/Bangla/English toggles
+            - ✅ **Qari selector** — 12 reciters with rounded profile avatars
+            - ✅ **Tafsir** — online + offline cache, 4 sources (Bangla Mukhtasar, Taisirul, English Jalalayn, Ibn Kathir)
+            - ✅ **Audio auto-pause timer** (5/15/30/60 min)
+            - ✅ **Bangla meaning audio toggle**
+            - ✅ **Word-by-word audio toggle**
+            - ✅ **Khatam player** — continuous surah-by-surah playback
+            - ✅ **Share features** — share ayah, share hadith, share khatam progress
+            - ✅ **Last Read** — quick resume from last ayah
+            - ✅ **Cache clear** — Settings option
+            - ✅ **More screen** — central hub for all features
+            - ✅ **Race-condition-free** architecture (single-writer repositories, idempotent operations)
 
-            ## Features
-            - Al-Quran: 114 surahs, 6236 ayahs, full Arabic + Bengali + English (AlQuran.cloud)
-            - Prayer Times: Aladhan API + FusedLocation with notification alarms
-            - Qibla: rotation-vector compass pointing to Kaaba
-            - Tasbih: tap counter with 5 dhikr presets
-            - 99 Names of Allah (Asma ul Husna)
-            - 8 Daily Duas (Arabic + Bengali + English)
-            - Hijri Calendar
-            - Audio tilawat: 12 reciters (Alafasy, Sudais, Husary, Minshawi, Abdul Basit, etc.)
-            - Material 3 + dark/light theme + Bangla/English UI
+            ## Features (cumulative)
+            - **Al-Quran**: 114 surahs, 6236 ayahs, full Arabic + Bengali + English (AlQuran.cloud)
+            - **Hadith**: 24,424 hadiths across 4 collections (Bukhari, Muslim, Tirmidhi, Abu Dawud)
+            - **Prayer Times**: Aladhan API + FusedLocation with notification alarms
+            - **Qibla**: rotation-vector compass pointing to Kaaba
+            - **Tasbih**: tap counter with 5 dhikr presets
+            - **99 Names of Allah** (Asma ul Husna)
+            - **8 Daily Duas** (Arabic + Bengali + English)
+            - **Hijri Calendar**
+            - **Audio tilawat**: 12 reciters with khatam player, auto-pause, Bangla meaning audio
+            - **Tafsir**: 4 sources, online + offline cache
+            - **Trackers**: Qada, daily prayer, zikr, khatam
+            - **Profile & Bookmarks**
+            - **Settings**: font, background, reciter, tafsir source, cache clear
+            - **Material 3 + dark/light theme + Bangla/English UI**
           files: |
             app/build/outputs/apk/release/islamichub-release.apk
             app/build/outputs/apk/release/checksums.txt

@@ -8,6 +8,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import com.islamichub.app.data.AppContainer
 import com.islamichub.app.data.model.Surah
+import com.islamichub.app.data.repo.AudioController
+import com.islamichub.app.data.repo.Bookmark
+import com.islamichub.app.data.repo.LastRead
 
 data class QuranReaderUiState(
     val surah: Surah? = null,
@@ -15,7 +18,13 @@ data class QuranReaderUiState(
     val notAvailable: Boolean = false,
     val isPlayingAudio: Boolean = false,
     val isLoadingAudio: Boolean = false,
-    val currentPlayingAyah: Int? = null
+    val currentPlayingAyah: Int? = null,
+    val bookmarkedAyahs: Set<Int> = emptySet(),
+    val quranFontScale: Float = 1.0f,
+    val showArabic: Boolean = true,
+    val showBangla: Boolean = true,
+    val showEnglish: Boolean = true,
+    val selectedReciterId: String = "ar.alafasy"
 )
 
 class QuranReaderViewModel(
@@ -28,16 +37,31 @@ class QuranReaderViewModel(
     init {
         load()
         observeAudio()
+        observeSettings()
+        observeBookmarks()
     }
 
     private fun load() {
         viewModelScope.launch {
             val surah = container.quranRepository.getSurah(surahNumber)
-            _state.value = QuranReaderUiState(
+            _state.value = _state.value.copy(
                 surah = surah,
                 isLoading = false,
                 notAvailable = surah == null
             )
+            // Mark khatam progress and last read
+            if (surah != null) {
+                container.khatamRepository.markSurahCompleted(surahNumber, surah.ayahCount)
+                container.lastReadRepository.set(
+                    LastRead(
+                        surahNumber = surahNumber,
+                        ayahNumber = surah.ayahs.lastOrNull()?.numberInSurah ?: 1,
+                        surahName = surah.nameEnglish,
+                        surahNameBn = surah.nameBengali
+                    )
+                )
+                container.trackerRepository.recordSurahRead()
+            }
         }
     }
 
@@ -54,12 +78,58 @@ class QuranReaderViewModel(
         }
     }
 
+    private fun observeSettings() {
+        viewModelScope.launch {
+            container.settingsRepository.quranFontScale.collect { scale ->
+                _state.value = _state.value.copy(quranFontScale = scale)
+            }
+        }
+        viewModelScope.launch {
+            container.settingsRepository.showArabic.collect { show ->
+                _state.value = _state.value.copy(showArabic = show)
+            }
+        }
+        viewModelScope.launch {
+            container.settingsRepository.showBangla.collect { show ->
+                _state.value = _state.value.copy(showBangla = show)
+            }
+        }
+        viewModelScope.launch {
+            container.settingsRepository.showEnglish.collect { show ->
+                _state.value = _state.value.copy(showEnglish = show)
+            }
+        }
+        viewModelScope.launch {
+            container.settingsRepository.selectedReciter.collect { id ->
+                _state.value = _state.value.copy(selectedReciterId = id)
+            }
+        }
+    }
+
+    private fun observeBookmarks() {
+        viewModelScope.launch {
+            container.bookmarkRepository.bookmarks.collect { list ->
+                _state.value = _state.value.copy(
+                    bookmarkedAyahs = list.filter { it.surahNumber == surahNumber }
+                        .map { it.ayahNumber }.toSet()
+                )
+            }
+        }
+    }
+
     fun playSurah() {
-        container.audioController.playSurah(surahNumber)
+        val reciter = AudioController.availableRecitersStatic.firstOrNull {
+            it.editionId == _state.value.selectedReciterId
+        } ?: AudioController.availableRecitersStatic.first()
+        container.audioController.playSurah(surahNumber, reciter)
     }
 
     fun playAyah(ayahNumber: Int) {
-        container.audioController.playAyah(surahNumber, ayahNumber)
+        val reciter = AudioController.availableRecitersStatic.firstOrNull {
+            it.editionId == _state.value.selectedReciterId
+        } ?: AudioController.availableRecitersStatic.first()
+        container.audioController.playAyah(surahNumber, ayahNumber, reciter)
+        container.trackerRepository.recordAyahRead()
     }
 
     fun toggleAudio() {
@@ -74,10 +144,24 @@ class QuranReaderViewModel(
         container.audioController.stop()
     }
 
+    fun toggleBookmark(ayahNumber: Int) {
+        val surah = _state.value.surah ?: return
+        val ayah = surah.ayahs.firstOrNull { it.numberInSurah == ayahNumber } ?: return
+        viewModelScope.launch {
+            container.bookmarkRepository.toggle(
+                Bookmark(
+                    surahNumber = surahNumber,
+                    ayahNumber = ayahNumber,
+                    surahName = surah.nameEnglish,
+                    surahNameBn = surah.nameBengali,
+                    arabicSnippet = ayah.arabic.take(120)
+                )
+            )
+        }
+    }
+
     override fun onCleared() {
         super.onCleared()
-        // Stop audio when leaving the reader to release Media3 resources
-        // (but only if this VM owns the current playback)
         val audioState = container.audioController.state.value
         if (audioState.currentSurah == surahNumber) {
             container.audioController.stop()

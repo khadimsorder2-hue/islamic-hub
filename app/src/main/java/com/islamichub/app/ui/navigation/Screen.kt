@@ -2,9 +2,13 @@ package com.islamichub.app.ui.navigation
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoStories
+import androidx.compose.material.icons.filled.Book
+import androidx.compose.material.icons.filled.Dashboard
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.MenuBook
-import androidx.compose.material.icons.filled.MoreHoriz
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.ui.graphics.vector.ImageVector
 
 sealed class Screen(val route: String) {
@@ -23,6 +27,27 @@ sealed class Screen(val route: String) {
         fun createRoute(id: String) = "dua/$id"
     }
     data object Calendar : Screen("calendar")
+    data object Settings : Screen("settings")
+    data object Profile : Screen("profile")
+    data object More : Screen("more")
+
+    // Hadith
+    data object Hadith : Screen("hadith")
+    data object HadithDetail : Screen("hadith/{collection}/{hadithNumber}") {
+        fun createRoute(collection: String, hadithNumber: Int) = "hadith/$collection/$hadithNumber"
+    }
+    data object HadithSearch : Screen("hadith/search")
+
+    // Quran extras
+    data object Bookmarks : Screen("bookmarks")
+    data object Tafsir : Screen("tafsir/{surah}/{ayah}") {
+        fun createRoute(surah: Int, ayah: Int) = "tafsir/$surah/$ayah"
+    }
+    data object Khatam : Screen("khatam")
+
+    // Trackers
+    data object Qada : Screen("qada")
+    data object Tracker : Screen("tracker")
 }
 
 data class BottomNavItem(
@@ -34,6 +59,6 @@ data class BottomNavItem(
 val bottomNavItems: List<BottomNavItem> = listOf(
     BottomNavItem(Screen.Home, com.islamichub.app.R.string.nav_home, Icons.Filled.Home),
     BottomNavItem(Screen.Quran, com.islamichub.app.R.string.nav_quran, Icons.Filled.AutoStories),
-    BottomNavItem(Screen.Prayer, com.islamichub.app.R.string.nav_prayer, Icons.Filled.MenuBook),
-    BottomNavItem(Screen.Qibla, com.islamichub.app.R.string.nav_more, Icons.Filled.MoreHoriz)
+    BottomNavItem(Screen.Hadith, com.islamichub.app.R.string.nav_hadith, Icons.Filled.Book),
+    BottomNavItem(Screen.More, com.islamichub.app.R.string.nav_more, Icons.Filled.Dashboard)
 )

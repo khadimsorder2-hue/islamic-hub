@@ -1,5 +1,6 @@
 package com.islamichub.app.ui.screens.quran
 
+import android.content.Intent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -15,14 +16,21 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Bookmark
+import androidx.compose.material.icons.filled.BookmarkBorder
 import androidx.compose.material.icons.filled.GraphicEq
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Stop
+import androidx.compose.material.icons.outlined.MenuBook
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
@@ -35,16 +43,22 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.islamichub.app.R
 import com.islamichub.app.data.AppContainer
 import com.islamichub.app.data.model.Ayah
+import com.islamichub.app.ui.screens.tafsir.TafsirBottomSheet
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -55,6 +69,8 @@ fun QuranReaderScreen(
 ) {
     val vm = remember { QuranReaderViewModel(container, surahNumber) }
     val state by vm.state.collectAsState()
+    val context = LocalContext.current
+    var showTafsirFor by remember { mutableStateOf<Int?>(null) }
 
     Scaffold(
         topBar = {
@@ -100,7 +116,7 @@ fun QuranReaderScreen(
                 ) {
                     CircularProgressIndicator()
                     Text(
-                        text = androidx.compose.ui.res.stringResource(R.string.loading),
+                        text = stringResource(R.string.loading),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -131,7 +147,7 @@ fun QuranReaderScreen(
                     contentPadding = PaddingValues(16.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    // Audio playback bar (if currently playing this surah)
+                    // Audio playback bar
                     if (state.isPlayingAudio || state.isLoadingAudio || state.currentPlayingAyah != null) {
                         item {
                             AudioPlaybackBar(
@@ -162,7 +178,9 @@ fun QuranReaderScreen(
                             ) {
                                 Text(
                                     text = surah.nameArabic,
-                                    style = MaterialTheme.typography.displayMedium,
+                                    style = MaterialTheme.typography.displayMedium.copy(
+                                        fontSize = MaterialTheme.typography.displayMedium.fontSize * state.quranFontScale
+                                    ),
                                     color = MaterialTheme.colorScheme.onPrimaryContainer
                                 )
                                 Text(
@@ -181,8 +199,10 @@ fun QuranReaderScreen(
 
                     item {
                         Text(
-                            text = androidx.compose.ui.res.stringResource(R.string.quran_bismillah),
-                            style = MaterialTheme.typography.titleMedium,
+                            text = stringResource(R.string.quran_bismillah),
+                            style = MaterialTheme.typography.titleMedium.copy(
+                                fontSize = MaterialTheme.typography.titleMedium.fontSize * state.quranFontScale
+                            ),
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.fillMaxWidth(),
                             textAlign = TextAlign.Center
@@ -192,13 +212,43 @@ fun QuranReaderScreen(
                     items(surah.ayahs, key = { it.numberInSurah }) { ayah ->
                         AyahCard(
                             ayah = ayah,
+                            fontScale = state.quranFontScale,
+                            showArabic = state.showArabic,
+                            showBangla = state.showBangla,
+                            showEnglish = state.showEnglish,
                             isPlayingAyah = state.currentPlayingAyah == ayah.numberInSurah,
-                            onPlayAyah = { vm.playAyah(ayah.numberInSurah) }
+                            isBookmarked = ayah.numberInSurah in state.bookmarkedAyahs,
+                            onPlayAyah = { vm.playAyah(ayah.numberInSurah) },
+                            onToggleBookmark = { vm.toggleBookmark(ayah.numberInSurah) },
+                            onShowTafsir = { showTafsirFor = ayah.numberInSurah },
+                            onShareAyah = {
+                                val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                                    type = "text/plain"
+                                    putExtra(Intent.EXTRA_TEXT,
+                                        "${surah.nameEnglish} (${surah.englishMeaning}) — ${ayah.numberInSurah}:\n\n" +
+                                        "${ayah.arabic}\n\n" +
+                                        "Bengali: ${ayah.bengali}\n\n" +
+                                        "English: ${ayah.english}\n\n" +
+                                        "— Shared via Islamic Hub"
+                                    )
+                                }
+                                context.startActivity(Intent.createChooser(shareIntent, "Share Ayah"))
+                            }
                         )
                     }
                 }
             }
         }
+    }
+
+    // Tafsir bottom sheet
+    showTafsirFor?.let { ayah ->
+        TafsirBottomSheet(
+            container = container,
+            surah = surahNumber,
+            ayah = ayah,
+            onDismiss = { showTafsirFor = null }
+        )
     }
 }
 
@@ -265,9 +315,18 @@ private fun AudioPlaybackBar(
 @Composable
 private fun AyahCard(
     ayah: Ayah,
+    fontScale: Float,
+    showArabic: Boolean,
+    showBangla: Boolean,
+    showEnglish: Boolean,
     isPlayingAyah: Boolean,
-    onPlayAyah: () -> Unit
+    isBookmarked: Boolean,
+    onPlayAyah: () -> Unit,
+    onToggleBookmark: () -> Unit,
+    onShowTafsir: () -> Unit,
+    onShareAyah: () -> Unit
 ) {
+    var showMenu by remember { mutableStateOf(false) }
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(18.dp),
@@ -298,31 +357,83 @@ private fun AyahCard(
                         modifier = Modifier.padding(horizontal = 10.dp, vertical = 2.dp)
                     )
                 }
-                IconButton(onClick = onPlayAyah, modifier = Modifier.size(36.dp)) {
-                    Icon(
-                        imageVector = Icons.Filled.PlayArrow,
-                        contentDescription = "Play ayah",
-                        tint = MaterialTheme.colorScheme.primary
-                    )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    IconButton(onClick = onPlayAyah, modifier = Modifier.size(36.dp)) {
+                        Icon(
+                            imageVector = Icons.Filled.PlayArrow,
+                            contentDescription = "Play ayah",
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                    IconButton(onClick = onToggleBookmark, modifier = Modifier.size(36.dp)) {
+                        Icon(
+                            imageVector = if (isBookmarked) Icons.Filled.Bookmark else Icons.Filled.BookmarkBorder,
+                            contentDescription = "Bookmark",
+                            tint = if (isBookmarked) MaterialTheme.colorScheme.primary
+                                   else MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    Box {
+                        IconButton(onClick = { showMenu = true }, modifier = Modifier.size(36.dp)) {
+                            Icon(
+                                imageVector = Icons.Filled.MoreVert,
+                                contentDescription = "More",
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        DropdownMenu(
+                            expanded = showMenu,
+                            onDismissRequest = { showMenu = false }
+                        ) {
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.action_tafsir)) },
+                                onClick = {
+                                    showMenu = false
+                                    onShowTafsir()
+                                },
+                                leadingIcon = { Icon(Icons.Outlined.MenuBook, contentDescription = null) }
+                            )
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.action_share)) },
+                                onClick = {
+                                    showMenu = false
+                                    onShareAyah()
+                                },
+                                leadingIcon = { Icon(Icons.Filled.Share, contentDescription = null) }
+                            )
+                        }
+                    }
                 }
             }
-            Text(
-                text = ayah.arabic,
-                style = MaterialTheme.typography.displaySmall,
-                color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.fillMaxWidth(),
-                textAlign = TextAlign.End
-            )
-            Text(
-                text = ayah.bengali,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            Text(
-                text = ayah.english,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+            if (showArabic) {
+                Text(
+                    text = ayah.arabic,
+                    style = MaterialTheme.typography.displaySmall.copy(
+                        fontSize = MaterialTheme.typography.displaySmall.fontSize * fontScale
+                    ),
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.End
+                )
+            }
+            if (showBangla) {
+                Text(
+                    text = ayah.bengali,
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        fontSize = MaterialTheme.typography.bodyMedium.fontSize * fontScale
+                    ),
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            }
+            if (showEnglish) {
+                Text(
+                    text = ayah.english,
+                    style = MaterialTheme.typography.bodySmall.copy(
+                        fontSize = MaterialTheme.typography.bodySmall.fontSize * fontScale
+                    ),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
         }
     }
 }

@@ -1,0 +1,15 @@
+Hadith data source attributions
+================================
+
+All hadith text bundled in this app is fetched from the public API:
+  https://github.com/fawazahmed0/hadith-api
+
+License: CC BY 4.0 / public domain dedication.
+Source: Hadith data is primarily sourced from sunnah.com
+(under their respective terms of use).
+
+Editions used:
+  - Arabic (ara-*): sunnah.com Arabic text
+  - Bangla (bn-*): Bengali translations from sunnah.com / Islamic Foundation Bangladesh
+
+Please respect the original sources when redistributing.

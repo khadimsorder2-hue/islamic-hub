@@ -9,16 +9,25 @@ import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.islamichub.app.data.local.DuaData
+import com.islamichub.app.data.local.HadithAssetSource
 import com.islamichub.app.data.local.NamesData
 import com.islamichub.app.data.local.QuranAssetSource
 import com.islamichub.app.data.local.QuranData
 import com.islamichub.app.data.remote.AladhanApi
 import com.islamichub.app.data.repo.AudioController
+import com.islamichub.app.data.repo.BookmarkRepository
 import com.islamichub.app.data.repo.DuaRepository
+import com.islamichub.app.data.repo.HadithRepository
+import com.islamichub.app.data.repo.KhatamRepository
+import com.islamichub.app.data.repo.LastReadRepository
 import com.islamichub.app.data.repo.NamesRepository
 import com.islamichub.app.data.repo.PrayerRepository
 import com.islamichub.app.data.repo.PrayerScheduler
+import com.islamichub.app.data.repo.QadaRepository
 import com.islamichub.app.data.repo.QuranRepository
+import com.islamichub.app.data.repo.SettingsRepository
+import com.islamichub.app.data.repo.TafsirRepository
+import com.islamichub.app.data.repo.TrackerRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import okhttp3.OkHttpClient
@@ -56,16 +65,27 @@ class AppContainer(private val context: Context) {
     val aladhanApi: AladhanApi by lazy { retrofit.create(AladhanApi::class.java) }
 
     private val quranAssetSource: QuranAssetSource by lazy { QuranAssetSource(context) }
+    private val hadithAssetSource: HadithAssetSource by lazy { HadithAssetSource(context) }
 
     val quranRepository: QuranRepository by lazy {
         QuranRepository(QuranData, quranAssetSource)
     }
+    val hadithRepository: HadithRepository by lazy { HadithRepository(hadithAssetSource) }
     val namesRepository: NamesRepository by lazy { NamesRepository(NamesData.names) }
     val duaRepository: DuaRepository by lazy { DuaRepository(DuaData.duas, DuaData.dhikrOptions) }
     val prayerRepository: PrayerRepository by lazy { PrayerRepository(aladhanApi, context) }
     val tasbihRepository: TasbihRepository by lazy { TasbihRepository(context) }
     val audioController: AudioController by lazy { AudioController(context) }
     val prayerScheduler: PrayerScheduler by lazy { PrayerScheduler(context, prayerRepository) }
+
+    // New v1.2.0 repositories
+    val bookmarkRepository: BookmarkRepository by lazy { BookmarkRepository(context) }
+    val qadaRepository: QadaRepository by lazy { QadaRepository(context) }
+    val trackerRepository: TrackerRepository by lazy { TrackerRepository(context) }
+    val lastReadRepository: LastReadRepository by lazy { LastReadRepository(context) }
+    val settingsRepository: SettingsRepository by lazy { SettingsRepository(context) }
+    val tafsirRepository: TafsirRepository by lazy { TafsirRepository(context, aladhanApi) }
+    val khatamRepository: KhatamRepository by lazy { KhatamRepository(context) }
 }
 
 /** Tiny preferences wrapper for tasbih counts. */
