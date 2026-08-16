@@ -221,7 +221,7 @@
     <string name="more_scanner">AI Scanner</string>
     <string name="more_stories">Islamic Stories</string>
     <string name="more_kalima">Six Kalimas</string>
-    <string name="more_qa">Q&A</string>
+    <string name="more_qa">Q&amp;A</string>
 
     <!-- AI Settings -->
     <string name="settings_ai_scholar">AI Scholar</string>
