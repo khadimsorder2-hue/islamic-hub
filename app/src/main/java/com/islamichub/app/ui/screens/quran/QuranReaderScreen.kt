@@ -58,6 +58,8 @@ import androidx.compose.ui.unit.dp
 import com.islamichub.app.R
 import com.islamichub.app.data.AppContainer
 import com.islamichub.app.data.model.Ayah
+import com.islamichub.app.ui.components.PremiumHeroCard
+import com.islamichub.app.ui.components.PremiumMiniAudioPlayer
 import com.islamichub.app.ui.screens.tafsir.TafsirBottomSheet
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -194,51 +196,50 @@ fun QuranReaderScreen(
                         }
                     }
 
-                    // Audio playback bar
+                    // Premium mini audio player
                     if (state.isPlayingAudio || state.isLoadingAudio || state.currentPlayingAyah != null) {
                         item {
-                            AudioPlaybackBar(
-                                isLoading = state.isLoadingAudio,
+                            PremiumMiniAudioPlayer(
                                 isPlaying = state.isPlayingAudio,
-                                ayahLabel = state.currentPlayingAyah?.let { "আয়াত $it" } ?: "সম্পূর্ণ সূরা",
+                                isLoading = state.isLoadingAudio,
+                                title = state.currentPlayingAyah?.let { "আয়াত $it" } ?: "সম্পূর্ণ সূরা",
+                                subtitle = state.selectedReciterName,
                                 onPlayPause = { vm.toggleAudio() },
                                 onStop = { vm.stopAudio() }
                             )
                         }
                     }
 
-                    // Surah header card
+                    // Surah header card with premium background
                     item {
-                        Card(
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(24.dp),
-                            colors = CardDefaults.cardColors(
-                                containerColor = MaterialTheme.colorScheme.primaryContainer
-                            )
+                        PremiumHeroCard(
+                            backgroundImage = "quran-premium-bg.webp",
+                            context = context,
+                            height = 200
                         ) {
                             Column(
                                 modifier = Modifier
-                                    .fillMaxWidth()
+                                    .fillMaxSize()
                                     .padding(24.dp),
                                 horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                                verticalArrangement = Arrangement.Center
                             ) {
                                 Text(
                                     text = surah.nameArabic,
                                     style = MaterialTheme.typography.displayMedium.copy(
                                         fontSize = MaterialTheme.typography.displayMedium.fontSize * state.quranFontScale
                                     ),
-                                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                                    color = Color.White
                                 )
                                 Text(
                                     text = "${surah.nameEnglish} • ${surah.englishMeaning}",
                                     style = MaterialTheme.typography.titleMedium,
-                                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                                    color = Color.White.copy(alpha = 0.9f)
                                 )
                                 Text(
                                     text = "${surah.revelationType.label} • ${surah.ayahCount} আয়াত",
                                     style = MaterialTheme.typography.labelMedium,
-                                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                                    color = Color.White.copy(alpha = 0.8f)
                                 )
                             }
                         }

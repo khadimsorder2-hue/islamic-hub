@@ -45,44 +45,46 @@ fun QuranListScreen(
 ) {
     val vm = remember { QuranListViewModel(container) }
     val state by vm.state.collectAsState()
+    val context = androidx.compose.ui.platform.LocalContext.current
 
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp)
     ) {
-        // Premium hero header
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 16.dp),
-            shape = RoundedCornerShape(24.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.primaryContainer
-            )
+        // Premium hero header with background image
+        com.islamichub.app.ui.components.PremiumHeroCard(
+            backgroundImage = "quran-premium-bg.webp",
+            context = context,
+            height = 160
         ) {
             Column(
-                modifier = Modifier.padding(20.dp),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(20.dp),
+                verticalArrangement = Arrangement.Center
             ) {
                 Text(
                     text = "القرآن الكريم",
                     style = MaterialTheme.typography.displaySmall,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                    color = androidx.compose.ui.graphics.Color.White
                 )
                 Text(
                     text = stringResource(R.string.quran_title),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                    color = androidx.compose.ui.graphics.Color.White
                 )
                 Text(
-                    text = "114 surahs • 6236 ayahs • Full Arabic text + Bengali + English",
+                    text = "১১৪ সূরা • ৬২৩৬ আয়াত • Arabic + Bengali + English",
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                    color = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.9f)
                 )
                 androidx.compose.material3.TextButton(onClick = onSearchClick) {
-                    Text("🔍 Search across all ayahs")
+                    Text(
+                        text = "🔍 সব আয়াতে সার্চ করুন",
+                        color = androidx.compose.ui.graphics.Color.White
+                    )
                 }
             }
         }
@@ -94,7 +96,7 @@ fun QuranListScreen(
             leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
             singleLine = true,
             shape = RoundedCornerShape(28.dp),
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth().padding(top = 12.dp)
         )
 
         LazyColumn(
