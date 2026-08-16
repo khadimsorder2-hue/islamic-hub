@@ -30,7 +30,8 @@ class TafsirRepository(
     }
 
     /**
-     * Fetch tafsir for a specific ayah.
+     * Fetch tafsir/translation for a specific ayah.
+     * API: https://api.alquran.cloud/v1/ayah/{surah}:{ayah}/{edition}
      * Cache key: {edition}_{surah}_{ayah}.txt
      * Returns null if fetching fails AND no cache exists.
      */

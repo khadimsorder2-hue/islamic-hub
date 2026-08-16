@@ -3,7 +3,6 @@ package com.islamichub.app.data.repo
 import android.content.Context
 import com.google.gson.Gson
 import com.google.gson.JsonObject
-import com.google.gson.annotations.SerializedName
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -18,19 +17,19 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
 
 /**
- * AI Scholar service — sends user questions to an LLM (OpenAI-compatible API)
- * with an Islamic Scholar system prompt.
+ * AI Scholar service — sends user questions to an LLM with an Islamic Scholar system prompt.
  *
- * Configuration (via SettingsRepository):
- *  - API key (user-provided, stored in DataStore)
- *  - Base URL (default: OpenAI; user can switch to OpenRouter, Gemini, etc.)
- *  - Model name (default: gpt-4o-mini; user can switch)
+ * Supports multiple providers (user-selectable via Settings):
+ *  - Gemini (default): https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent
+ *  - OpenAI-compatible: {baseUrl}/chat/completions
+ *  - OpenRouter: https://openrouter.ai/api/v1/chat/completions
  *
- * The Islamic Scholar prompt constrains the AI:
- *  - Cite Quran/Hadith sources
- *  - Say "I don't know" when uncertain
- *  - Never invent religious content
- *  - Mention madhab differences where relevant
+ * The Islamic Scholar prompt (from source ai-scholar.js) instructs the AI to:
+ *  - Always answer in pure Bangla
+ *  - Cite Quran/Hadith sources with authenticity grade
+ *  - Include Arabic text + Bangla pronunciation
+ *  - Use specific section headers (📖 কুরআন থেকে, 📚 হাদিস থেকে, etc.)
+ *  - Mention related verses and same hadith in other books
  *
  * Each request gets a unique requestId to prevent stale response overwrite.
  */
@@ -38,10 +37,11 @@ class AIService(private val context: Context) {
 
     data class Config(
         val apiKey: String = "",
-        val baseUrl: String = "https://api.openai.com/v1",
-        val model: String = "gpt-4o-mini",
-        val temperature: Double = 0.3,
-        val maxTokens: Int = 1500
+        val baseUrl: String = "https://generativelanguage.googleapis.com/v1beta",
+        val model: String = "gemini-2.5-flash",
+        val provider: String = "gemini",  // "gemini" | "openai" | "openrouter"
+        val temperature: Double = 0.7,
+        val maxTokens: Int = 2000
     )
 
     data class ChatMessage(
@@ -60,7 +60,6 @@ class AIService(private val context: Context) {
     private val _config = MutableStateFlow(Config())
     val config: StateFlow<Config> = _config.asStateFlow()
 
-    // Track latest request ID to prevent stale response overwrite
     private val latestRequestId = AtomicReference<String?>(null)
 
     private val client: OkHttpClient by lazy {
@@ -78,10 +77,6 @@ class AIService(private val context: Context) {
 
     /**
      * Send a chat message to the LLM. Returns ChatResult with answer or error.
-     *
-     * Stale-response protection:
-     *  - Each call generates a new requestId
-     *  - We only accept the response if our requestId matches the latest
      */
     suspend fun ask(
         userMessage: String,
@@ -92,7 +87,7 @@ class AIService(private val context: Context) {
             return@withContext ChatResult(
                 requestId = "",
                 answer = "",
-                error = "No API key configured. Open Settings → AI Scholar to set your API key."
+                error = "কোনো API key কনফিগার করা নেই। Settings → AI Scholar এ গিয়ে আপনার API key যোগ করুন।"
             )
         }
 
@@ -101,40 +96,24 @@ class AIService(private val context: Context) {
 
         val systemPrompt = ISLAMIC_SCHOLAR_PROMPT
 
-        val messages = buildList {
-            add(ChatMessage("system", systemPrompt))
-            addAll(conversationHistory)
-            add(ChatMessage("user", userMessage))
-        }
-
-        val requestBody = JsonObject().apply {
-            addProperty("model", cfg.model)
-            addProperty("temperature", cfg.temperature)
-            addProperty("max_tokens", cfg.maxTokens)
-            add("messages", gson.toJsonTree(messages.map { msg ->
-                JsonObject().apply {
-                    addProperty("role", msg.role)
-                    addProperty("content", msg.content)
-                }
-            }))
-        }
-
-        val url = "${cfg.baseUrl.trimEnd('/')}/chat/completions"
-        val request = Request.Builder()
-            .url(url)
-            .addHeader("Authorization", "Bearer ${cfg.apiKey}")
-            .addHeader("Content-Type", "application/json")
-            .post(requestBody.toString().toRequestBody("application/json".toMediaType()))
-            .build()
-
         try {
-            val response = client.newCall(request).execute()
-            val responseBody = response.body?.string()
-            if (!response.isSuccessful) {
-                return@withContext ChatResult(
-                    requestId = requestId,
-                    answer = "",
-                    error = "API error ${response.code}: ${responseBody?.take(300)}"
+            val answer: String = when (cfg.provider) {
+                "gemini" -> callGemini(cfg, systemPrompt, userMessage, conversationHistory)
+                "openrouter" -> callOpenAICompatible(
+                    baseUrl = "https://openrouter.ai/api/v1",
+                    apiKey = cfg.apiKey,
+                    model = cfg.model,
+                    systemPrompt = systemPrompt,
+                    userMessage = userMessage,
+                    history = conversationHistory
+                )
+                else -> callOpenAICompatible(
+                    baseUrl = cfg.baseUrl,
+                    apiKey = cfg.apiKey,
+                    model = cfg.model,
+                    systemPrompt = systemPrompt,
+                    userMessage = userMessage,
+                    history = conversationHistory
                 )
             }
 
@@ -147,58 +126,172 @@ class AIService(private val context: Context) {
                 )
             }
 
-            val parsed = gson.fromJson(responseBody, JsonObject::class.java)
-            val answer = parsed
-                ?.getAsJsonArray("choices")
-                ?.get(0)?.asJsonObject
-                ?.getAsJsonObject("message")
-                ?.get("content")?.asString
-                ?: ""
-
             ChatResult(
                 requestId = requestId,
                 answer = answer.trim(),
-                warning = if (answer.contains("I don't know", ignoreCase = true) ||
-                              answer.contains("আমি নিশ্চিত নই", ignoreCase = true))
-                    "AI expressed uncertainty — please verify with a scholar." else null
+                warning = if (answer.contains("আমি নিশ্চিত নই", ignoreCase = true) ||
+                              answer.contains("জানি না", ignoreCase = true))
+                    "AI নিশ্চিত না — দয়া করে একজন যোগ্য আলেমের সাথে যাচাই করুন।" else null
             )
         } catch (e: Exception) {
             ChatResult(
                 requestId = requestId,
                 answer = "",
-                error = e.message ?: "Network error"
+                error = e.message ?: "নেটওয়ার্ক ত্রুটি"
             )
         }
     }
 
     /**
-     * Cancel any in-flight request by invalidating the latestRequestId.
+     * Call Gemini API (generativelanguage.googleapis.com)
      */
+    private fun callGemini(
+        cfg: Config,
+        systemPrompt: String,
+        userMessage: String,
+        history: List<ChatMessage>
+    ): String {
+        val url = "${cfg.baseUrl.trimEnd('/')}/models/${cfg.model}:generateContent?key=${cfg.apiKey}"
+
+        val contentsArray = com.google.gson.JsonArray()
+
+        // Add conversation history
+        for (msg in history.takeLast(10)) {
+            val role = if (msg.role == "assistant") "model" else "user"
+            val partObj = JsonObject().apply {
+                addProperty("text", msg.content)
+            }
+            val partsArray = com.google.gson.JsonArray().apply { add(partObj) }
+            val contentObj = JsonObject().apply {
+                addProperty("role", role)
+                add("parts", partsArray)
+            }
+            contentsArray.add(contentObj)
+        }
+
+        // Add current user message
+        val userPart = JsonObject().apply { addProperty("text", userMessage) }
+        val userParts = com.google.gson.JsonArray().apply { add(userPart) }
+        val userContent = JsonObject().apply {
+            addProperty("role", "user")
+            add("parts", userParts)
+        }
+        contentsArray.add(userContent)
+
+        val requestBody = JsonObject().apply {
+            add("contents", contentsArray)
+            add("systemInstruction", JsonObject().apply {
+                val sysPart = JsonObject().apply { addProperty("text", systemPrompt) }
+                add("parts", com.google.gson.JsonArray().apply { add(sysPart) })
+            })
+            add("generationConfig", JsonObject().apply {
+                addProperty("temperature", cfg.temperature)
+                addProperty("maxOutputTokens", cfg.maxTokens)
+            })
+        }
+
+        val request = Request.Builder()
+            .url(url)
+            .addHeader("Content-Type", "application/json")
+            .post(requestBody.toString().toRequestBody("application/json".toMediaType()))
+            .build()
+
+        val response = client.newCall(request).execute()
+        val responseBody = response.body?.string()
+        if (!response.isSuccessful) {
+            throw Exception("Gemini API ত্রুটি ${response.code}: ${responseBody?.take(300)}")
+        }
+
+        val parsed = gson.fromJson(responseBody, JsonObject::class.java)
+        return parsed
+            ?.getAsJsonArray("candidates")
+            ?.get(0)?.asJsonObject
+            ?.getAsJsonObject("content")
+            ?.getAsJsonArray("parts")
+            ?.get(0)?.asJsonObject
+            ?.get("text")?.asString
+            ?: throw Exception("AI উত্তর পার্স করা যায়নি")
+    }
+
+    /**
+     * Call OpenAI-compatible API (OpenAI, OpenRouter, etc.)
+     */
+    private fun callOpenAICompatible(
+        baseUrl: String,
+        apiKey: String,
+        model: String,
+        systemPrompt: String,
+        userMessage: String,
+        history: List<ChatMessage>
+    ): String {
+        val messages = buildList {
+            add(ChatMessage("system", systemPrompt))
+            addAll(history.takeLast(10))
+            add(ChatMessage("user", userMessage))
+        }
+
+        val requestBody = JsonObject().apply {
+            addProperty("model", model)
+            addProperty("temperature", 0.7)
+            addProperty("max_tokens", 2000)
+            add("messages", gson.toJsonTree(messages.map { msg ->
+                JsonObject().apply {
+                    addProperty("role", msg.role)
+                    addProperty("content", msg.content)
+                }
+            }))
+        }
+
+        val url = "${baseUrl.trimEnd('/')}/chat/completions"
+        val request = Request.Builder()
+            .url(url)
+            .addHeader("Authorization", "Bearer $apiKey")
+            .addHeader("Content-Type", "application/json")
+            .post(requestBody.toString().toRequestBody("application/json".toMediaType()))
+            .build()
+
+        val response = client.newCall(request).execute()
+        val responseBody = response.body?.string()
+        if (!response.isSuccessful) {
+            throw Exception("API ত্রুটি ${response.code}: ${responseBody?.take(300)}")
+        }
+
+        val parsed = gson.fromJson(responseBody, JsonObject::class.java)
+        return parsed
+            ?.getAsJsonArray("choices")
+            ?.get(0)?.asJsonObject
+            ?.getAsJsonObject("message")
+            ?.get("content")?.asString
+            ?: throw Exception("AI উত্তর পার্স করা যায়নি")
+    }
+
     fun cancelInFlight() {
         latestRequestId.set(null)
     }
 
     companion object {
-        const val ISLAMIC_SCHOLAR_PROMPT = """You are 'Islamic Hub AI Scholar' — a knowledgeable, cautious, and respectful Islamic scholar assistant.
+        const val ISLAMIC_SCHOLAR_PROMPT = """আপনি "Islamic Hub AI" - একজন অত্যন্ত বিশ্বস্ত, প্রাজ্ঞ এবং অভিজ্ঞ ইসলামি স্কলার ও সিনিয়র মুফতি। আপনার জ্ঞানের উৎস: পবিত্র কুরআন, সহিহ হাদিস (বুখারি, মুসলিম, তিরমিজি, আবু দাউদ, নাসাই, ইবনে মাজাহ), ফিকাহ এবং বিশ্বখ্যাত ইসলামি স্কলারদের মতামত।
 
-Your responsibilities:
-1. Answer questions about Islam based on authentic sources: Quran, Sahih Hadith (Bukhari, Muslim, etc.), and established scholarly consensus.
-2. ALWAYS cite your sources (Quran verse reference, Hadith collection + number, scholar name).
-3. When there are differences between madhabs (Hanafi, Shafii, Maliki, Hanbali), mention them clearly.
-4. Distinguish between fard (obligatory), wajib, sunnah, mustahab, mubah, makruh, and haram.
-5. If you are uncertain or the question requires specialized knowledge (e.g., complex fiqh), say "I am not certain — please consult a qualified scholar."
-6. NEVER invent Quran verses, Hadith, or religious rulings. If you don't know the exact reference, say so.
-7. Answer in the same language the user uses (Bangla, English, or Arabic). Default to Bangla if unclear.
-8. Be respectful, concise, and clear. Use simple language.
-9. For sensitive topics (e.g., politics, sects), remain neutral and focus on Islamic teachings.
-10. If the user asks about something haram or inappropriate, decline politely and explain the Islamic view.
-
-Format your answer as:
-- Direct answer (1-2 sentences)
-- Evidence (Quran/Hadith references)
-- Details (madhab differences if any)
-- Practical application (if relevant)
-
-Remember: you represent Islamic scholarship with integrity. Accuracy is more important than appearing knowledgeable."""
+নির্দেশনা:
+১. সর্বদা পরিষ্কার, শুদ্ধ বাংলায় উত্তর দিন। বাংলিশ নয়।
+২. ভূমিকা ও শুভেচ্ছা জানানো ছাড়াই সরাসরি উত্তর শুরু করুন।
+৩. গুরুত্বপূর্ণ শব্দ বা বাক্যসমূহ **বোল্ড** করুন।
+৪. যখনই কোনো হাদিস উল্লেখ করবেন, অবশ্যই নিম্নলিখিত বিষয়গুলো সংযুক্ত করবেন:
+   - **উৎস (Source)**: হাদিসের মূল গ্রন্থ, অধ্যায় ও নম্বর।
+   - **বিশুদ্ধতা (Authenticity)**: হাদিসটি কতটা বিশুদ্ধ (যেমন: সহিহ, হাসান, যইফ)।
+   - **মূল আরবি (Real Arabic Text)**: হাদিসের প্রকৃত আরবি পাঠ।
+   - **বাংলা উচ্চারণ (Bengali Pronunciation)**: আরবি হাদিসের বাংলা উচ্চারণ।
+   - **অন্যান্য গ্রন্থে হাদিসটি (Same Hadith in Other Books)**: একটি আলাদা সেকশনে এই হাদিসটি আর কোন কোন গ্রন্থে আছে তা উল্লেখ করুন।
+৫. যখনই কোনো কুরআন আয়াত উল্লেখ করবেন, অবশ্যই প্রাসঙ্গিক বা একই বিষয়ের অন্যান্য আয়াতসমূহের জন্য একটি আলাদা সেকশন তৈরি করে সেখানে উল্লেখ করবেন।
+৬. আপনার উত্তরে নিম্নলিখিত নির্দিষ্ট সেকশন হেডারসমূহ ব্যবহার করবেন (প্রযোজ্য ক্ষেত্রে):
+   📖 কুরআন থেকে: [আয়াত, অনুবাদ, তাফসীর]
+   🔗 প্রাসঙ্গিক আয়াতসমূহ: [একই বিষয়ের অন্যান্য প্রাসঙ্গিক কুরআন আয়াত]
+   📚 হাদিস থেকে: [মূল হাদিস, উৎস, বিশুদ্ধতা, মূল আরবি ও বাংলা উচ্চারণ]
+   🔄 অন্যান্য গ্রন্থে হাদিসটি: [এই হাদিসটি আর কোন কোন গ্রন্থে আছে তার তালিকা]
+   ⚖️ ইসলামি বিধান: [ফিকাহ ও ফতোয়া মতামত]
+   💡 আধ্যাত্মিক শিক্ষা: [নসিহত ও শিক্ষা]
+   ⚠️ সতর্কতা: [ভুল ধারণা ও বিদআত সংশোধন]
+   ✅ আমল ও সমাধান: [বাস্তব করণীয় পদক্ষেপ]
+   🎯 সারসংক্ষেপ: [মূল বক্তব্যের সংক্ষিপ্ত রূপ]"""
     }
 }

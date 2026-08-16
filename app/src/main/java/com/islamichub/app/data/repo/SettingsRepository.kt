@@ -23,10 +23,10 @@ enum class BackgroundMode(val label: String, val labelBn: String) {
 }
 
 enum class TafsirSource(val editionId: String, val displayName: String, val displayNameBn: String) {
+    BN_BENGALI("bn.bengali", "Muhiuddin Khan (Bangla)", "মুহিউদ্দীন খান (বাংলা)"),
     BN_MUKHTASAR("bn.mukhtasar", "Tafsir Mukhtasar", "তাফসীর মুখতাসার"),
-    BN_TAISIRUL("bn.taisirulquran", "Taisirul Quran", "তাইসীরুল কুরআন"),
-    EN_JALALAYN("en.jalalayn", "Tafsir Jalalayn (English)", "তাফসীর জালালাইন (ইংরেজি)"),
-    EN_IBN_KATHIR("en.ibnkathir", "Ibn Kathir (English)", "ইবনে কাসীর (ইংরেজি)")
+    EN_SAHIH("en.sahih", "Sahih International (English)", "সহীহ ইন্টারন্যাশনাল (ইংরেজি)"),
+    EN_JALALAYN("en.jalalayn", "Tafsir Jalalayn (English)", "তাফসীর জালালাইন (ইংরেজি)")
 }
 
 enum class AutoPauseOption(val minutes: Int, val label: String, val labelBn: String) {
@@ -61,8 +61,8 @@ class SettingsRepository(private val context: Context) {
 
     // Selected tafsir source
     val tafsirSource: Flow<TafsirSource> = context.settingsStore.data.map {
-        val name = it[TAFSIR_SOURCE] ?: TafsirSource.BN_MUKHTASAR.name
-        try { TafsirSource.valueOf(name) } catch (_: Exception) { TafsirSource.BN_MUKHTASAR }
+        val name = it[TAFSIR_SOURCE] ?: TafsirSource.BN_BENGALI.name
+        try { TafsirSource.valueOf(name) } catch (_: Exception) { TafsirSource.BN_BENGALI }
     }
 
     // Auto-pause timer for audio
@@ -99,10 +99,13 @@ class SettingsRepository(private val context: Context) {
     // AI Scholar config
     val aiApiKey: Flow<String> = context.settingsStore.data.map { it[AI_API_KEY] ?: "" }
     val aiBaseUrl: Flow<String> = context.settingsStore.data.map {
-        it[AI_BASE_URL] ?: "https://api.openai.com/v1"
+        it[AI_BASE_URL] ?: "https://generativelanguage.googleapis.com/v1beta"
     }
     val aiModel: Flow<String> = context.settingsStore.data.map {
-        it[AI_MODEL] ?: "gpt-4o-mini"
+        it[AI_MODEL] ?: "gemini-2.5-flash"
+    }
+    val aiProvider: Flow<String> = context.settingsStore.data.map {
+        it[AI_PROVIDER] ?: "gemini"
     }
 
     // Firebase config (user can paste google-services.json content)
@@ -172,6 +175,9 @@ class SettingsRepository(private val context: Context) {
     suspend fun setAiModel(model: String) = withContext(Dispatchers.IO) {
         context.settingsStore.edit { it[AI_MODEL] = model }
     }
+    suspend fun setAiProvider(provider: String) = withContext(Dispatchers.IO) {
+        context.settingsStore.edit { it[AI_PROVIDER] = provider }
+    }
 
     suspend fun setFirebaseEnabled(enabled: Boolean) = withContext(Dispatchers.IO) {
         context.settingsStore.edit { it[FIREBASE_ENABLED] = enabled }
@@ -202,6 +208,7 @@ class SettingsRepository(private val context: Context) {
         private val AI_API_KEY = stringPreferencesKey("ai_api_key")
         private val AI_BASE_URL = stringPreferencesKey("ai_base_url")
         private val AI_MODEL = stringPreferencesKey("ai_model")
+        private val AI_PROVIDER = stringPreferencesKey("ai_provider")
         private val FIREBASE_ENABLED = booleanPreferencesKey("firebase_enabled")
     }
 }

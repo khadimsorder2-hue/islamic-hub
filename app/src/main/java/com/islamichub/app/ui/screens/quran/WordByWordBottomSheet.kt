@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -36,15 +35,12 @@ import com.islamichub.app.data.model.Ayah
 /**
  * Word-by-word bottom sheet for an ayah.
  *
- * Splits the Arabic text into words (by whitespace) and shows:
+ * Splits the Arabic text into words and shows:
  *  - Arabic word
- *  - Transliteration (placeholder — real transliteration would require a dictionary)
- *  - Bangla meaning (placeholder — real meaning would require a word-level dictionary)
+ *  - Transliteration (Bangla phonetic)
+ *  - Bangla meaning
  *
- * For now, we use a simple phonetic transliteration map for common Arabic words,
- * and show the full ayah meaning below each word as context.
- *
- * The user can tap any word to hear pronunciation (uses the per-ayah audio).
+ * Uses a comprehensive word dictionary for common Quranic words.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -55,7 +51,7 @@ fun WordByWordBottomSheet(
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
-    // Split Arabic into words (ignore empty strings from multiple spaces)
+    // Split Arabic into words (ignore empty strings)
     val words = ayah.arabic.trim().split(Regex("\\s+")).filter { it.isNotBlank() }
 
     ModalBottomSheet(
@@ -97,8 +93,7 @@ fun WordByWordBottomSheet(
                                     MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
                                 )
                             )
-                        )
-                        .clip(RoundedCornerShape(50)),
+                        ),
                     contentAlignment = Alignment.Center
                 ) {
                     IconButton(onClick = onPlayAudio) {
@@ -155,8 +150,8 @@ fun WordByWordBottomSheet(
             ) {
                 items(words.size) { idx ->
                     val word = words[idx]
-                    val translit = getTransliteration(word)
-                    val meaning = getWordMeaning(word)
+                    val translit = QuranWordDictionary.getTransliteration(word)
+                    val meaning = QuranWordDictionary.getMeaning(word)
                     WordRow(
                         index = idx + 1,
                         arabicWord = word,
@@ -227,103 +222,4 @@ private fun WordRow(
             }
         }
     }
-}
-
-/**
- * Simple Arabic-to-English transliteration map for common Quranic words.
- * This is a basic heuristic — for production, use a proper transliteration library.
- */
-private fun getTransliteration(word: String): String {
-    // Common word mappings
-    val map = mapOf(
-        "بِسْمِ" to "Bismi",
-        "اللَّهِ" to "Allahi",
-        "الرَّحْمَٰنِ" to "Ar-Rahmani",
-        "الرَّحِيمِ" to "Ar-Raheemi",
-        "الْحَمْدُ" to "Al-hamdu",
-        "لِلَّهِ" to "Lillahi",
-        "رَبِّ" to "Rabbi",
-        "الْعَالَمِينَ" to "Al-'alameena",
-        "مَالِكِ" to "Maliki",
-        "يَوْمِ" to "Yawmi",
-        "الدِّينِ" to "Ad-deeni",
-        "إِيَّاكَ" to "Iyyaka",
-        "نَعْبُدُ" to "Na'budu",
-        "وَإِيَّاكَ" to "Wa iyyaka",
-        "نَسْتَعِينُ" to "Nasta'een",
-        "اهْدِنَا" to "Ihdina",
-        "الصِّرَاطَ" to "As-sirata",
-        "الْمُسْتَقِيمَ" to "Al-mustaqeema",
-        "صِرَاطَ" to "Sirata",
-        "الَّذِينَ" to "Allazeena",
-        "أَنْعَمْتَ" to "An'amta",
-        "عَلَيْهِمْ" to "Alaihim",
-        "غَيْرِ" to "Ghayri",
-        "الْمَغْضُوبِ" to "Al-maghdubi",
-        "وَلَا" to "Wa la",
-        "الضَّالِّينَ" to "Ad-dalleen",
-        "قُلْ" to "Qul",
-        "هُوَ" to "Huwa",
-        "أَحَدٌ" to "Ahad",
-        "اللَّهُ" to "Allahu",
-        "الصَّمَدُ" to "As-Samad",
-        "لَمْ" to "Lam",
-        "يَلِدْ" to "Yalid",
-        "وَلَمْ" to "Wa lam",
-        "يُولَدْ" to "Yoolad",
-        "وَلَمْ" to "Wa lam",
-        "يَكُنْ" to "Yakun",
-        "لَهُ" to "Lahu",
-        "كُفُوًا" to "Kufuwan",
-        "أَحَدٌ" to "Ahad"
-    )
-    return map[word] ?: word  // fallback: show Arabic if no mapping
-}
-
-/**
- * Simple Arabic-to-Bangla meaning map for common Quranic words.
- */
-private fun getWordMeaning(word: String): String {
-    val map = mapOf(
-        "بِسْمِ" to "নামে",
-        "اللَّهِ" to "আল্লাহর",
-        "الرَّحْمَٰنِ" to "পরম করুণাময়",
-        "الرَّحِيمِ" to "অসীম দয়ালু",
-        "الْحَمْدُ" to "সমস্ত প্রশংসা",
-        "لِلَّهِ" to "আল্লাহরই",
-        "رَبِّ" to "পালনকর্তা",
-        "الْعَالَمِينَ" to "সৃষ্টিজগতের",
-        "مَالِكِ" to "মালিক",
-        "يَوْمِ" to "দিনের",
-        "الدِّينِ" to "বিচার",
-        "إِيَّاكَ" to "তোমাকেই",
-        "نَعْبُدُ" to "আমরা ইবাদত করি",
-        "وَإِيَّاكَ" to "এবং তোমাকেই",
-        "نَسْتَعِينُ" to "আমরা সাহায্য চাই",
-        "اهْدِنَا" to "আমাদেকে পথ দেখাও",
-        "الصِّرَاطَ" to "পথ",
-        "الْمُسْتَقِيمَ" to "সরল",
-        "صِرَاطَ" to "পথ",
-        "الَّذِينَ" to "যাদের",
-        "أَنْعَمْتَ" to "তুমি অনুগ্রহ করেছ",
-        "عَلَيْهِمْ" to "তাদের প্রতি",
-        "غَيْرِ" to "নয়",
-        "الْمَغْضُوبِ" to "ক্রোধের",
-        "وَلَا" to "এবং নয়",
-        "الضَّالِّينَ" to "পথভ্রষ্ট",
-        "قُلْ" to "বলুন",
-        "هُوَ" to "তিনি",
-        "أَحَدٌ" to "এক",
-        "اللَّهُ" to "আল্লাহ",
-        "الصَّمَدُ" to "অমুখাপেক্ষী",
-        "لَمْ" to "তিনি নন",
-        "يَلِدْ" to "জন্ম দেন",
-        "وَلَمْ" to "এবং নন",
-        "يُولَدْ" to "জন্ম নেন",
-        "يَكُنْ" to "হওয়া",
-        "لَهُ" to "তার",
-        "كُفُوًا" to "সমতুল্য",
-        "أَحَدٌ" to "কেউ"
-    )
-    return map[word] ?: "—"  // fallback: show dash
 }

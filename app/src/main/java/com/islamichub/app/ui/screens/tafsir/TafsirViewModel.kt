@@ -13,7 +13,7 @@ import com.islamichub.app.data.repo.TafsirSource
 data class TafsirUiState(
     val isLoading: Boolean = true,
     val tafsirText: String? = null,
-    val source: TafsirSource = TafsirSource.BN_MUKHTASAR,
+    val source: TafsirSource = TafsirSource.BN_BENGALI,
     val isCached: Boolean = false,
     val error: String? = null
 )
@@ -44,7 +44,7 @@ class TafsirViewModel(
                 } else {
                     _state.value = TafsirUiState(
                         isLoading = false,
-                        error = "Could not load tafsir. Check your internet connection.",
+                        error = "তাফসীর লোড করা যায়নি। ইন্টারনেট সংযোগ পরীক্ষা করুন।",
                         source = source
                     )
                 }

@@ -240,6 +240,26 @@ fun SettingsScreen(
             // ─── AI Scholar ───────────────────────────────────────────
             item {
                 SettingsSection(title = stringResource(R.string.settings_ai_scholar)) {
+                    // Provider selector
+                    Text(
+                        text = "AI Provider নির্বাচন করুন",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        listOf("gemini" to "Gemini", "openrouter" to "OpenRouter", "openai" to "OpenAI").forEach { (id, label) ->
+                            FilterChip(
+                                selected = state.aiProvider == id,
+                                onClick = { vm.setAiProvider(id) },
+                                label = { Text(label) }
+                            )
+                        }
+                    }
+                    Spacer(8.dp)
+
                     // API Key
                     OutlinedTextField(
                         value = state.aiApiKey,
@@ -280,8 +300,13 @@ fun SettingsScreen(
                             else MaterialTheme.colorScheme.error
                     )
                     Spacer(8.dp)
+                    val helpText = when (state.aiProvider) {
+                        "gemini" -> "Gemini API key নিন: https://aistudio.google.com/apikey (ফ্রি)। Model: gemini-2.5-flash বা gemini-2.0-flash।"
+                        "openrouter" -> "OpenRouter key নিন: https://openrouter.ai/keys (ফ্রি tier আছে)। Model উদাহরণ: stepfun/step-3.5-flash:free।"
+                        else -> "OpenAI key নিন: https://platform.openai.com/api-keys। Model উদাহরণ: gpt-4o-mini।"
+                    }
                     Text(
-                        text = "Supported: OpenAI (gpt-4o-mini), OpenRouter (any model), Gemini (via OpenAI-compatible endpoint), Anthropic Claude, custom OpenAI-compatible APIs.",
+                        text = helpText,
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

@@ -17,7 +17,7 @@ data class SettingsUiState(
     val quranFontScale: Float = 1.0f,
     val backgroundMode: BackgroundMode = BackgroundMode.CREAM,
     val selectedReciter: String = "ar.alafasy",
-    val tafsirSource: TafsirSource = TafsirSource.BN_MUKHTASAR,
+    val tafsirSource: TafsirSource = TafsirSource.BN_BENGALI,
     val autoPause: AutoPauseOption = AutoPauseOption.OFF,
     val banglaAudioEnabled: Boolean = false,
     val wordByWordAudioEnabled: Boolean = true,
@@ -26,8 +26,9 @@ data class SettingsUiState(
     val showEnglish: Boolean = true,
     val cacheSizeBytes: Long = 0L,
     val aiApiKey: String = "",
-    val aiBaseUrl: String = "https://api.openai.com/v1",
-    val aiModel: String = "gpt-4o-mini",
+    val aiBaseUrl: String = "https://generativelanguage.googleapis.com/v1beta",
+    val aiModel: String = "gemini-2.5-flash",
+    val aiProvider: String = "gemini",
     val firebaseEnabled: Boolean = false
 )
 
@@ -53,6 +54,7 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
             val aiKey = container.settingsRepository.aiApiKey.first()
             val aiUrl = container.settingsRepository.aiBaseUrl.first()
             val aiModel = container.settingsRepository.aiModel.first()
+            val aiProvider = container.settingsRepository.aiProvider.first()
             val firebase = container.settingsRepository.firebaseEnabled.first()
 
             _state.value = SettingsUiState(
@@ -70,6 +72,7 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
                 aiApiKey = aiKey,
                 aiBaseUrl = aiUrl,
                 aiModel = aiModel,
+                aiProvider = aiProvider,
                 firebaseEnabled = firebase
             )
         }
@@ -83,7 +86,8 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
                 com.islamichub.app.data.repo.AIService.Config(
                     apiKey = key,
                     baseUrl = _state.value.aiBaseUrl,
-                    model = _state.value.aiModel
+                    model = _state.value.aiModel,
+                    provider = _state.value.aiProvider
                 )
             )
         }
@@ -96,7 +100,8 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
                 com.islamichub.app.data.repo.AIService.Config(
                     apiKey = _state.value.aiApiKey,
                     baseUrl = url,
-                    model = _state.value.aiModel
+                    model = _state.value.aiModel,
+                    provider = _state.value.aiProvider
                 )
             )
         }
@@ -109,7 +114,34 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
                 com.islamichub.app.data.repo.AIService.Config(
                     apiKey = _state.value.aiApiKey,
                     baseUrl = _state.value.aiBaseUrl,
-                    model = model
+                    model = model,
+                    provider = _state.value.aiProvider
+                )
+            )
+        }
+    }
+    fun setAiProvider(provider: String) {
+        viewModelScope.launch {
+            container.settingsRepository.setAiProvider(provider)
+            // Auto-set defaults per provider
+            val (defaultUrl, defaultModel) = when (provider) {
+                "gemini" -> "https://generativelanguage.googleapis.com/v1beta" to "gemini-2.5-flash"
+                "openrouter" -> "https://openrouter.ai/api/v1" to "stepfun/step-3.5-flash:free"
+                else -> "https://api.openai.com/v1" to "gpt-4o-mini"
+            }
+            container.settingsRepository.setAiBaseUrl(defaultUrl)
+            container.settingsRepository.setAiModel(defaultModel)
+            _state.value = _state.value.copy(
+                aiProvider = provider,
+                aiBaseUrl = defaultUrl,
+                aiModel = defaultModel
+            )
+            container.aiService.updateConfig(
+                com.islamichub.app.data.repo.AIService.Config(
+                    apiKey = _state.value.aiApiKey,
+                    baseUrl = defaultUrl,
+                    model = defaultModel,
+                    provider = provider
                 )
             )
         }

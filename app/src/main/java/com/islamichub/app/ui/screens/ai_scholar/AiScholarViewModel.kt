@@ -29,8 +29,14 @@ class AiScholarViewModel(private val container: AppContainer) : ViewModel() {
             val apiKey = container.settingsRepository.aiApiKey.first()
             val baseUrl = container.settingsRepository.aiBaseUrl.first()
             val model = container.settingsRepository.aiModel.first()
+            val provider = container.settingsRepository.aiProvider.first()
             container.aiService.updateConfig(
-                AIService.Config(apiKey = apiKey, baseUrl = baseUrl, model = model)
+                AIService.Config(
+                    apiKey = apiKey,
+                    baseUrl = baseUrl,
+                    model = model,
+                    provider = provider
+                )
             )
             _state.value = _state.value.copy(apiKeyConfigured = apiKey.isNotBlank())
         }

@@ -145,7 +145,8 @@ class AudioController(private val context: Context) {
     }
 
     private fun playSurahInternal(surahNumber: Int, reciter: Reciter) {
-        val url = "https://cdn.islamic.network/quran/audio-surah/${reciter.editionId}/${surahNumber.toString().padStart(3, '0')}.mp3"
+        // URL pattern: https://cdn.islamic.network/quran/audio-surah/128/{edition}/{surah:03d}.mp3
+        val url = "https://cdn.islamic.network/quran/audio-surah/128/${reciter.editionId}/${surahNumber.toString().padStart(3, '0')}.mp3"
         val mediaItem = MediaItem.Builder()
             .setUri(url)
             .setMediaMetadata(
@@ -170,7 +171,8 @@ class AudioController(private val context: Context) {
     fun playAyah(surahNumber: Int, ayahNumber: Int, reciter: Reciter = currentReciter) {
         currentReciter = reciter
         isKhatamMode = false
-        val url = "https://cdn.islamic.network/quran/audio/${reciter.editionId}/" +
+        // URL pattern: https://cdn.islamic.network/quran/audio/128/{edition}/{globalAyahNumber}.mp3
+        val url = "https://cdn.islamic.network/quran/audio/128/${reciter.editionId}/" +
             "${globalAyahNumber(surahNumber, ayahNumber)}.mp3"
         val mediaItem = MediaItem.Builder()
             .setUri(url)

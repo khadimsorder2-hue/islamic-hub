@@ -1,5 +1,6 @@
 package com.islamichub.app.ui.screens.home
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -7,7 +8,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -47,6 +50,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -61,44 +66,82 @@ fun HomeScreen(
 ) {
     val vm = remember { HomeViewModel(container) }
     val state by vm.uiState.collectAsState()
+    val context = LocalContext.current
 
-    androidx.compose.foundation.lazy.LazyColumn(
+    LazyColumn(
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // Hero greeting + next prayer (premium gradient)
+        // Hero with background image
         item {
-            Surface(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(28.dp),
-                color = MaterialTheme.colorScheme.primary,
-                shadowElevation = 6.dp
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(220.dp)
+                    .clip(RoundedCornerShape(28.dp))
             ) {
-                Column(
+                // Background image
+                try {
+                    val assetManager = context.assets
+                    val inputStream = assetManager.open("img/hero-premium-masjid.webp")
+                    val bitmap = android.graphics.BitmapFactory.decodeStream(inputStream)
+                    inputStream.close()
+                    Image(
+                        bitmap = bitmap.asImageBitmap(),
+                        contentDescription = null,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                } catch (_: Exception) {
+                    // Fallback gradient
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(
+                                brush = Brush.verticalGradient(
+                                    colors = listOf(
+                                        MaterialTheme.colorScheme.primary,
+                                        MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
+                                    )
+                                )
+                            )
+                    )
+                }
+
+                // Dark overlay for text readability
+                Box(
                     modifier = Modifier
-                        .fillMaxWidth()
+                        .fillMaxSize()
                         .background(
                             brush = Brush.verticalGradient(
                                 colors = listOf(
-                                    MaterialTheme.colorScheme.primary,
-                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.85f)
+                                    Color.Black.copy(alpha = 0.3f),
+                                    Color.Black.copy(alpha = 0.6f)
                                 )
                             )
                         )
+                )
+
+                // Content
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
                         .padding(24.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                    verticalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text(
-                        text = stringResource(R.string.home_greeting),
-                        style = MaterialTheme.typography.displaySmall,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onPrimary
-                    )
-                    Text(
-                        text = state.hijriDate.ifBlank { "—" },
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.9f)
-                    )
+                    Column {
+                        Text(
+                            text = stringResource(R.string.home_greeting),
+                            style = MaterialTheme.typography.headlineMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+                        Text(
+                            text = state.hijriDate.ifBlank { "—" },
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Color.White.copy(alpha = 0.9f)
+                        )
+                    }
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
@@ -108,18 +151,18 @@ fun HomeScreen(
                             Text(
                                 text = stringResource(R.string.home_next_prayer),
                                 style = MaterialTheme.typography.labelMedium,
-                                color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.85f)
+                                color = Color.White.copy(alpha = 0.85f)
                             )
                             Text(
                                 text = state.nextPrayerName.ifBlank { "—" },
-                                style = MaterialTheme.typography.headlineMedium,
+                                style = MaterialTheme.typography.headlineSmall,
                                 fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onPrimary
+                                color = Color.White
                             )
                             Text(
                                 text = state.nextPrayerTime.ifBlank { "--:--" },
-                                style = MaterialTheme.typography.titleLarge,
-                                color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.9f)
+                                style = MaterialTheme.typography.titleMedium,
+                                color = Color.White.copy(alpha = 0.9f)
                             )
                         }
                         Column(horizontalAlignment = Alignment.End) {
@@ -127,20 +170,20 @@ fun HomeScreen(
                                 Icon(
                                     imageVector = Icons.Filled.LocalFireDepartment,
                                     contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.onPrimary,
+                                    tint = Color.White,
                                     modifier = Modifier.size(16.dp)
                                 )
                                 Text(
                                     text = stringResource(R.string.home_time_remaining),
                                     style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.85f)
+                                    color = Color.White.copy(alpha = 0.85f)
                                 )
                             }
                             Text(
                                 text = state.timeRemaining.ifBlank { "--" },
-                                style = MaterialTheme.typography.headlineMedium,
+                                style = MaterialTheme.typography.titleLarge,
                                 fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onPrimary
+                                color = Color.White
                             )
                         }
                     }
@@ -159,32 +202,32 @@ fun HomeScreen(
         }
         item {
             val features = listOf(
-                GridFeature("আল-কুরআন", "১১৪ সূরা", Icons.Filled.AutoStories, Screen.Quran.route, Color(0xFF6D45C7)),
-                GridFeature("হাদিস", "২৪,৪২৪টি", Icons.Filled.Book, Screen.Hadith.route, Color(0xFF1B5E20)),
-                GridFeature("নামাজ শিক্ষা", "সম্পূর্ণ", Icons.Filled.MenuBook, Screen.NamazShikkha.route, Color(0xFFC9A34E)),
-                GridFeature("নামাজের সময়", "৫ ওয়াক্ত", Icons.Filled.CalendarMonth, Screen.Prayer.route, Color(0xFF7E8CE0)),
-                GridFeature("কিবলা", "কম্পাস", Icons.Filled.CompassCalibration, Screen.Qibla.route, Color(0xFF2E7D32)),
-                GridFeature("তসবিহ", "কাউন্টার", Icons.Filled.Spa, Screen.Tasbih.route, Color(0xFFB36283)),
-                GridFeature("৯৯ নাম", "আসমাউল হুসনা", Icons.Filled.Favorite, Screen.Names.route, Color(0xFFE91E63)),
-                GridFeature("দোয়া", "প্রতিদিনের", Icons.Filled.Bedtime, Screen.Duas.route, Color(0xFF6B6E91)),
-                GridFeature("ভুল বোঝাবুঝি", "৩০০+", Icons.Filled.Warning, Screen.Misconceptions.route, Color(0xFFEF6C00)),
-                GridFeature("প্রশ্ন-উত্তর", "Q&A", Icons.Filled.QuestionAnswer, Screen.Qa.route, Color(0xFF00897B)),
-                GridFeature("AI স্কলার", "জিজ্ঞাসা করুন", Icons.Filled.Bolt, Screen.AiScholar.route, Color(0xFF8E24AA)),
-                GridFeature("তাজবীদ", "চেকার", Icons.Filled.AutoStories, Screen.TajweedChecker.route, Color(0xFF3949AB)),
-                GridFeature("AI স্ক্যানার", "ছবি বিশ্লেষণ", Icons.Filled.CameraAlt, Screen.Scanner.route, Color(0xFF43A047)),
-                GridFeature("গল্প", "নবী ও খলিফা", Icons.Filled.Book, Screen.Stories.route, Color(0xFF8D6E63)),
-                GridFeature("৬ কালিমা", "কালিমা", Icons.Filled.MenuBook, Screen.Kalima.route, Color(0xFF5C6BC0)),
-                GridFeature("কাযা", "ট্র্যাকার", Icons.Filled.History, Screen.Qada.route, Color(0xFFD84315)),
-                GridFeature("ট্র্যাকার", "দৈনিক", Icons.Filled.Dashboard, Screen.Tracker.route, Color(0xFF00ACC1)),
-                GridFeature("বুকমার্ক", "সংরক্ষিত", Icons.Filled.Bookmark, Screen.Bookmarks.route, Color(0xFF66BB6A)),
-                GridFeature("খতম", "কুরআন", Icons.Filled.MenuBook, Screen.Khatam.route, Color(0xFF26A69A)),
-                GridFeature("ক্যালেন্ডার", "হিজরি", Icons.Filled.CalendarMonth, Screen.Calendar.route, Color(0xFF7E57C2)),
-                GridFeature("অতিরিক্ত নামাজ", "জুমআ, ঈদ", Icons.Filled.MenuBook, Screen.NamazExtras.route, Color(0xFF558B2F)),
-                GridFeature("আরও", "সব দেখুন", Icons.Filled.Dashboard, Screen.More.route, Color(0xFF455A64)),
-                GridFeature("প্রোফাইল", "আপনার", Icons.Filled.Person, Screen.Profile.route, Color(0xFF5E35B1)),
-                GridFeature("সেটিংস", "কনফিগ", Icons.Filled.Dashboard, Screen.Settings.route, Color(0xFF607D8B))
+                GridFeature("আল-কুরআন", "১১৪ সূরা", Icons.Filled.AutoStories, Screen.Quran.route, "quran-premium-bg.webp", Color(0xFF6D45C7)),
+                GridFeature("হাদিস", "২৪,৪২৪টি", Icons.Filled.Book, Screen.Hadith.route, "hadith-premium-bg.webp", Color(0xFF1B5E20)),
+                GridFeature("নামাজ শিক্ষা", "সম্পূর্ণ", Icons.Filled.MenuBook, Screen.NamazShikkha.route, "namaz-premium-bg.webp", Color(0xFFC9A34E)),
+                GridFeature("নামাজের সময়", "৫ ওয়াক্ত", Icons.Filled.CalendarMonth, Screen.Prayer.route, "prayer-premium-bg.webp", Color(0xFF7E8CE0)),
+                GridFeature("কিবলা", "কম্পাস", Icons.Filled.CompassCalibration, Screen.Qibla.route, "qibla-premium-bg.webp", Color(0xFF2E7D32)),
+                GridFeature("তসবিহ", "কাউন্টার", Icons.Filled.Spa, Screen.Tasbih.route, "tasbih-bg.webp", Color(0xFFB36283)),
+                GridFeature("৯৯ নাম", "আসমাউল হুসনা", Icons.Filled.Favorite, Screen.Names.route, "asmaul_husna_light_bg.webp", Color(0xFFE91E63)),
+                GridFeature("দোয়া", "প্রতিদিনের", Icons.Filled.Bedtime, Screen.Duas.route, "dua-premium-bg.webp", Color(0xFF6B6E91)),
+                GridFeature("ভুল বোঝাবুঝি", "৩০০+", Icons.Filled.Warning, Screen.Misconceptions.route, null, Color(0xFFEF6C00)),
+                GridFeature("প্রশ্ন-উত্তর", "Q&A", Icons.Filled.QuestionAnswer, Screen.Qa.route, null, Color(0xFF00897B)),
+                GridFeature("AI স্কলার", "জিজ্ঞাসা করুন", Icons.Filled.Bolt, Screen.AiScholar.route, "voice-ai-bg.webp", Color(0xFF8E24AA)),
+                GridFeature("তাজবীদ", "চেকার", Icons.Filled.AutoStories, Screen.TajweedChecker.route, "tajweed-premium-bg.webp", Color(0xFF3949AB)),
+                GridFeature("AI স্ক্যানার", "ছবি বিশ্লেষণ", Icons.Filled.CameraAlt, Screen.Scanner.route, null, Color(0xFF43A047)),
+                GridFeature("গল্প", "নবী ও খলিফা", Icons.Filled.Book, Screen.Stories.route, "stories-premium-bg.webp", Color(0xFF8D6E63)),
+                GridFeature("৬ কালিমা", "কালিমা", Icons.Filled.MenuBook, Screen.Kalima.route, null, Color(0xFF5C6BC0)),
+                GridFeature("কাযা", "ট্র্যাকার", Icons.Filled.History, Screen.Qada.route, null, Color(0xFFD84315)),
+                GridFeature("ট্র্যাকার", "দৈনিক", Icons.Filled.Dashboard, Screen.Tracker.route, "salah-premium-bg.webp", Color(0xFF00ACC1)),
+                GridFeature("বুকমার্ক", "সংরক্ষিত", Icons.Filled.Bookmark, Screen.Bookmarks.route, null, Color(0xFF66BB6A)),
+                GridFeature("খতম", "কুরআন", Icons.Filled.MenuBook, Screen.Khatam.route, "premium-quran-bg.webp", Color(0xFF26A69A)),
+                GridFeature("ক্যালেন্ডার", "হিজরি", Icons.Filled.CalendarMonth, Screen.Calendar.route, null, Color(0xFF7E57C2)),
+                GridFeature("অতিরিক্ত নামাজ", "জুমআ, ঈদ", Icons.Filled.MenuBook, Screen.NamazExtras.route, "namaz-premium-bg.webp", Color(0xFF558B2F)),
+                GridFeature("আরও", "সব দেখুন", Icons.Filled.Dashboard, Screen.More.route, "topics-premium-bg.webp", Color(0xFF455A64)),
+                GridFeature("প্রোফাইল", "আপনার", Icons.Filled.Person, Screen.Profile.route, "profile-premium-bg.webp", Color(0xFF5E35B1)),
+                GridFeature("সেটিংস", "কনফিগ", Icons.Filled.Dashboard, Screen.Settings.route, null, Color(0xFF607D8B))
             )
-            // Render grid as rows of 2 (avoids nested scroll issue)
+            // Render grid as rows of 2
             val rows = features.chunked(2)
             rows.forEach { rowFeatures ->
                 Row(
@@ -195,10 +238,9 @@ fun HomeScreen(
                 ) {
                     rowFeatures.forEach { feature ->
                         Box(modifier = Modifier.weight(1f)) {
-                            PremiumFeatureCard(feature) { onNavigate(feature.route) }
+                            PremiumFeatureCard(feature, context) { onNavigate(feature.route) }
                         }
                     }
-                    // If odd number, add empty spacer
                     if (rowFeatures.size == 1) {
                         Box(modifier = Modifier.weight(1f)) {}
                     }
@@ -249,6 +291,7 @@ fun HomeScreen(
 @Composable
 private fun PremiumFeatureCard(
     feature: GridFeature,
+    context: android.content.Context,
     onClick: () -> Unit
 ) {
     Card(
@@ -260,47 +303,104 @@ private fun PremiumFeatureCard(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+                .height(140.dp)
         ) {
-            // Icon with gradient circle
-            Box(
-                modifier = Modifier
-                    .size(48.dp)
-                    .clip(CircleShape)
-                    .background(
-                        brush = Brush.linearGradient(
-                            colors = listOf(
-                                feature.color,
-                                feature.color.copy(alpha = 0.7f)
+            // Background image (if available)
+            if (feature.bgImage != null) {
+                try {
+                    val assetManager = context.assets
+                    val inputStream = assetManager.open("img/${feature.bgImage}")
+                    val bitmap = android.graphics.BitmapFactory.decodeStream(inputStream)
+                    inputStream.close()
+                    Image(
+                        bitmap = bitmap.asImageBitmap(),
+                        contentDescription = null,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                    // Dark overlay
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(
+                                brush = Brush.verticalGradient(
+                                    colors = listOf(
+                                        feature.color.copy(alpha = 0.3f),
+                                        feature.color.copy(alpha = 0.8f)
+                                    )
+                                )
+                            )
+                    )
+                } catch (_: Exception) {
+                    // Fallback to solid gradient
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(
+                                brush = Brush.verticalGradient(
+                                    colors = listOf(
+                                        feature.color,
+                                        feature.color.copy(alpha = 0.7f)
+                                    )
+                                )
+                            )
+                    )
+                }
+            } else {
+                // Solid gradient background
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(
+                            brush = Brush.verticalGradient(
+                                colors = listOf(
+                                    feature.color,
+                                    feature.color.copy(alpha = 0.7f)
+                                )
                             )
                         )
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = feature.icon,
-                    contentDescription = null,
-                    tint = Color.White,
-                    modifier = Modifier.size(24.dp)
                 )
             }
-            // Text
-            Column {
-                Text(
-                    text = feature.title,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                Text(
-                    text = feature.subtitle,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+
+            // Content
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.SpaceBetween
+            ) {
+                // Icon in circle
+                Box(
+                    modifier = Modifier
+                        .size(44.dp)
+                        .clip(CircleShape)
+                        .background(Color.White.copy(alpha = 0.25f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = feature.icon,
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+                // Text
+                Column {
+                    Text(
+                        text = feature.title,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+                    Text(
+                        text = feature.subtitle,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color.White.copy(alpha = 0.9f)
+                    )
+                }
             }
         }
     }
@@ -311,5 +411,6 @@ private data class GridFeature(
     val subtitle: String,
     val icon: ImageVector,
     val route: String,
+    val bgImage: String?,
     val color: Color
 )
