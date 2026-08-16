@@ -71,6 +71,7 @@ fun KhatamScreen(
     val khatamTitle = stringResource(R.string.khatam_title)
     val khatamStart = stringResource(R.string.khatam_start)
     val khatamShare = stringResource(R.string.khatam_share)
+    val surahList = remember { (1..114).toList() }
 
     Scaffold(
         topBar = {
@@ -201,7 +202,6 @@ fun KhatamScreen(
                         color = MaterialTheme.colorScheme.onSurface
                     )
                 }
-                val surahList = remember { (1..114).toList() }
                 items(surahList, key = { it }) { surahNum ->
                     val isCompleted = khatam?.completedSurahs?.contains(surahNum) == true
                     KhatamSurahRow(
