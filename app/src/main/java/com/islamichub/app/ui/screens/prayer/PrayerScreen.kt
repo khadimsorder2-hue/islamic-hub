@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -46,6 +47,7 @@ import com.islamichub.app.data.AppContainer
 fun PrayerScreen(container: AppContainer) {
     val vm = remember { PrayerViewModel(container) }
     val state by vm.state.collectAsState()
+    val context = androidx.compose.ui.platform.LocalContext.current
 
     // Notification permission launcher (Android 13+)
     val notifPermLauncher = rememberLauncherForActivityResult(
@@ -90,37 +92,37 @@ fun PrayerScreen(container: AppContainer) {
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // Header
+        // Premium hero
         item {
-            Column {
-                Text(
-                    text = stringResource(R.string.prayer_title),
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onBackground
-                )
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+            com.islamichub.app.ui.components.PremiumHeroCard(
+                backgroundImage = "prayer-premium-bg.webp",
+                context = context,
+                height = 180
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(20.dp),
+                        verticalArrangement = Arrangement.Center
                 ) {
-                    Icon(
-                        imageVector = Icons.Filled.LocationOn,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(16.dp)
+                    Text(
+                        text = stringResource(R.string.prayer_title),
+                        style = MaterialTheme.typography.headlineMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = androidx.compose.ui.graphics.Color.White
                     )
                     Text(
                         text = state.times?.locationName ?: locationFallback,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.9f)
                     )
-                }
-                state.times?.hijriDate?.let {
-                    Text(
-                        text = it,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    state.times?.hijriDate?.let {
+                        Text(
+                            text = it,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.85f)
+                        )
+                    }
                 }
             }
         }
@@ -145,14 +147,14 @@ fun PrayerScreen(container: AppContainer) {
                         )
                         Column {
                             Text(
-                                text = "Prayer notifications enabled",
+                                text = "নামাজের নোটিফিকেশন চালু",
                                 style = MaterialTheme.typography.titleSmall,
                                 fontWeight = FontWeight.SemiBold,
                                 color = MaterialTheme.colorScheme.onSecondaryContainer
                             )
                             state.nextNotificationTitle?.let { title ->
                                 Text(
-                                    text = "Next: $title",
+                                    text = "পরবর্তী: $title",
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.85f)
                                 )
@@ -215,7 +217,7 @@ fun PrayerScreen(container: AppContainer) {
                             onClick = { vm.scheduleNotifications() },
                             modifier = Modifier.fillMaxWidth()
                         ) {
-                            Text("Enable Prayer Notifications")
+                            Text("নামাজের নোটিফিকেশন চালু করুন")
                         }
                     }
                 }

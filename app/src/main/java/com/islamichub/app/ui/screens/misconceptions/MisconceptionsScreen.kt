@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -52,11 +53,12 @@ fun MisconceptionsScreen(
 ) {
     val vm = remember { MisconceptionsViewModel(container) }
     val state by vm.state.collectAsState()
+    val context = androidx.compose.ui.platform.LocalContext.current
 
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text("ভুল বোঝাবুঝি" + " / Misconceptions") },
+                title = { Text("ভুল বোঝাবুঝি") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
@@ -70,28 +72,29 @@ fun MisconceptionsScreen(
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
+            // Premium hero
             item {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(24.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.primaryContainer
-                    )
+                com.islamichub.app.ui.components.PremiumHeroCard(
+                    backgroundImage = "topics-premium-bg.webp",
+                    context = context,
+                    height = 160
                 ) {
                     Column(
-                        modifier = Modifier.padding(20.dp),
-                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(20.dp),
+                        verticalArrangement = Arrangement.Center
                     ) {
                         Text(
-                            text = "৩০০+ ভুল বোঝাবুঝির সমাধান",
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                            text = "ভুল বোঝাবুঝির সমাধান",
+                            style = MaterialTheme.typography.headlineMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = androidx.compose.ui.graphics.Color.White
                         )
                         Text(
-                            text = "ইসলাম সম্পর্কে প্রচলিত ভুল ধারণাগুলোর সঠিক উত্তর",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                            text = "৩০০+ ভুল ধারণার সঠিক উত্তর",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.9f)
                         )
                     }
                 }
@@ -99,12 +102,8 @@ fun MisconceptionsScreen(
 
             state.categories.forEach { category ->
                 item {
-                    Text(
-                        text = category.icon + "  " + category.name,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.padding(top = 12.dp, bottom = 4.dp)
+                    com.islamichub.app.ui.components.PremiumSectionHeader(
+                        title = category.icon + "  " + category.name
                     )
                 }
                 items(category.questions, key = { it.id }) { item ->

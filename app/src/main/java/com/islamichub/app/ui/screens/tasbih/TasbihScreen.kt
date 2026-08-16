@@ -62,12 +62,31 @@ fun TasbihScreen(container: AppContainer) {
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Text(
-                text = stringResource(R.string.tasbih_title),
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onBackground
-            )
+            // Premium hero
+            com.islamichub.app.ui.components.PremiumHeroCard(
+                backgroundImage = "tasbih-bg.webp",
+                context = androidx.compose.ui.platform.LocalContext.current,
+                height = 120
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(20.dp),
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Text(
+                        text = stringResource(R.string.tasbih_title),
+                        style = MaterialTheme.typography.headlineMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = androidx.compose.ui.graphics.Color.White
+                    )
+                    Text(
+                        text = "তসবিহ গণনা করুন",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.9f)
+                    )
+                }
+            }
 
             // Dhikr selector
             if (state.dhikrOptions.isNotEmpty()) {
