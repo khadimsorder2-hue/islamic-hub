@@ -1,0 +1,119 @@
+package com.islamichub.app.data
+
+import android.content.Context
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.intPreferencesKey
+import androidx.datastore.preferences.core.longPreferencesKey
+import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.preferences.preferencesDataStore
+import com.islamichub.app.data.local.DuaData
+import com.islamichub.app.data.local.NamesData
+import com.islamichub.app.data.local.QuranData
+import com.islamichub.app.data.remote.AladhanApi
+import com.islamichub.app.data.repo.DuaRepository
+import com.islamichub.app.data.repo.NamesRepository
+import com.islamichub.app.data.repo.PrayerRepository
+import com.islamichub.app.data.repo.QuranRepository
+import com.islamichub.app.data.repo.TasbihRepository
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
+import okhttp3.OkHttpClient
+import okhttp3.logging.HttpLoggingInterceptor
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
+import java.util.concurrent.TimeUnit
+
+private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "islamichub_prefs")
+
+/**
+ * Manual DI container. Avoids Hilt to keep the build simple and fast.
+ * Single instance created in [IslamicHubApp].
+ */
+class AppContainer(private val context: Context) {
+
+    private val okHttp: OkHttpClient by lazy {
+        OkHttpClient.Builder()
+            .connectTimeout(15, TimeUnit.SECONDS)
+            .readTimeout(20, TimeUnit.SECONDS)
+            .addInterceptor(HttpLoggingInterceptor().apply {
+                level = HttpLoggingInterceptor.Level.BASIC
+            })
+            .build()
+    }
+
+    private val retrofit: Retrofit by lazy {
+        Retrofit.Builder()
+            .baseUrl(AladhanApi.BASE_URL)
+            .client(okHttp)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+    }
+
+    val aladhanApi: AladhanApi by lazy { retrofit.create(AladhanApi::class.java) }
+
+    val quranRepository: QuranRepository by lazy { QuranRepository(QuranData) }
+    val namesRepository: NamesRepository by lazy { NamesRepository(NamesData.names) }
+    val duaRepository: DuaRepository by lazy { DuaRepository(DuaData.duas, DuaData.dhikrOptions) }
+    val prayerRepository: PrayerRepository by lazy { PrayerRepository(aladhanApi, context) }
+    val tasbihRepository: TasbihRepository by lazy { TasbihRepository(context) }
+}
+
+/** Tiny preferences wrapper for tasbih counts. */
+class TasbihRepository(private val context: Context) {
+
+    private val KEY_COUNT = intPreferencesKey("tasbih_count")
+    private val KEY_TOTAL = intPreferencesKey("tasbih_total")
+    private val KEY_ROUND = intPreferencesKey("tasbih_round")
+    private val KEY_DHIKR_ID = stringPreferencesKey("tasbih_dhikr_id")
+
+    val count: Flow<Int> = context.dataStore.data.map { it[KEY_COUNT] ?: 0 }
+    val total: Flow<Int> = context.dataStore.data.map { it[KEY_TOTAL] ?: 0 }
+    val round: Flow<Int> = context.dataStore.data.map { it[KEY_ROUND] ?: 0 }
+    val dhikrId: Flow<String> = context.dataStore.data.map { it[KEY_DHIKR_ID] ?: "subhanallah" }
+
+    suspend fun setDhikr(id: String) {
+        context.dataStore.edit { it[KEY_DHIKR_ID] = id }
+    }
+
+    suspend fun increment(): Int {
+        var newCount = 0
+        context.dataStore.edit { prefs ->
+            val current = prefs[KEY_COUNT] ?: 0
+            val currentTotal = prefs[KEY_TOTAL] ?: 0
+            newCount = current + 1
+            prefs[KEY_COUNT] = newCount
+            prefs[KEY_TOTAL] = currentTotal + 1
+        }
+        return newCount
+    }
+
+    suspend fun checkRoundComplete(target: Int): Boolean {
+        var completed = false
+        context.dataStore.edit { prefs ->
+            val current = prefs[KEY_COUNT] ?: 0
+            if (current >= target) {
+                prefs[KEY_COUNT] = 0
+                prefs[KEY_ROUND] = (prefs[KEY_ROUND] ?: 0) + 1
+                completed = true
+            }
+        }
+        return completed
+    }
+
+    suspend fun reset() {
+        context.dataStore.edit { prefs ->
+            prefs.remove(KEY_COUNT)
+            prefs.remove(KEY_ROUND)
+        }
+    }
+
+    suspend fun resetAll() {
+        context.dataStore.edit { prefs ->
+            prefs.remove(KEY_COUNT)
+            prefs.remove(KEY_ROUND)
+            prefs.remove(KEY_TOTAL)
+        }
+    }
+}

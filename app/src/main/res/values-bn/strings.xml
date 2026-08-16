@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">ইসলামিক হাব</string>
+    <string name="app_tagline">আপনার প্রতিদিনের ইসলামিক সঙ্গী</string>
+
+    <!-- Bottom Nav -->
+    <string name="nav_home">হোম</string>
+    <string name="nav_quran">কুরআন</string>
+    <string name="nav_prayer">নামাজ</string>
+    <string name="nav_more">আরও</string>
+
+    <!-- Home -->
+    <string name="home_greeting">আসসালামু আলাইকুম</string>
+    <string name="home_next_prayer">পরবর্তী নামাজ</string>
+    <string name="home_time_remaining">বাকি সময়</string>
+    <string name="home_hijri_date">হিজরি তারিখ</string>
+    <string name="home_quick_actions">দ্রুত অ্যাক্সেস</string>
+    <string name="home_feature_quran">আল-কুরআন</string>
+    <string name="home_feature_prayer">নামাজের সময়</string>
+    <string name="home_feature_qibla">কিবলা</string>
+    <string name="home_feature_tasbih">তসবিহ</string>
+    <string name="home_feature_names">৯৯ নাম</string>
+    <string name="home_feature_dua">দোয়া</string>
+    <string name="home_feature_calendar">ক্যালেন্ডার</string>
+    <string name="home_ayah_of_day">আজকের আয়াত</string>
+    <string name="home_dua_of_day">আজকের দোয়া</string>
+    <string name="home_hadith_of_day">আজকের হাদিস</string>
+
+    <!-- Quran -->
+    <string name="quran_title">আল-কুরআন</string>
+    <string name="quran_search">সূরা খুঁজুন…</string>
+    <string name="quran_surah">সূরা</string>
+    <string name="quran_ayah">আয়াত</string>
+    <string name="quran_verses">আয়াত</string>
+    <string name="quran_bismillah">পরম করুণাময় অসীম দয়ালু আল্লাহর নামে</string>
+
+    <!-- Prayer -->
+    <string name="prayer_title">নামাজের সময়</string>
+    <string name="prayer_fajr">ফজর</string>
+    <string name="prayer_sunrise">সূর্যোদয়</string>
+    <string name="prayer_dhuhr">যোহর</string>
+    <string name="prayer_asr">আসর</string>
+    <string name="prayer_maghrib">মাগরিব</string>
+    <string name="prayer_isha">এশা</string>
+    <string name="prayer_location">অবস্থান</string>
+    <string name="prayer_loading">নামাজের সময় লোড হচ্ছে…</string>
+    <string name="prayer_error">নামাজের সময় লোড করা যায়নি। ডিফল্ট সময় দেখানো হচ্ছে।</string>
+    <string name="prayer_use_my_location">আমার অবস্থান ব্যবহার করুন</string>
+
+    <!-- Qibla -->
+    <string name="qibla_title">কিবলা দিক</string>
+    <string name="qibla_instruction">আপনার ফোন সমান জায়গায় রাখুন এবং সবুজ তীরের সাথে মিলিয়ে নিন।</string>
+    <string name="qibla_angle">কোণ: %1$d°</string>
+    <string name="qibla_aligned">কিবলার সাথে মিলে গেছে</string>
+    <string name="qibla_need_location">কিবলা দিক নির্ধারণের জন্য অবস্থানের অনুমতি প্রয়োজন।</string>
+
+    <!-- Tasbih -->
+    <string name="tasbih_title">তসবিহ গণনাকারী</string>
+    <string name="tasbih_count">গণনা</string>
+    <string name="tasbih_total">মোট</string>
+    <string name="tasbih_round">চক্র</string>
+    <string name="tasbih_dhikr">জিকির</string>
+    <string name="tasbih_subhanallah">সুবহানাল্লাহ</string>
+    <string name="tasbih_alhamdulillah">আলহামদুলিল্লাহ</string>
+    <string name="tasbih_allahu_akbar">আল্লাহু আকবার</string>
+    <string name="tasbih_la_ilaha">লা ইলাহা ইল্লাল্লাহ</string>
+    <string name="tasbih_reset">রিসেট</string>
+    <string name="tasbih_target">লক্ষ্য: %1$d</string>
+
+    <!-- 99 Names -->
+    <string name="names_title">আল্লাহর ৯৯ নাম</string>
+    <string name="names_subtitle">আসমাউল হুসনা</string>
+
+    <!-- Duas -->
+    <string name="dua_title">প্রতিদিনের দোয়া</string>
+    <string name="dua_morning">সকালের জিকির</string>
+    <string name="dua_evening">সন্ধ্যার জিকির</string>
+    <string name="dua_before_sleep">ঘুমানোর আগে</string>
+    <string name="dua_after_wudu">অজুর পরে</string>
+    <string name="dua_before_eating">খাওয়ার আগে</string>
+    <string name="dua_after_eating">খাওয়ার পরে</string>
+    <string name="dua_entering_masjid">মসজিদে প্রবেশ</string>
+    <string name="dua_leaving_masjid">মসজিদ ত্যাগ</string>
+
+    <!-- Calendar -->
+    <string name="calendar_title">হিজরি ক্যালেন্ডার</string>
+    <string name="calendar_today">আজ</string>
+
+    <!-- Common -->
+    <string name="action_retry">পুনরায় চেষ্টা</string>
+    <string name="action_ok">ঠিক আছে</string>
+    <string name="action_cancel">বাতিল</string>
+    <string name="loading">লোড হচ্ছে…</string>
+</resources>

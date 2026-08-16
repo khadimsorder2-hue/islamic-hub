@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.IslamicHub" parent="android:Theme.Material.Light.NoActionBar" />
+
+    <style name="Theme.IslamicHub.Splash" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/primary_green</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_splash_logo</item>
+        <item name="windowSplashScreenAnimationDuration">800</item>
+        <item name="postSplashScreenTheme">@style/Theme.IslamicHub.App</item>
+    </style>
+
+    <style name="Theme.IslamicHub.App" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">true</item>
+    </style>
+</resources>

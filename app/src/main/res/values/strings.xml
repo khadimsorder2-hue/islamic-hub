@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Islamic Hub</string>
+    <string name="app_tagline">Your daily Islamic companion</string>
+
+    <!-- Bottom Nav -->
+    <string name="nav_home">Home</string>
+    <string name="nav_quran">Quran</string>
+    <string name="nav_prayer">Prayer</string>
+    <string name="nav_more">More</string>
+
+    <!-- Home -->
+    <string name="home_greeting">Assalamu Alaikum</string>
+    <string name="home_next_prayer">Next Prayer</string>
+    <string name="home_time_remaining">Time remaining</string>
+    <string name="home_hijri_date">Hijri Date</string>
+    <string name="home_quick_actions">Quick Actions</string>
+    <string name="home_feature_quran">Al-Quran</string>
+    <string name="home_feature_prayer">Prayer Times</string>
+    <string name="home_feature_qibla">Qibla</string>
+    <string name="home_feature_tasbih">Tasbih</string>
+    <string name="home_feature_names">99 Names</string>
+    <string name="home_feature_dua">Duas</string>
+    <string name="home_feature_calendar">Calendar</string>
+    <string name="home_ayah_of_day">Ayah of the Day</string>
+    <string name="home_dua_of_day">Dua of the Day</string>
+    <string name="home_hadith_of_day">Hadith of the Day</string>
+
+    <!-- Quran -->
+    <string name="quran_title">Al-Quran</string>
+    <string name="quran_search">Search surah…</string>
+    <string name="quran_surah">Surah</string>
+    <string name="quran_ayah">Ayah</string>
+    <string name="quran_verses">verses</string>
+    <string name="quran_bismillah">In the name of Allah, the Most Gracious, the Most Merciful</string>
+
+    <!-- Prayer -->
+    <string name="prayer_title">Prayer Times</string>
+    <string name="prayer_fajr">Fajr</string>
+    <string name="prayer_sunrise">Sunrise</string>
+    <string name="prayer_dhuhr">Dhuhr</string>
+    <string name="prayer_asr">Asr</string>
+    <string name="prayer_maghrib">Maghrib</string>
+    <string name="prayer_isha">Isha</string>
+    <string name="prayer_location">Location</string>
+    <string name="prayer_loading">Loading prayer times…</string>
+    <string name="prayer_error">Could not load prayer times. Showing default times.</string>
+    <string name="prayer_use_my_location">Use my location</string>
+
+    <!-- Qibla -->
+    <string name="qibla_title">Qibla Direction</string>
+    <string name="qibla_instruction">Place your phone on a flat surface and align it with the green arrow.</string>
+    <string name="qibla_angle">Angle: %1$d°</string>
+    <string name="qibla_aligned">Aligned with Qibla</string>
+    <string name="qibla_need_location">Location permission needed to determine Qibla direction.</string>
+
+    <!-- Tasbih -->
+    <string name="tasbih_title">Tasbih Counter</string>
+    <string name="tasbih_count">Count</string>
+    <string name="tasbih_total">Total</string>
+    <string name="tasbih_round">Round</string>
+    <string name="tasbih_dhikr">Dhikr</string>
+    <string name="tasbih_subhanallah">SubhanAllah</string>
+    <string name="tasbih_alhamdulillah">Alhamdulillah</string>
+    <string name="tasbih_allahu_akbar">Allahu Akbar</string>
+    <string name="tasbih_la_ilaha">La ilaha illallah</string>
+    <string name="tasbih_reset">Reset</string>
+    <string name="tasbih_target">Target: %1$d</string>
+
+    <!-- 99 Names -->
+    <string name="names_title">99 Names of Allah</string>
+    <string name="names_subtitle">Asma ul Husna</string>
+
+    <!-- Duas -->
+    <string name="dua_title">Daily Duas</string>
+    <string name="dua_morning">Morning Adhkar</string>
+    <string name="dua_evening">Evening Adhkar</string>
+    <string name="dua_before_sleep">Before Sleeping</string>
+    <string name="dua_after_wudu">After Wudu</string>
+    <string name="dua_before_eating">Before Eating</string>
+    <string name="dua_after_eating">After Eating</string>
+    <string name="dua_entering_masjid">Entering Masjid</string>
+    <string name="dua_leaving_masjid">Leaving Masjid</string>
+
+    <!-- Calendar -->
+    <string name="calendar_title">Hijri Calendar</string>
+    <string name="calendar_today">Today</string>
+
+    <!-- Common -->
+    <string name="action_retry">Retry</string>
+    <string name="action_ok">OK</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="loading">Loading…</string>
+</resources>
