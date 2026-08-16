@@ -13,7 +13,10 @@ data class PrayerUiState(
     val times: PrayerTimes? = null,
     val isLoading: Boolean = true,
     val error: String? = null,
-    val hasLocationPermission: Boolean = false
+    val hasLocationPermission: Boolean = false,
+    val hasNotificationPermission: Boolean = false,
+    val notificationsScheduled: Boolean = false,
+    val nextNotificationTitle: String? = null
 )
 
 class PrayerViewModel(private val container: AppContainer) : ViewModel() {
@@ -21,7 +24,10 @@ class PrayerViewModel(private val container: AppContainer) : ViewModel() {
     val state: StateFlow<PrayerUiState> = _state.asStateFlow()
 
     init {
-        _state.value = _state.value.copy(hasLocationPermission = container.prayerRepository.hasLocationPermission())
+        _state.value = _state.value.copy(
+            hasLocationPermission = container.prayerRepository.hasLocationPermission(),
+            hasNotificationPermission = container.prayerScheduler.hasNotificationPermission()
+        )
         load()
     }
 
@@ -46,12 +52,49 @@ class PrayerViewModel(private val container: AppContainer) : ViewModel() {
                 container.prayerRepository.getDefaultPrayerTimes().getOrNull()?.let { times = it }
             }
 
+            // Schedule notifications if we got times AND have permission
+            if (times != null && container.prayerScheduler.hasNotificationPermission()) {
+                try {
+                    container.prayerScheduler.scheduleToday(times)
+                    val scheduleState = container.prayerScheduler.state.value
+                    _state.value = PrayerUiState(
+                        times = times,
+                        isLoading = false,
+                        error = error,
+                        hasLocationPermission = container.prayerRepository.hasLocationPermission(),
+                        hasNotificationPermission = container.prayerScheduler.hasNotificationPermission(),
+                        notificationsScheduled = true,
+                        nextNotificationTitle = scheduleState.nextNotificationTitle
+                    )
+                    return@launch
+                } catch (e: Exception) {
+                    error = (error ?: "") + " (notification schedule failed: ${e.message})"
+                }
+            }
+
             _state.value = PrayerUiState(
                 times = times,
                 isLoading = false,
                 error = error,
-                hasLocationPermission = container.prayerRepository.hasLocationPermission()
+                hasLocationPermission = container.prayerRepository.hasLocationPermission(),
+                hasNotificationPermission = container.prayerScheduler.hasNotificationPermission(),
+                notificationsScheduled = false
             )
+        }
+    }
+
+    fun scheduleNotifications() {
+        viewModelScope.launch {
+            val times = _state.value.times ?: return@launch
+            try {
+                container.prayerScheduler.scheduleToday(times)
+                _state.value = _state.value.copy(
+                    notificationsScheduled = true,
+                    nextNotificationTitle = container.prayerScheduler.state.value.nextNotificationTitle
+                )
+            } catch (e: Exception) {
+                _state.value = _state.value.copy(error = e.message)
+            }
         }
     }
 }

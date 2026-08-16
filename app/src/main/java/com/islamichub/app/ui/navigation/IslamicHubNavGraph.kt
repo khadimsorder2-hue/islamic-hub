@@ -87,6 +87,18 @@ fun IslamicHubNavGraph(container: AppContainer) {
                     container = container,
                     onSurahClick = { num ->
                         navController.navigate(Screen.QuranReader.createRoute(num))
+                    },
+                    onSearchClick = {
+                        navController.navigate(Screen.QuranSearch.route)
+                    }
+                )
+            }
+            composable(Screen.QuranSearch.route) {
+                QuranSearchScreen(
+                    container = container,
+                    onBack = { navController.popBackStack() },
+                    onAyahClick = { num ->
+                        navController.navigate(Screen.QuranReader.createRoute(num))
                     }
                 )
             }

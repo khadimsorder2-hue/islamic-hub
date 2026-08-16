@@ -1,0 +1,18 @@
+Quran text data source attributions
+====================================
+
+All Quran data bundled in this app is fetched from the public AlQuran.cloud API
+(https://alquran.cloud) which serves the following editions:
+
+1. Arabic (Uthmani): quran-uthmani
+   Source: Tanzil project (https://tanzil.net)
+   License: public domain / Tanzil Quran Text (permissive)
+
+2. English translation: en.sahih (Sahih International)
+   Source: Sahih International, 1997. Used via AlQuran.cloud for non-commercial use.
+
+3. Bengali translation: bn.bengali (Muhiuddin Khan)
+   Source: Muhiuddin Khan Bengali translation.
+   Used via AlQuran.cloud for non-commercial use.
+
+Appreciation: AlQuran.cloud for maintaining the free public API.

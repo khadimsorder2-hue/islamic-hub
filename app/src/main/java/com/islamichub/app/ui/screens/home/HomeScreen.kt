@@ -2,7 +2,6 @@ package com.islamichub.app.ui.screens.home
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -58,60 +57,87 @@ fun HomeScreen(
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // Greeting + Hijri date
+        // Greeting + Hijri date (premium header with subtle gradient)
         item {
-            Column {
-                Text(
-                    text = stringResource(R.string.home_greeting),
-                    style = MaterialTheme.typography.displaySmall,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onBackground
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(24.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant
                 )
-                Text(
-                    text = state.hijriDate.ifBlank { "—" },
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
-                )
+            ) {
+                Column(modifier = Modifier.padding(20.dp)) {
+                    Text(
+                        text = stringResource(R.string.home_greeting),
+                        style = MaterialTheme.typography.displaySmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        text = state.hijriDate.ifBlank { "—" },
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
         }
 
-        // Next prayer card
+        // Hero — next prayer (premium gradient card)
         item {
             Surface(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(24.dp),
+                shape = RoundedCornerShape(28.dp),
                 color = MaterialTheme.colorScheme.primary,
-                shadowElevation = 2.dp
+                shadowElevation = 4.dp
             ) {
                 Column(
-                    modifier = Modifier.padding(20.dp),
-                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(
+                            brush = Brush.verticalGradient(
+                                colors = listOf(
+                                    MaterialTheme.colorScheme.primary,
+                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.85f)
+                                )
+                            )
+                        )
+                        .padding(24.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Text(
                         text = stringResource(R.string.home_next_prayer),
-                        style = MaterialTheme.typography.labelMedium,
+                        style = MaterialTheme.typography.labelLarge,
                         color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.85f)
                     )
-                    Text(
-                        text = state.nextPrayerName.ifBlank { "—" },
-                        style = MaterialTheme.typography.headlineMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onPrimary
-                    )
                     Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.Bottom
                     ) {
                         Column {
                             Text(
-                                text = state.nextPrayerTime.ifBlank { "--:--" },
-                                style = MaterialTheme.typography.titleLarge,
+                                text = state.nextPrayerName.ifBlank { "—" },
+                                style = MaterialTheme.typography.displayMedium,
+                                fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onPrimary
                             )
                             Text(
-                                text = "${stringResource(R.string.home_time_remaining)}: ${state.timeRemaining}",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.85f)
+                                text = state.nextPrayerTime.ifBlank { "--:--" },
+                                style = MaterialTheme.typography.headlineSmall,
+                                color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.9f)
+                            )
+                        }
+                        Column(horizontalAlignment = Alignment.End) {
+                            Text(
+                                text = stringResource(R.string.home_time_remaining),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.75f)
+                            )
+                            Text(
+                                text = state.timeRemaining.ifBlank { "--" },
+                                style = MaterialTheme.typography.headlineMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onPrimary
                             )
                         }
                     }
@@ -136,7 +162,7 @@ fun HomeScreen(
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(20.dp))
+                    .clip(RoundedCornerShape(18.dp))
                     .clickable { onNavigate(feature.route) },
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
                 elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
@@ -148,8 +174,8 @@ fun HomeScreen(
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(44.dp)
-                            .clip(CircleShape)
+                            .size(48.dp)
+                            .clip(RoundedCornerShape(14.dp))
                             .background(
                                 brush = Brush.linearGradient(
                                     colors = listOf(
@@ -184,7 +210,9 @@ fun HomeScreen(
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer
+                ),
                 elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
             ) {
                 Column(
@@ -195,7 +223,7 @@ fun HomeScreen(
                         Text(
                             text = arabic,
                             style = MaterialTheme.typography.displaySmall,
-                            color = MaterialTheme.colorScheme.onSurface,
+                            color = MaterialTheme.colorScheme.onSecondaryContainer,
                             modifier = Modifier.fillMaxWidth()
                         )
                     }
@@ -203,14 +231,14 @@ fun HomeScreen(
                         Text(
                             text = bn,
                             style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.85f)
                         )
                     }
                     state.ayahOfDay?.english?.let { en ->
                         Text(
                             text = en,
                             style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                            color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f)
                         )
                     }
                 }

@@ -7,9 +7,9 @@
     </style>
 
     <style name="Theme.IslamicHub.Splash" parent="Theme.SplashScreen">
-        <item name="windowSplashScreenBackground">@color/primary_green_dark</item>
+        <item name="windowSplashScreenBackground">@color/primary_violet_dark</item>
         <item name="windowSplashScreenAnimatedIcon">@drawable/ic_splash_logo</item>
-        <item name="windowSplashScreenAnimationDuration">800</item>
+        <item name="windowSplashScreenAnimationDuration">1000</item>
         <item name="postSplashScreenTheme">@style/Theme.IslamicHub.App</item>
     </style>
 </resources>

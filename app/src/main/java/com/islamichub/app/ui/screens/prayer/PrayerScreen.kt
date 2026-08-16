@@ -1,5 +1,9 @@
 package com.islamichub.app.ui.screens.prayer
 
+import android.Manifest
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -15,6 +19,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.NotificationsActive
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -22,12 +28,14 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -39,9 +47,35 @@ fun PrayerScreen(container: AppContainer) {
     val vm = remember { PrayerViewModel(container) }
     val state by vm.state.collectAsState()
 
-    // Hoist stringResource() calls out of the LazyColumn content lambda — the
-    // LazyListScope receiver does not provide a @Composable scope, so composable
-    // invocations must happen at the function-body level.
+    // Notification permission launcher (Android 13+)
+    val notifPermLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestMultiplePermissions()
+    ) { grants ->
+        val granted = grants.values.any { it }
+        if (granted) vm.load()
+    }
+
+    val locationPermLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestMultiplePermissions()
+    ) { grants ->
+        if (grants.values.any { it }) vm.load()
+    }
+
+    LaunchedEffect(Unit) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            !container.prayerScheduler.hasNotificationPermission()) {
+            notifPermLauncher.launch(arrayOf(Manifest.permission.POST_NOTIFICATIONS))
+        }
+        if (!container.prayerRepository.hasLocationPermission()) {
+            locationPermLauncher.launch(
+                arrayOf(
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION
+                )
+            )
+        }
+    }
+
     val fajrName = stringResource(R.string.prayer_fajr)
     val sunriseName = stringResource(R.string.prayer_sunrise)
     val dhuhrName = stringResource(R.string.prayer_dhuhr)
@@ -56,6 +90,7 @@ fun PrayerScreen(container: AppContainer) {
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
+        // Header
         item {
             Column {
                 Text(
@@ -86,6 +121,44 @@ fun PrayerScreen(container: AppContainer) {
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
+                }
+            }
+        }
+
+        // Notification status banner
+        if (state.notificationsScheduled) {
+            item {
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    color = MaterialTheme.colorScheme.secondaryContainer
+                ) {
+                    Row(
+                        modifier = Modifier.padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.NotificationsActive,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSecondaryContainer
+                        )
+                        Column {
+                            Text(
+                                text = "Prayer notifications enabled",
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.onSecondaryContainer
+                            )
+                            state.nextNotificationTitle?.let { title ->
+                                Text(
+                                    text = "Next: $title",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.85f)
+                                )
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -136,6 +209,16 @@ fun PrayerScreen(container: AppContainer) {
                         }
                     }
                 }
+                if (!state.notificationsScheduled && state.times != null) {
+                    item {
+                        Button(
+                            onClick = { vm.scheduleNotifications() },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text("Enable Prayer Notifications")
+                        }
+                    }
+                }
             }
         }
     }
@@ -170,8 +253,19 @@ private fun PrayerRow(name: String, time: String, isFard: Boolean) {
                         .size(36.dp)
                         .clip(CircleShape)
                         .background(
-                            if (isFard) MaterialTheme.colorScheme.primary
-                            else MaterialTheme.colorScheme.secondary.copy(alpha = 0.4f)
+                            brush = if (isFard)
+                                Brush.linearGradient(
+                                    colors = listOf(
+                                        MaterialTheme.colorScheme.primary,
+                                        MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
+                                    )
+                                )
+                            else Brush.linearGradient(
+                                colors = listOf(
+                                    MaterialTheme.colorScheme.secondary,
+                                    MaterialTheme.colorScheme.secondary.copy(alpha = 0.7f)
+                                )
+                            )
                         ),
                     contentAlignment = Alignment.Center
                 ) {

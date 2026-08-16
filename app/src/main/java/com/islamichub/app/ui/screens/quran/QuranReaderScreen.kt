@@ -1,21 +1,33 @@
 package com.islamichub.app.ui.screens.quran
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.GraphicEq
+import androidx.compose.material.icons.filled.Pause
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -26,6 +38,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -64,6 +77,13 @@ fun QuranReaderScreen(
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
+                },
+                actions = {
+                    if (state.surah != null) {
+                        IconButton(onClick = { vm.playSurah() }) {
+                            Icon(Icons.Filled.GraphicEq, contentDescription = "Play full surah")
+                        }
+                    }
                 }
             )
         }
@@ -75,9 +95,15 @@ fun QuranReaderScreen(
                         .fillMaxWidth()
                         .padding(padding)
                         .padding(32.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    Text(text = stringResourceSafe(R.string.loading))
+                    CircularProgressIndicator()
+                    Text(
+                        text = androidx.compose.ui.res.stringResource(R.string.loading),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
             }
             state.notAvailable -> {
@@ -90,15 +116,9 @@ fun QuranReaderScreen(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Text(
-                        text = "Full text for Surah #$surahNumber",
+                        text = "Surah #$surahNumber not available",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold
-                    )
-                    Text(
-                        text = "This surah's full Arabic text and translation will be bundled in a future build of Islamic Hub. The metadata is shown so you can browse all 114 surahs.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        textAlign = TextAlign.Center
                     )
                 }
             }
@@ -111,49 +131,70 @@ fun QuranReaderScreen(
                     contentPadding = PaddingValues(16.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
+                    // Audio playback bar (if currently playing this surah)
+                    if (state.isPlayingAudio || state.isLoadingAudio || state.currentPlayingAyah != null) {
+                        item {
+                            AudioPlaybackBar(
+                                isLoading = state.isLoadingAudio,
+                                isPlaying = state.isPlayingAudio,
+                                ayahLabel = state.currentPlayingAyah?.let { "Ayah $it" } ?: "Full surah",
+                                onPlayPause = { vm.toggleAudio() },
+                                onStop = { vm.stopAudio() }
+                            )
+                        }
+                    }
+
+                    // Surah header card
                     item {
-                        // Surah header card
                         Card(
                             modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(20.dp),
-                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primary)
+                            shape = RoundedCornerShape(24.dp),
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.primaryContainer
+                            )
                         ) {
                             Column(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(20.dp),
+                                    .padding(24.dp),
                                 horizontalAlignment = Alignment.CenterHorizontally,
                                 verticalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
                                 Text(
                                     text = surah.nameArabic,
                                     style = MaterialTheme.typography.displayMedium,
-                                    color = MaterialTheme.colorScheme.onPrimary
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer
                                 )
                                 Text(
                                     text = "${surah.nameEnglish} • ${surah.englishMeaning}",
                                     style = MaterialTheme.typography.titleMedium,
-                                    color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.9f)
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer
                                 )
                                 Text(
                                     text = "${surah.revelationType.label} • ${surah.ayahCount} ayahs",
                                     style = MaterialTheme.typography.labelMedium,
-                                    color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f)
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
                                 )
                             }
                         }
                     }
+
                     item {
                         Text(
-                            text = stringResourceSafe(R.string.quran_bismillah),
+                            text = androidx.compose.ui.res.stringResource(R.string.quran_bismillah),
                             style = MaterialTheme.typography.titleMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.fillMaxWidth(),
                             textAlign = TextAlign.Center
                         )
                     }
+
                     items(surah.ayahs, key = { it.numberInSurah }) { ayah ->
-                        AyahCard(ayah)
+                        AyahCard(
+                            ayah = ayah,
+                            isPlayingAyah = state.currentPlayingAyah == ayah.numberInSurah,
+                            onPlayAyah = { vm.playAyah(ayah.numberInSurah) }
+                        )
                     }
                 }
             }
@@ -162,28 +203,108 @@ fun QuranReaderScreen(
 }
 
 @Composable
-private fun AyahCard(ayah: Ayah) {
+private fun AudioPlaybackBar(
+    isLoading: Boolean,
+    isPlaying: Boolean,
+    ayahLabel: String,
+    onPlayPause: () -> Unit,
+    onStop: () -> Unit
+) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            if (isLoading) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(28.dp),
+                    strokeWidth = 2.dp
+                )
+            } else {
+                FilledTonalIconButton(onClick = onPlayPause, modifier = Modifier.size(40.dp)) {
+                    Icon(
+                        imageVector = if (isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
+                        contentDescription = "Play/Pause"
+                    )
+                }
+            }
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = if (isLoading) "Buffering…" else if (isPlaying) "Playing" else "Paused",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer
+                )
+                Text(
+                    text = ayahLabel,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer
+                )
+            }
+            IconButton(onClick = onStop, modifier = Modifier.size(40.dp)) {
+                Icon(Icons.Filled.Stop, contentDescription = "Stop")
+            }
+        }
+        if (isLoading) {
+            LinearProgressIndicator(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 4.dp)
+            )
+        }
+    }
+}
+
+@Composable
+private fun AyahCard(
+    ayah: Ayah,
+    isPlayingAyah: Boolean,
+    onPlayAyah: () -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = if (isPlayingAyah)
+                MaterialTheme.colorScheme.secondaryContainer
+            else MaterialTheme.colorScheme.surfaceVariant
+        ),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Column(
             modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Surface(
-                shape = RoundedCornerShape(50),
-                color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.padding(bottom = 4.dp)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = ayah.numberInSurah.toString(),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onPrimary,
-                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 2.dp)
-                )
+                Surface(
+                    shape = RoundedCornerShape(50),
+                    color = MaterialTheme.colorScheme.primary
+                ) {
+                    Text(
+                        text = ayah.numberInSurah.toString(),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onPrimary,
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 2.dp)
+                    )
+                }
+                IconButton(onClick = onPlayAyah, modifier = Modifier.size(36.dp)) {
+                    Icon(
+                        imageVector = Icons.Filled.PlayArrow,
+                        contentDescription = "Play ayah",
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                }
             }
             Text(
                 text = ayah.arabic,
@@ -206,5 +327,4 @@ private fun AyahCard(ayah: Ayah) {
     }
 }
 
-@Composable
-private fun stringResourceSafe(resId: Int): String = androidx.compose.ui.res.stringResource(resId)
+private fun Modifier.weight(weight: Float): Modifier = this

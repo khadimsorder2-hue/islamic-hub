@@ -1,6 +1,17 @@
+import java.util.Properties
+import java.io.FileInputStream
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
+}
+
+// Load keystore properties from a file (committed to repo for open-source reference
+// build) or fall back to environment variables / debug signing.
+val keystorePropertiesFile = rootProject.file("keystore/keystore.properties")
+val keystoreProperties = Properties()
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(FileInputStream(keystorePropertiesFile))
 }
 
 android {
@@ -11,12 +22,34 @@ android {
         applicationId = "com.islamichub.app"
         minSdk = 24
         targetSdk = 34
-        versionCode = 1
-        versionName = "1.0.0"
+        versionCode = 2
+        versionName = "1.1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
             useSupportLibrary = true
+        }
+    }
+
+    signingConfigs {
+        create("release") {
+            if (keystoreProperties.isNotEmpty()) {
+                keyAlias = keystoreProperties["keyAlias"] as String
+                keyPassword = keystoreProperties["keyPassword"] as String
+                storeFile = file(keystoreProperties["storeFile"] as String)
+                storePassword = keystoreProperties["storePassword"] as String
+            } else if (System.getenv("KEYSTORE_BASE64") != null) {
+                // CI mode — decode keystore from env var
+                val ksFile = rootProject.file("keystore/decoded-release.keystore")
+                ksFile.parentFile.mkdirs()
+                ksFile.writeBytes(
+                    java.util.Base64.getDecoder().decode(System.getenv("KEYSTORE_BASE64"))
+                )
+                storeFile = ksFile
+                storePassword = System.getenv("STORE_PASSWORD")
+                keyAlias = System.getenv("KEY_ALIAS")
+                keyPassword = System.getenv("KEY_PASSWORD")
+            }
         }
     }
 
@@ -28,10 +61,15 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            // Sign release with debug keystore so APK is installable on devices
-            // without requiring a custom keystore. This is acceptable for an
-            // open-source reference build.
-            signingConfig = signingConfigs.getByName("debug")
+            // Sign release with custom keystore if available, otherwise fall back
+            // to debug signing so the build never fails just because credentials
+            // are missing.
+            signingConfig = if (keystoreProperties.isNotEmpty() ||
+                System.getenv("KEYSTORE_BASE64") != null) {
+                signingConfigs.getByName("release")
+            } else {
+                signingConfigs.getByName("debug")
+            }
         }
         debug {
             isMinifyEnabled = false
@@ -120,6 +158,12 @@ dependencies {
 
     // Coil for image loading
     implementation("io.coil-kt:coil-compose:2.6.0")
+
+    // Media3 (audio playback — Quran tilawat)
+    implementation("androidx.media3:media3-exoplayer:1.3.1")
+    implementation("androidx.media3:media3-ui:1.3.1")
+    implementation("androidx.media3:media3-session:1.3.1")
+    implementation("androidx.media3:media3-common:1.3.1")
 
     // Debug
     debugImplementation("androidx.compose.ui:ui-tooling")

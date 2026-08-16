@@ -91,4 +91,27 @@
     <string name="action_ok">OK</string>
     <string name="action_cancel">Cancel</string>
     <string name="loading">Loading…</string>
+
+    <!-- Audio -->
+    <string name="audio_play_surah">Play full surah</string>
+    <string name="audio_play_ayah">Play ayah</string>
+    <string name="audio_pause">Pause</string>
+    <string name="audio_resume">Resume</string>
+    <string name="audio_stop">Stop</string>
+    <string name="audio_buffering">Buffering…</string>
+    <string name="audio_playing">Playing</string>
+    <string name="audio_paused">Paused</string>
+    <string name="audio_reciter">Reciter</string>
+
+    <!-- Notifications -->
+    <string name="notif_channel_prayer">Prayer Times</string>
+    <string name="notif_enable_prayer">Enable Prayer Notifications</string>
+    <string name="notif_enabled">Prayer notifications enabled</string>
+    <string name="notif_next">Next: %1$s</string>
+
+    <!-- Search -->
+    <string name="search_title">Search</string>
+    <string name="search_quran_hint">Search ayahs…</string>
+    <string name="search_results_count">%1$d results</string>
+    <string name="search_no_results">No results found</string>
 </resources>

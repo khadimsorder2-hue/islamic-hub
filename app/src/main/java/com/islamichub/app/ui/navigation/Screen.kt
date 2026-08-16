@@ -10,6 +10,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 sealed class Screen(val route: String) {
     data object Home : Screen("home")
     data object Quran : Screen("quran")
+    data object QuranSearch : Screen("quran/search")
     data object QuranReader : Screen("quran/{surahNumber}") {
         fun createRoute(surahNumber: Int) = "quran/$surahNumber"
     }

@@ -10,8 +10,10 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.islamichub.app.data.local.DuaData
 import com.islamichub.app.data.local.NamesData
+import com.islamichub.app.data.local.QuranAssetSource
 import com.islamichub.app.data.local.QuranData
 import com.islamichub.app.data.remote.AladhanApi
+import com.islamichub.app.data.repo.AudioController
 import com.islamichub.app.data.repo.DuaRepository
 import com.islamichub.app.data.repo.NamesRepository
 import com.islamichub.app.data.repo.PrayerRepository
@@ -52,11 +54,17 @@ class AppContainer(private val context: Context) {
 
     val aladhanApi: AladhanApi by lazy { retrofit.create(AladhanApi::class.java) }
 
-    val quranRepository: QuranRepository by lazy { QuranRepository(QuranData) }
+    private val quranAssetSource: QuranAssetSource by lazy { QuranAssetSource(context) }
+
+    val quranRepository: QuranRepository by lazy {
+        QuranRepository(QuranData, quranAssetSource)
+    }
     val namesRepository: NamesRepository by lazy { NamesRepository(NamesData.names) }
     val duaRepository: DuaRepository by lazy { DuaRepository(DuaData.duas, DuaData.dhikrOptions) }
     val prayerRepository: PrayerRepository by lazy { PrayerRepository(aladhanApi, context) }
     val tasbihRepository: TasbihRepository by lazy { TasbihRepository(context) }
+    val audioController: AudioController by lazy { AudioController(context) }
+    val prayerScheduler: PrayerScheduler by lazy { PrayerScheduler(context, prayerRepository) }
 }
 
 /** Tiny preferences wrapper for tasbih counts. */

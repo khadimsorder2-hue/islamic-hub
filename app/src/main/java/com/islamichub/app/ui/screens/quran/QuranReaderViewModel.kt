@@ -12,7 +12,10 @@ import com.islamichub.app.data.model.Surah
 data class QuranReaderUiState(
     val surah: Surah? = null,
     val isLoading: Boolean = true,
-    val notAvailable: Boolean = false
+    val notAvailable: Boolean = false,
+    val isPlayingAudio: Boolean = false,
+    val isLoadingAudio: Boolean = false,
+    val currentPlayingAyah: Int? = null
 )
 
 class QuranReaderViewModel(
@@ -22,7 +25,10 @@ class QuranReaderViewModel(
     private val _state = MutableStateFlow(QuranReaderUiState())
     val state: StateFlow<QuranReaderUiState> = _state.asStateFlow()
 
-    init { load() }
+    init {
+        load()
+        observeAudio()
+    }
 
     private fun load() {
         viewModelScope.launch {
@@ -32,6 +38,49 @@ class QuranReaderViewModel(
                 isLoading = false,
                 notAvailable = surah == null
             )
+        }
+    }
+
+    private fun observeAudio() {
+        viewModelScope.launch {
+            container.audioController.state.collect { audioState ->
+                _state.value = _state.value.copy(
+                    isPlayingAudio = audioState.isPlaying,
+                    isLoadingAudio = audioState.isLoading,
+                    currentPlayingAyah = if (audioState.currentSurah == surahNumber)
+                        audioState.currentAyah else null
+                )
+            }
+        }
+    }
+
+    fun playSurah() {
+        container.audioController.playSurah(surahNumber)
+    }
+
+    fun playAyah(ayahNumber: Int) {
+        container.audioController.playAyah(surahNumber, ayahNumber)
+    }
+
+    fun toggleAudio() {
+        if (_state.value.isPlayingAudio) {
+            container.audioController.pause()
+        } else {
+            container.audioController.resume()
+        }
+    }
+
+    fun stopAudio() {
+        container.audioController.stop()
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        // Stop audio when leaving the reader to release Media3 resources
+        // (but only if this VM owns the current playback)
+        val audioState = container.audioController.state.value
+        if (audioState.currentSurah == surahNumber) {
+            container.audioController.stop()
         }
     }
 }

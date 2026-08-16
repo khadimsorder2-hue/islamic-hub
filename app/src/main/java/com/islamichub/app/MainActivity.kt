@@ -30,4 +30,14 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        // Release Media3 player to free audio focus
+        try {
+            (application as IslamicHubApp).container.audioController.release()
+        } catch (_: Exception) {
+            // Best-effort — never crash during teardown
+        }
+    }
 }

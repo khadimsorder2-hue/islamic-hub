@@ -11,51 +11,51 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
 private val LightColors = lightColorScheme(
-    primary = EmeraldPrimary,
+    primary = IslamicViolet,
     onPrimary = Color.White,
-    primaryContainer = EmeraldLight,
-    onPrimaryContainer = Color.White,
-    secondary = GoldAccent,
+    primaryContainer = IslamicVioletSoft,
+    onPrimaryContainer = IslamicVioletDark,
+    secondary = MutedGold,
     onSecondary = Color.Black,
-    secondaryContainer = GoldAccent.copy(alpha = 0.15f),
+    secondaryContainer = MutedGoldSoft,
     onSecondaryContainer = Color(0xFF4A3F0A),
-    tertiary = EmeraldLight,
-    background = CreamBackground,
+    tertiary = IslamicVioletDark,
+    background = WarmIvoryBg,
     onBackground = TextPrimaryLight,
-    surface = CreamSurface,
+    surface = WhiteSurface,
     onSurface = TextPrimaryLight,
-    surfaceVariant = CardLight,
+    surfaceVariant = SurfaceAlt,
     onSurfaceVariant = TextSecondaryLight,
     outline = DividerLight,
     outlineVariant = DividerLight
 )
 
 private val DarkColors = darkColorScheme(
-    primary = EmeraldLight,
+    primary = IslamicVioletNight,
     onPrimary = Color.Black,
-    primaryContainer = EmeraldPrimaryDark,
+    primaryContainer = IslamicVioletDarkNight,
     onPrimaryContainer = Color.White,
-    secondary = GoldAccent,
+    secondary = MutedGoldNight,
     onSecondary = Color.Black,
-    secondaryContainer = GoldAccentDark.copy(alpha = 0.2f),
-    onSecondaryContainer = GoldAccent,
-    tertiary = EmeraldLight,
-    background = DarkBackground,
+    secondaryContainer = MutedGoldSoftNight,
+    onSecondaryContainer = MutedGoldNight,
+    tertiary = IslamicVioletNight,
+    background = DarkBg,
     onBackground = TextPrimaryDark,
     surface = DarkSurface,
     onSurface = TextPrimaryDark,
-    surfaceVariant = CardDark,
+    surfaceVariant = DarkSurfaceAlt,
     onSurfaceVariant = TextSecondaryDark,
     outline = DividerDark,
     outlineVariant = DividerDark
 )
 
 private val IslamicHubShapes = Shapes(
-    extraSmall = RoundedCornerShape(6.dp),
-    small = RoundedCornerShape(10.dp),
-    medium = RoundedCornerShape(16.dp),
-    large = RoundedCornerShape(20.dp),
-    extraLarge = RoundedCornerShape(28.dp)
+    extraSmall = RoundedCornerShape(8.dp),
+    small = RoundedCornerShape(12.dp),
+    medium = RoundedCornerShape(18.dp),
+    large = RoundedCornerShape(24.dp),
+    extraLarge = RoundedCornerShape(32.dp)
 )
 
 @Composable

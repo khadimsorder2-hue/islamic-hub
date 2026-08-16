@@ -10,5 +10,8 @@
 local.properties
 *.apk
 *.aab
-*.keystore
 !gradle-wrapper.jar
+# Note: keystore IS committed for this open-source reference build.
+# For production, replace with your own keystore and add these to .gitignore:
+# *.keystore
+# keystore/keystore.properties

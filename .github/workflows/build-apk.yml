@@ -40,6 +40,17 @@ jobs:
           key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*', 'gradle/wrapper/gradle-wrapper.properties') }}
           restore-keys: gradle-${{ runner.os }}-
 
+      # Keystore: prefer committed keystore file (open-source reference build).
+      # If CI env vars are set, those take precedence (see keystore/README.md).
+      - name: Verify keystore present
+        run: |
+          if [ -f keystore/islamichub-release.keystore ]; then
+            echo "✓ Committed keystore found"
+            ls -la keystore/
+          else
+            echo "No committed keystore — build will fall back to debug signing"
+          fi
+
       - name: Build release APK
         run: ./gradlew assembleRelease --no-daemon --stacktrace
 
@@ -50,12 +61,31 @@ jobs:
           echo "path=$APK" >> $GITHUB_OUTPUT
           echo "Found APK at: $APK"
           ls -la "$APK"
+          # Output signing info
+          echo "=== APK signing info ==="
+          $ANDROID_HOME/build-tools/34.0.0/apksigner verify --print-cert "$APK" 2>&1 | head -20 || true
+
+      - name: Rename APK for release
+        id: rename
+        run: |
+          SRC="${{ steps.apk.outputs.path }}"
+          DST="app/build/outputs/apk/release/islamichub-release.apk"
+          cp "$SRC" "$DST"
+          echo "renamed=$DST" >> $GITHUB_OUTPUT
+
+      - name: Generate checksums
+        run: |
+          cd app/build/outputs/apk/release
+          sha256sum islamichub-release.apk > checksums.txt
+          cat checksums.txt
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: islamichub-release-apk
-          path: ${{ steps.apk.outputs.path }}
+          path: |
+            app/build/outputs/apk/release/islamichub-release.apk
+            app/build/outputs/apk/release/checksums.txt
           retention-days: 90
 
       - name: Create GitHub release (on tag)
@@ -68,21 +98,33 @@ jobs:
             # Islamic Hub ${{ github.ref_name }}
 
             Bangla-first native Android (Kotlin + Jetpack Compose) reference build.
+            Signed with custom release keystore (committed to repo for open-source reference).
 
             ## Install
-            - Download `app-release.apk` below
+            - Download `islamichub-release.apk` below
             - Tap to install (allow "Install from unknown sources" if prompted)
 
+            ## What's new (v1.1.0)
+            - ✅ **All 114 surahs** with full Arabic text + Bengali + English translation
+            - ✅ **Audio tilawat** (Media3 ExoPlayer) — 12 reciters, play full surah or per-ayah
+            - ✅ **Prayer time notifications** (AlarmManager + boot receiver) — exact alarms, idempotent scheduling
+            - ✅ **Custom keystore signing** for stable APK signatures
+            - ✅ **Premium UI** — Islamic Violet + Warm Ivory + Muted Gold palette, gradient hero cards
+            - ✅ **Quran full-text search** across all 6236 ayahs
+            - ✅ Race-condition-free architecture (single-writer repositories, atomic scheduling)
+
             ## Features
-            - Al-Quran reader (10 full surahs + all 114 metadata)
-            - Prayer Times (Aladhan API + location)
-            - Qibla compass
-            - Tasbih counter
+            - Al-Quran: 114 surahs, 6236 ayahs, full Arabic + Bengali + English (AlQuran.cloud)
+            - Prayer Times: Aladhan API + FusedLocation with notification alarms
+            - Qibla: rotation-vector compass pointing to Kaaba
+            - Tasbih: tap counter with 5 dhikr presets
             - 99 Names of Allah (Asma ul Husna)
-            - Daily Duas
+            - 8 Daily Duas (Arabic + Bengali + English)
             - Hijri Calendar
-            - Material 3 + dark/light theme
-            - Bengali + English UI
-          files: ${{ steps.apk.outputs.path }}
+            - Audio tilawat: 12 reciters (Alafasy, Sudais, Husary, Minshawi, Abdul Basit, etc.)
+            - Material 3 + dark/light theme + Bangla/English UI
+          files: |
+            app/build/outputs/apk/release/islamichub-release.apk
+            app/build/outputs/apk/release/checksums.txt
           draft: false
           prerelease: false

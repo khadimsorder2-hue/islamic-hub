@@ -91,4 +91,27 @@
     <string name="action_ok">ঠিক আছে</string>
     <string name="action_cancel">বাতিল</string>
     <string name="loading">লোড হচ্ছে…</string>
+
+    <!-- Audio -->
+    <string name="audio_play_surah">সম্পূর্ণ সূরা শুনুন</string>
+    <string name="audio_play_ayah">আয়াত শুনুন</string>
+    <string name="audio_pause">বিরতি</string>
+    <string name="audio_resume">চালিয়ে যান</string>
+    <string name="audio_stop">বন্ধ</string>
+    <string name="audio_buffering">বাফার হচ্ছে…</string>
+    <string name="audio_playing">চলছে</string>
+    <string name="audio_paused">বিরতি</string>
+    <string name="audio_reciter">কারী</string>
+
+    <!-- Notifications -->
+    <string name="notif_channel_prayer">নামাজের সময়</string>
+    <string name="notif_enable_prayer">নামাজের নোটিফিকেশন চালু করুন</string>
+    <string name="notif_enabled">নামাজের নোটিফিকেশন চালু আছে</string>
+    <string name="notif_next">পরবর্তী: %1$s</string>
+
+    <!-- Search -->
+    <string name="search_title">অনুসন্ধান</string>
+    <string name="search_quran_hint">আয়াত খুঁজুন…</string>
+    <string name="search_results_count">%1$dটি ফলাফল</string>
+    <string name="search_no_results">কোনো ফলাফল পাওয়া যায়নি</string>
 </resources>
