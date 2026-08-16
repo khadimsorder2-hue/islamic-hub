@@ -129,7 +129,9 @@ class QuranReaderViewModel(
             it.editionId == _state.value.selectedReciterId
         } ?: AudioController.availableRecitersStatic.first()
         container.audioController.playAyah(surahNumber, ayahNumber, reciter)
-        container.trackerRepository.recordAyahRead()
+        viewModelScope.launch {
+            container.trackerRepository.recordAyahRead()
+        }
     }
 
     fun toggleAudio() {

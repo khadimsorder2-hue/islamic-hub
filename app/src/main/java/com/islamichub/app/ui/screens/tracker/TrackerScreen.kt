@@ -121,7 +121,7 @@ fun TrackerScreen(
                 state.today.maghribDone,
                 state.today.ishaDone
             )
-            items(prayers.indices.toList()) { idx ->
+            items(prayers.size) { idx ->
                 PrayerCheckRow(
                     prayerEn = prayers[idx],
                     prayerBn = prayerBn[idx],

@@ -42,8 +42,8 @@ class HadithAssetSource(private val context: Context) {
 
     private val gson = Gson()
 
-    @Volatile private var indexCache: HadithIndex? = null
-    @Volatile private val collectionCache = mutableMapOf<String, HadithCollectionJson>()
+    private var indexCache: HadithIndex? = null
+    private val collectionCache = mutableMapOf<String, HadithCollectionJson>()
 
     suspend fun loadIndex(): List<HadithCollectionMeta> = withContext(Dispatchers.IO) {
         indexCache?.let { return@withContext it.collections }

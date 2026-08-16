@@ -2,6 +2,7 @@ package com.islamichub.app.ui.screens.khatam
 
 import android.content.Intent
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -31,9 +32,13 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -44,6 +49,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.islamichub.app.R
 import com.islamichub.app.data.AppContainer
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -56,11 +62,20 @@ fun KhatamScreen(
     val progressPercent by remember { container.khatamRepository.progressPercent }.collectAsState(initial = 0f)
     val completedCount by remember { container.khatamRepository.completedSurahCount }.collectAsState(initial = 0)
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+
+    // Hoist all stringResource calls out of LazyColumn scope
+    val khatamShareText = stringResource(R.string.khatam_share_text)
+    val khatamSurahsFmt = stringResource(R.string.khatam_surahs, completedCount)
+    val khatamProgressFmt = stringResource(R.string.khatam_progress, progressPercent * 100f)
+    val khatamTitle = stringResource(R.string.khatam_title)
+    val khatamStart = stringResource(R.string.khatam_start)
+    val khatamShare = stringResource(R.string.khatam_share)
 
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text(stringResource(R.string.khatam_title)) },
+                title = { Text(khatamTitle) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
@@ -72,7 +87,7 @@ fun KhatamScreen(
                             val shareIntent = Intent(Intent.ACTION_SEND).apply {
                                 type = "text/plain"
                                 putExtra(Intent.EXTRA_TEXT,
-                                    stringResource(R.string.khatam_share_text) + "\n\n" +
+                                    khatamShareText + "\n\n" +
                                     "Progress: ${"%.1f".format(progressPercent * 100)}% ($completedCount/114 surahs)"
                                 )
                             }
@@ -119,7 +134,7 @@ fun KhatamScreen(
                             color = MaterialTheme.colorScheme.onPrimary
                         )
                         Text(
-                            text = stringResource(R.string.khatam_surahs, completedCount),
+                            text = khatamSurahsFmt,
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.9f)
                         )
@@ -138,10 +153,10 @@ fun KhatamScreen(
             if (khatam == null) {
                 item {
                     Button(
-                        onClick = { container.khatamRepository.startNew() },
+                        onClick = { scope.launch { container.khatamRepository.startNew() } },
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text(stringResource(R.string.khatam_start))
+                        Text(khatamStart)
                     }
                 }
                 item {
@@ -158,7 +173,7 @@ fun KhatamScreen(
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         OutlinedButton(
-                            onClick = { container.khatamRepository.reset() },
+                            onClick = { scope.launch { container.khatamRepository.reset() } },
                             modifier = Modifier.weight(1f)
                         ) { Text("Reset") }
                         if (khatam!!.isComplete) {
@@ -166,13 +181,13 @@ fun KhatamScreen(
                                 onClick = {
                                     val shareIntent = Intent(Intent.ACTION_SEND).apply {
                                         type = "text/plain"
-                                        putExtra(Intent.EXTRA_TEXT, stringResource(R.string.khatam_share_text))
+                                        putExtra(Intent.EXTRA_TEXT, khatamShareText)
                                     }
                                     context.startActivity(Intent.createChooser(shareIntent, "Share Khatam"))
                                 },
                                 modifier = Modifier.weight(1f)
                             ) {
-                                Text(stringResource(R.string.khatam_share))
+                                Text(khatamShare)
                             }
                         }
                     }
@@ -186,7 +201,6 @@ fun KhatamScreen(
                         color = MaterialTheme.colorScheme.onSurface
                     )
                 }
-                // Show surah list (114)
                 val surahList = remember { (1..114).toList() }
                 items(surahList, key = { it }) { surahNum ->
                     val isCompleted = khatam?.completedSurahs?.contains(surahNum) == true

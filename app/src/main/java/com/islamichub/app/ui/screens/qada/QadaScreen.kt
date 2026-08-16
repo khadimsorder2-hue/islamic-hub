@@ -113,7 +113,7 @@ fun QadaScreen(
                 state.summary.maghrib, state.summary.isha
             )
 
-            items(prayers.indices.toList()) { idx ->
+            items(prayers.size) { idx ->
                 QadaPrayerRow(
                     prayerEn = prayers[idx],
                     prayerBn = prayerBn[idx],
