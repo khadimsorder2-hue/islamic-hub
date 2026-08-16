@@ -42,23 +42,24 @@ class PrayerViewModel(private val container: AppContainer) : ViewModel() {
                 val loc = container.prayerRepository.getCurrentLocation()
                 if (loc != null) {
                     val result = container.prayerRepository.getPrayerTimes(loc.latitude, loc.longitude)
-                    result.getOrNull()?.let { times = it }
+                    times = result.getOrNull()
                     if (times == null) error = result.exceptionOrNull()?.message
                 } else {
                     error = "Could not get current location."
                 }
             }
             if (times == null) {
-                container.prayerRepository.getDefaultPrayerTimes().getOrNull()?.let { times = it }
+                times = container.prayerRepository.getDefaultPrayerTimes().getOrNull()
             }
 
+            val resolvedTimes = times
             // Schedule notifications if we got times AND have permission
-            if (times != null && container.prayerScheduler.hasNotificationPermission()) {
+            if (resolvedTimes != null && container.prayerScheduler.hasNotificationPermission()) {
                 try {
-                    container.prayerScheduler.scheduleToday(times)
+                    container.prayerScheduler.scheduleToday(resolvedTimes)
                     val scheduleState = container.prayerScheduler.state.value
                     _state.value = PrayerUiState(
-                        times = times,
+                        times = resolvedTimes,
                         isLoading = false,
                         error = error,
                         hasLocationPermission = container.prayerRepository.hasLocationPermission(),
@@ -73,7 +74,7 @@ class PrayerViewModel(private val container: AppContainer) : ViewModel() {
             }
 
             _state.value = PrayerUiState(
-                times = times,
+                times = resolvedTimes,
                 isLoading = false,
                 error = error,
                 hasLocationPermission = container.prayerRepository.hasLocationPermission(),
