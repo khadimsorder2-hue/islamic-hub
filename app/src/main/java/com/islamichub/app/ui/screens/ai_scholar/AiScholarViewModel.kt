@@ -15,7 +15,9 @@ data class AiScholarUiState(
     val isThinking: Boolean = false,
     val error: String? = null,
     val warning: String? = null,
-    val apiKeyConfigured: Boolean = false
+    val apiKeyConfigured: Boolean = false,
+    val provider: String = "gemini",
+    val model: String = "gemini-2.5-flash"
 )
 
 class AiScholarViewModel(private val container: AppContainer) : ViewModel() {
@@ -38,7 +40,11 @@ class AiScholarViewModel(private val container: AppContainer) : ViewModel() {
                     provider = provider
                 )
             )
-            _state.value = _state.value.copy(apiKeyConfigured = apiKey.isNotBlank())
+            _state.value = _state.value.copy(
+                apiKeyConfigured = apiKey.isNotBlank(),
+                provider = provider,
+                model = model
+            )
         }
     }
 
@@ -82,8 +88,16 @@ class AiScholarViewModel(private val container: AppContainer) : ViewModel() {
         }
     }
 
+    fun sendQuickQuestion(question: String) {
+        sendQuestion(question)
+    }
+
     fun clearChat() {
-        _state.value = AiScholarUiState(apiKeyConfigured = _state.value.apiKeyConfigured)
+        _state.value = AiScholarUiState(
+            apiKeyConfigured = _state.value.apiKeyConfigured,
+            provider = _state.value.provider,
+            model = _state.value.model
+        )
     }
 
     fun dismissError() {

@@ -2,6 +2,7 @@ package com.islamichub.app.ui.screens.ai_scholar
 
 import android.content.Intent
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -206,10 +207,49 @@ fun AiScholarScreen(
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.85f)
                             )
+                        }
+                    }
+                }
+                // Quick questions
+                item {
+                    com.islamichub.app.ui.components.PremiumSectionHeader(title = "দ্রুত প্রশ্ন")
+                }
+                val quickQuestions = listOf(
+                    "নামাজের গুরুত্ব কী?",
+                    "নামাজে ভুল হলে কী করব?",
+                    "জুমআর নামাজের নিয়ম কী?",
+                    "মুসাফিরের নামাজের বিধান কী?",
+                    "রমজানের ফজিলত কী?",
+                    "হজ্জের নিয়ম কী?",
+                    "যাকাত কাদের প্রদান করতে হয়?",
+                    "তালাকের ইসলামিক বিধান কী?"
+                )
+                items(quickQuestions.size) { idx ->
+                    val q = quickQuestions[idx]
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(12.dp))
+                            .clickable { vm.sendQuickQuestion(q) },
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant
+                        )
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.Bolt,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(16.dp)
+                            )
                             Text(
-                                text = "উদাহরণ:\n• নামাজে ভুল হলে কী করব?\n• জুমআর নামাজের নিয়ম কী?\n• মুসাফিরের নামাজের বিধান কী?",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.75f)
+                                text = q,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurface
                             )
                         }
                     }

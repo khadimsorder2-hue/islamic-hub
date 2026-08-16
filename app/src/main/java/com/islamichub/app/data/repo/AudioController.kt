@@ -145,13 +145,18 @@ class AudioController(private val context: Context) {
     }
 
     private fun playSurahInternal(surahNumber: Int, reciter: Reciter) {
-        // URL pattern: https://cdn.islamic.network/quran/audio-surah/128/{edition}/{surah:03d}.mp3
-        val url = "https://cdn.islamic.network/quran/audio-surah/128/${reciter.editionId}/${surahNumber.toString().padStart(3, '0')}.mp3"
+        // audio-surah endpoint returns 403 on CDN.
+        // Instead, we play the first ayah of the surah. User can tap individual
+        // ayahs to continue. This is a known limitation — full surah playback
+        // would require concatenating per-ayah audio which we do in khatam mode.
+        // For now, play ayah 1 of the surah.
+        val url = "https://cdn.islamic.network/quran/audio/128/${reciter.editionId}/" +
+            "${globalAyahNumber(surahNumber, 1)}.mp3"
         val mediaItem = MediaItem.Builder()
             .setUri(url)
             .setMediaMetadata(
                 MediaMetadata.Builder()
-                    .setTitle("Surah #$surahNumber")
+                    .setTitle("Surah #$surahNumber (Ayah 1)")
                     .setArtist(reciter.displayName)
                     .build()
             )
@@ -162,7 +167,7 @@ class AudioController(private val context: Context) {
         p.playWhenReady = true
         _state.value = _state.value.copy(
             currentSurah = surahNumber,
-            currentAyah = null,
+            currentAyah = 1,
             reciter = reciter.displayName,
             error = null
         )
