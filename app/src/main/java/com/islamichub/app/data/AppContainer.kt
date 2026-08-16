@@ -17,6 +17,7 @@ import com.islamichub.app.data.repo.AudioController
 import com.islamichub.app.data.repo.DuaRepository
 import com.islamichub.app.data.repo.NamesRepository
 import com.islamichub.app.data.repo.PrayerRepository
+import com.islamichub.app.data.repo.PrayerScheduler
 import com.islamichub.app.data.repo.QuranRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map

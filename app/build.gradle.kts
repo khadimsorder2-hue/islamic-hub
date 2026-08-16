@@ -38,7 +38,9 @@ android {
             if (keystoreProperties.isNotEmpty()) {
                 keyAlias = keystoreProperties["keyAlias"] as String
                 keyPassword = keystoreProperties["keyPassword"] as String
-                storeFile = file(keystoreProperties["storeFile"] as String)
+                // Resolve storeFile relative to the rootProject (keystore/ is at repo root)
+                val storeFilePath = keystoreProperties["storeFile"] as String
+                storeFile = rootProject.file("keystore/$storeFilePath")
                 storePassword = keystoreProperties["storePassword"] as String
             } else if (System.getenv("KEYSTORE_BASE64") != null) {
                 // CI mode — decode keystore from env var

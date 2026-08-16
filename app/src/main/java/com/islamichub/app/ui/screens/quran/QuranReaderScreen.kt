@@ -326,5 +326,3 @@ private fun AyahCard(
         }
     }
 }
-
-private fun Modifier.weight(weight: Float): Modifier = this

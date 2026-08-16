@@ -29,6 +29,7 @@ import com.islamichub.app.ui.screens.prayer.PrayerScreen
 import com.islamichub.app.ui.screens.qibla.QiblaScreen
 import com.islamichub.app.ui.screens.quran.QuranListScreen
 import com.islamichub.app.ui.screens.quran.QuranReaderScreen
+import com.islamichub.app.ui.screens.quran.QuranSearchScreen
 import com.islamichub.app.ui.screens.tasbih.TasbihScreen
 
 @Composable
