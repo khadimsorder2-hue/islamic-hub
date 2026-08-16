@@ -90,7 +90,7 @@ class AppContainer(private val context: Context) {
     val trackerRepository: TrackerRepository by lazy { TrackerRepository(context) }
     val lastReadRepository: LastReadRepository by lazy { LastReadRepository(context) }
     val settingsRepository: SettingsRepository by lazy { SettingsRepository(context) }
-    val tafsirRepository: TafsirRepository by lazy { TafsirRepository(context, aladhanApi) }
+    val tafsirRepository: TafsirRepository by lazy { TafsirRepository(context) }
     val khatamRepository: KhatamRepository by lazy { KhatamRepository(context) }
 }
 

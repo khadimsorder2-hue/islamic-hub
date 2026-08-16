@@ -1,21 +1,28 @@
 package com.islamichub.app.data.repo
 
 import android.content.Context
-import com.islamichub.app.data.remote.AladhanApi
-import com.islamichub.app.data.remote.AladhanResponse
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
+import java.net.HttpURLConnection
+import java.net.URL
 
 /**
  * Tafsir repository — fetches tafsir per ayah from AlQuran.cloud API,
  * caches to local file system so it works offline once fetched.
  *
- * Supports multiple sources via SettingsRepository.TafsirSource.
+ * API: https://api.alquran.cloud/v1/ayah/{reference}/{edition}
+ *   - reference: "surah:ayah" (e.g., "1:1") or global ayah number
+ *   - edition: tafsir edition ID (e.g., "bn.mukhtasar")
+ *
+ * Available tafsir editions (see SettingsRepository.TafsirSource):
+ *  - bn.mukhtasar           — Bangla Tafsir Mukhtasar
+ *  - bn.taisirulquran       — Bangla Taisirul Quran
+ *  - en.jalalayn            — English Tafsir Jalalayn
+ *  - en.ibnkathir           — English Ibn Kathir (surah-level only)
  */
 class TafsirRepository(
-    private val context: Context,
-    private val api: AladhanApi
+    private val context: Context
 ) {
 
     private val cacheDir: File by lazy {
@@ -37,22 +44,20 @@ class TafsirRepository(
         // Try cache first
         if (cacheFile.exists()) {
             try {
-                return@withContext cacheFile.readText()
+                val cached = cacheFile.readText()
+                if (cached.isNotBlank()) return@withContext cached
             } catch (_: Exception) { /* fall through */ }
         }
 
         // Otherwise fetch from API
         try {
-            // Use AlQuran.cloud ayah endpoint
-            // https://api.alquran.cloud/v1/ayah/{surah}:{ayah}/{edition}
-            val url = "https://api.alquran.cloud/v1/ayah/${surah}:${ayah}/${editionId}/quran-uthmani"
-            val response = fetchFromApi(url)
-            if (response != null) {
-                try {
-                    cacheFile.writeText(response)
-                } catch (_: Exception) { /* best-effort */ }
-            }
-            response
+            val url = "https://api.alquran.cloud/v1/ayah/${surah}:${ayah}/${editionId}"
+            val response = fetchFromApi(url) ?: return@withContext null
+            // Parse JSON response
+            val tafsirText = parseAyahTafsir(response) ?: return@withContext null
+            // Cache
+            try { cacheFile.writeText(tafsirText) } catch (_: Exception) {}
+            tafsirText
         } catch (_: Exception) {
             null
         }
@@ -66,7 +71,6 @@ class TafsirRepository(
         surah: Int,
         editionId: String
     ): List<SurahAyahTafsir>? = withContext(Dispatchers.IO) {
-        // Check cache first
         val cacheFile = File(cacheDir, "surah_${editionId}_${surah}.json")
         if (cacheFile.exists()) {
             try {
@@ -76,11 +80,9 @@ class TafsirRepository(
             } catch (_: Exception) { /* fall through */ }
         }
 
-        // Fetch
         try {
             val url = "https://api.alquran.cloud/v1/surah/${surah}/${editionId}"
-            val text = fetchRawFromApi(url) ?: return@withContext null
-            // Cache
+            val text = fetchFromApi(url) ?: return@withContext null
             try { cacheFile.writeText(text) } catch (_: Exception) {}
             parseSurahResponse(text, editionId)
         } catch (_: Exception) {
@@ -99,20 +101,32 @@ class TafsirRepository(
 
     // ─── Internals ────────────────────────────────────────────────────────
 
-    private suspend fun fetchFromApi(url: String): String? = withContext(Dispatchers.IO) {
-        try {
-            val conn = java.net.URL(url).openConnection() as java.net.HttpURLConnection
+    private fun fetchFromApi(url: String): String? {
+        return try {
+            val conn = URL(url).openConnection() as HttpURLConnection
             conn.connectTimeout = 15000
             conn.readTimeout = 20000
             conn.setRequestProperty("User-Agent", "islamichub/1.0")
+            conn.requestMethod = "GET"
             conn.connect()
             if (conn.responseCode in 200..299) {
                 conn.inputStream.bufferedReader().use { it.readText() }
-            } else null
-        } catch (_: Exception) { null }
+            } else {
+                null
+            }
+        } catch (_: Exception) {
+            null
+        }
     }
 
-    private suspend fun fetchRawFromApi(url: String): String? = fetchFromApi(url)
+    private fun parseAyahTafsir(json: String): String? {
+        return try {
+            val gson = com.google.gson.Gson()
+            val tree = gson.fromJson(json, com.google.gson.JsonObject::class.java)
+            val data = tree?.getAsJsonObject("data") ?: return null
+            data.get("text")?.asString
+        } catch (_: Exception) { null }
+    }
 
     private fun parseSurahResponse(text: String, editionId: String): List<SurahAyahTafsir>? {
         return try {

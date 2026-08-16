@@ -24,7 +24,8 @@ data class QuranReaderUiState(
     val showArabic: Boolean = true,
     val showBangla: Boolean = true,
     val showEnglish: Boolean = true,
-    val selectedReciterId: String = "ar.alafasy"
+    val selectedReciterId: String = "ar.alafasy",
+    val selectedReciterName: String = "Mishary Rashid Alafasy"
 )
 
 class QuranReaderViewModel(
@@ -101,7 +102,13 @@ class QuranReaderViewModel(
         }
         viewModelScope.launch {
             container.settingsRepository.selectedReciter.collect { id ->
-                _state.value = _state.value.copy(selectedReciterId = id)
+                val reciter = AudioController.availableRecitersStatic.firstOrNull {
+                    it.editionId == id
+                } ?: AudioController.availableRecitersStatic.first()
+                _state.value = _state.value.copy(
+                    selectedReciterId = id,
+                    selectedReciterName = reciter.displayName
+                )
             }
         }
     }

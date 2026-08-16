@@ -2,6 +2,7 @@ package com.islamichub.app.ui.screens.quran
 
 import android.content.Intent
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,10 +22,10 @@ import androidx.compose.material.icons.filled.BookmarkBorder
 import androidx.compose.material.icons.filled.GraphicEq
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Pause
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Stop
-import androidx.compose.material.icons.outlined.MenuBook
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -54,7 +55,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.islamichub.app.R
 import com.islamichub.app.data.AppContainer
 import com.islamichub.app.data.model.Ayah
@@ -71,6 +71,8 @@ fun QuranReaderScreen(
     val state by vm.state.collectAsState()
     val context = LocalContext.current
     var showTafsirFor by remember { mutableStateOf<Int?>(null) }
+    var showQariSelector by remember { mutableStateOf(false) }
+    var showWordByWordFor by remember { mutableStateOf<Int?>(null) }
 
     Scaffold(
         topBar = {
@@ -95,6 +97,11 @@ fun QuranReaderScreen(
                     }
                 },
                 actions = {
+                    // Qari selector button
+                    IconButton(onClick = { showQariSelector = true }) {
+                        Icon(Icons.Filled.Person, contentDescription = "Select reciter")
+                    }
+                    // Play full surah
                     if (state.surah != null) {
                         IconButton(onClick = { vm.playSurah() }) {
                             Icon(Icons.Filled.GraphicEq, contentDescription = "Play full surah")
@@ -147,13 +154,53 @@ fun QuranReaderScreen(
                     contentPadding = PaddingValues(16.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
+                    // Reciter banner
+                    item {
+                        Surface(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(12.dp),
+                            color = MaterialTheme.colorScheme.secondaryContainer
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable { showQariSelector = true }
+                                    .padding(12.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Filled.Person,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.onSecondaryContainer
+                                )
+                                Text(
+                                    text = "কারী: ",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSecondaryContainer
+                                )
+                                Text(
+                                    text = state.selectedReciterName,
+                                    style = MaterialTheme.typography.titleSmall,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = MaterialTheme.colorScheme.onSecondaryContainer
+                                )
+                                Text(
+                                    text = "  (পরিবর্তন করুন)",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f)
+                                )
+                            }
+                        }
+                    }
+
                     // Audio playback bar
                     if (state.isPlayingAudio || state.isLoadingAudio || state.currentPlayingAyah != null) {
                         item {
                             AudioPlaybackBar(
                                 isLoading = state.isLoadingAudio,
                                 isPlaying = state.isPlayingAudio,
-                                ayahLabel = state.currentPlayingAyah?.let { "Ayah $it" } ?: "Full surah",
+                                ayahLabel = state.currentPlayingAyah?.let { "আয়াত $it" } ?: "সম্পূর্ণ সূরা",
                                 onPlayPause = { vm.toggleAudio() },
                                 onStop = { vm.stopAudio() }
                             )
@@ -189,7 +236,7 @@ fun QuranReaderScreen(
                                     color = MaterialTheme.colorScheme.onPrimaryContainer
                                 )
                                 Text(
-                                    text = "${surah.revelationType.label} • ${surah.ayahCount} ayahs",
+                                    text = "${surah.revelationType.label} • ${surah.ayahCount} আয়াত",
                                     style = MaterialTheme.typography.labelMedium,
                                     color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
                                 )
@@ -221,18 +268,19 @@ fun QuranReaderScreen(
                             onPlayAyah = { vm.playAyah(ayah.numberInSurah) },
                             onToggleBookmark = { vm.toggleBookmark(ayah.numberInSurah) },
                             onShowTafsir = { showTafsirFor = ayah.numberInSurah },
+                            onShowWordByWord = { showWordByWordFor = ayah.numberInSurah },
                             onShareAyah = {
                                 val shareIntent = Intent(Intent.ACTION_SEND).apply {
                                     type = "text/plain"
                                     putExtra(Intent.EXTRA_TEXT,
-                                        "${surah.nameEnglish} (${surah.englishMeaning}) — ${ayah.numberInSurah}:\n\n" +
+                                        "${surah.nameEnglish} (${surah.englishMeaning}) — আয়াত ${ayah.numberInSurah}:\n\n" +
                                         "${ayah.arabic}\n\n" +
-                                        "Bengali: ${ayah.bengali}\n\n" +
+                                        "বাংলা: ${ayah.bengali}\n\n" +
                                         "English: ${ayah.english}\n\n" +
-                                        "— Shared via Islamic Hub"
+                                        "— Islamic Hub থেকে শেয়ার করা হয়েছে"
                                     )
                                 }
-                                context.startActivity(Intent.createChooser(shareIntent, "Share Ayah"))
+                                context.startActivity(Intent.createChooser(shareIntent, "আয়াত শেয়ার করুন"))
                             }
                         )
                     }
@@ -248,6 +296,26 @@ fun QuranReaderScreen(
             surah = surahNumber,
             ayah = ayah,
             onDismiss = { showTafsirFor = null }
+        )
+    }
+
+    // Word-by-word bottom sheet
+    showWordByWordFor?.let { ayah ->
+        val ayahObj = state.surah?.ayahs?.firstOrNull { it.numberInSurah == ayah }
+        if (ayahObj != null) {
+            WordByWordBottomSheet(
+                ayah = ayahObj,
+                onPlayAudio = { vm.playAyah(ayah) },
+                onDismiss = { showWordByWordFor = null }
+            )
+        }
+    }
+
+    // Qari selector sheet
+    if (showQariSelector) {
+        QariSelectorSheet(
+            container = container,
+            onDismiss = { showQariSelector = false }
         )
     }
 }
@@ -287,7 +355,7 @@ private fun AudioPlaybackBar(
             }
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = if (isLoading) "Buffering…" else if (isPlaying) "Playing" else "Paused",
+                    text = if (isLoading) "বাফার হচ্ছে…" else if (isPlaying) "চলছে" else "বিরতি",
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSecondaryContainer
                 )
@@ -324,6 +392,7 @@ private fun AyahCard(
     onPlayAyah: () -> Unit,
     onToggleBookmark: () -> Unit,
     onShowTafsir: () -> Unit,
+    onShowWordByWord: () -> Unit,
     onShareAyah: () -> Unit
 ) {
     var showMenu by remember { mutableStateOf(false) }
@@ -361,14 +430,14 @@ private fun AyahCard(
                     IconButton(onClick = onPlayAyah, modifier = Modifier.size(36.dp)) {
                         Icon(
                             imageVector = Icons.Filled.PlayArrow,
-                            contentDescription = "Play ayah",
+                            contentDescription = "আয়াত চালান",
                             tint = MaterialTheme.colorScheme.primary
                         )
                     }
                     IconButton(onClick = onToggleBookmark, modifier = Modifier.size(36.dp)) {
                         Icon(
                             imageVector = if (isBookmarked) Icons.Filled.Bookmark else Icons.Filled.BookmarkBorder,
-                            contentDescription = "Bookmark",
+                            contentDescription = "বুকমার্ক",
                             tint = if (isBookmarked) MaterialTheme.colorScheme.primary
                                    else MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -377,7 +446,7 @@ private fun AyahCard(
                         IconButton(onClick = { showMenu = true }, modifier = Modifier.size(36.dp)) {
                             Icon(
                                 imageVector = Icons.Filled.MoreVert,
-                                contentDescription = "More",
+                                contentDescription = "আরও",
                                 tint = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
@@ -386,20 +455,25 @@ private fun AyahCard(
                             onDismissRequest = { showMenu = false }
                         ) {
                             DropdownMenuItem(
+                                text = { Text(stringResource(R.string.action_word_by_word)) },
+                                onClick = {
+                                    showMenu = false
+                                    onShowWordByWord()
+                                }
+                            )
+                            DropdownMenuItem(
                                 text = { Text(stringResource(R.string.action_tafsir)) },
                                 onClick = {
                                     showMenu = false
                                     onShowTafsir()
-                                },
-                                leadingIcon = { Icon(Icons.Outlined.MenuBook, contentDescription = null) }
+                                }
                             )
                             DropdownMenuItem(
                                 text = { Text(stringResource(R.string.action_share)) },
                                 onClick = {
                                     showMenu = false
                                     onShareAyah()
-                                },
-                                leadingIcon = { Icon(Icons.Filled.Share, contentDescription = null) }
+                                }
                             )
                         }
                     }
