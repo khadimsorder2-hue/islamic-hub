@@ -1,5 +1,7 @@
+import java.util.Base64
 import java.util.Properties
 import java.io.FileInputStream
+import java.io.File
 
 plugins {
     id("com.android.application")
@@ -42,9 +44,8 @@ android {
                 // CI mode — decode keystore from env var
                 val ksFile = rootProject.file("keystore/decoded-release.keystore")
                 ksFile.parentFile.mkdirs()
-                ksFile.writeBytes(
-                    java.util.Base64.getDecoder().decode(System.getenv("KEYSTORE_BASE64"))
-                )
+                val decoded = Base64.getDecoder().decode(System.getenv("KEYSTORE_BASE64"))
+                ksFile.writeBytes(decoded)
                 storeFile = ksFile
                 storePassword = System.getenv("STORE_PASSWORD")
                 keyAlias = System.getenv("KEY_ALIAS")
