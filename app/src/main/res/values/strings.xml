@@ -213,6 +213,25 @@
     <string name="more_khatam">Quran Khatam</string>
     <string name="more_settings">Settings</string>
     <string name="more_profile">Profile</string>
+    <string name="more_misconceptions">Misconceptions</string>
+    <string name="more_namaz_shikkha">Namaz Learning</string>
+    <string name="more_namaz_extras">Extra Prayers</string>
+    <string name="more_ai_scholar">AI Scholar</string>
+    <string name="more_tajweed">Tajweed Checker</string>
+    <string name="more_scanner">AI Scanner</string>
+    <string name="more_stories">Islamic Stories</string>
+    <string name="more_kalima">Six Kalimas</string>
+    <string name="more_qa">Q&A</string>
+
+    <!-- AI Settings -->
+    <string name="settings_ai_scholar">AI Scholar</string>
+    <string name="settings_ai_api_key">AI API Key</string>
+    <string name="settings_ai_base_url">AI Base URL</string>
+    <string name="settings_ai_model">AI Model</string>
+    <string name="settings_ai_configured">AI configured</string>
+    <string name="settings_ai_not_configured">AI not configured — set API key to use</string>
+    <string name="settings_firebase">Firebase</string>
+    <string name="settings_firebase_enabled">Enable Firebase</string>
 
     <!-- Word-by-word -->
     <string name="word_by_word_title">Word by Word</string>

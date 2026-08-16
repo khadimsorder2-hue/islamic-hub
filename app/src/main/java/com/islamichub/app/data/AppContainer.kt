@@ -8,14 +8,17 @@ import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import com.islamichub.app.data.local.ContentAssetSource
 import com.islamichub.app.data.local.DuaData
 import com.islamichub.app.data.local.HadithAssetSource
 import com.islamichub.app.data.local.NamesData
 import com.islamichub.app.data.local.QuranAssetSource
 import com.islamichub.app.data.local.QuranData
 import com.islamichub.app.data.remote.AladhanApi
+import com.islamichub.app.data.repo.AIService
 import com.islamichub.app.data.repo.AudioController
 import com.islamichub.app.data.repo.BookmarkRepository
+import com.islamichub.app.data.repo.ContentRepository
 import com.islamichub.app.data.repo.DuaRepository
 import com.islamichub.app.data.repo.HadithRepository
 import com.islamichub.app.data.repo.KhatamRepository
@@ -66,17 +69,20 @@ class AppContainer(private val context: Context) {
 
     private val quranAssetSource: QuranAssetSource by lazy { QuranAssetSource(context) }
     private val hadithAssetSource: HadithAssetSource by lazy { HadithAssetSource(context) }
+    private val contentAssetSource: ContentAssetSource by lazy { ContentAssetSource(context) }
 
     val quranRepository: QuranRepository by lazy {
         QuranRepository(QuranData, quranAssetSource)
     }
     val hadithRepository: HadithRepository by lazy { HadithRepository(hadithAssetSource) }
+    val contentRepository: ContentRepository by lazy { ContentRepository(contentAssetSource) }
     val namesRepository: NamesRepository by lazy { NamesRepository(NamesData.names) }
     val duaRepository: DuaRepository by lazy { DuaRepository(DuaData.duas, DuaData.dhikrOptions) }
     val prayerRepository: PrayerRepository by lazy { PrayerRepository(aladhanApi, context) }
     val tasbihRepository: TasbihRepository by lazy { TasbihRepository(context) }
     val audioController: AudioController by lazy { AudioController(context) }
     val prayerScheduler: PrayerScheduler by lazy { PrayerScheduler(context, prayerRepository) }
+    val aiService: AIService by lazy { AIService(context) }
 
     // New v1.2.0 repositories
     val bookmarkRepository: BookmarkRepository by lazy { BookmarkRepository(context) }

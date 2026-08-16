@@ -236,6 +236,74 @@ fun SettingsScreen(
                 }
             }
 
+            // ─── AI Scholar ───────────────────────────────────────────
+            item {
+                SettingsSection(title = stringResource(R.string.settings_ai_scholar)) {
+                    // API Key
+                    OutlinedTextField(
+                        value = state.aiApiKey,
+                        onValueChange = vm::setAiApiKey,
+                        label = { Text(stringResource(R.string.settings_ai_api_key)) },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp)
+                    )
+                    Spacer(8.dp)
+                    // Base URL
+                    OutlinedTextField(
+                        value = state.aiBaseUrl,
+                        onValueChange = vm::setAiBaseUrl,
+                        label = { Text(stringResource(R.string.settings_ai_base_url)) },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp)
+                    )
+                    Spacer(8.dp)
+                    // Model
+                    OutlinedTextField(
+                        value = state.aiModel,
+                        onValueChange = vm::setAiModel,
+                        label = { Text(stringResource(R.string.settings_ai_model)) },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp)
+                    )
+                    Spacer(8.dp)
+                    Text(
+                        text = if (state.aiApiKey.isNotBlank())
+                            "✓ " + stringResource(R.string.settings_ai_configured)
+                            else stringResource(R.string.settings_ai_not_configured),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = if (state.aiApiKey.isNotBlank())
+                            MaterialTheme.colorScheme.primary
+                            else MaterialTheme.colorScheme.error
+                    )
+                    Spacer(8.dp)
+                    Text(
+                        text = "Supported: OpenAI (gpt-4o-mini), OpenRouter (any model), Gemini (via OpenAI-compatible endpoint), Anthropic Claude, custom OpenAI-compatible APIs.",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+
+            // ─── Firebase ─────────────────────────────────────────────
+            item {
+                SettingsSection(title = stringResource(R.string.settings_firebase)) {
+                    ToggleRow(
+                        label = stringResource(R.string.settings_firebase_enabled),
+                        checked = state.firebaseEnabled,
+                        onCheckedChange = vm::setFirebaseEnabled
+                    )
+                    Spacer(8.dp)
+                    Text(
+                        text = "Firebase চালু করলে আপনার app-এ analytics, crash reporting এবং remote config কাজ করবে।",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+
             // ─── Cache ────────────────────────────────────────────────
             item {
                 SettingsSection(title = stringResource(R.string.settings_cache)) {

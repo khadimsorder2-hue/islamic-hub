@@ -15,6 +15,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.Book
 import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.CompassCalibration
@@ -23,6 +24,7 @@ import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.MenuBook
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Spa
 import androidx.compose.material3.Card
@@ -63,7 +65,17 @@ fun MoreScreen(
         MoreItem(R.string.more_bookmarks, Icons.Filled.Bookmark, Screen.Bookmarks.route),
         MoreItem(R.string.more_khatam, Icons.Filled.MenuBook, Screen.Khatam.route),
         MoreItem(R.string.more_profile, Icons.Filled.Person, Screen.Profile.route),
-        MoreItem(R.string.more_settings, Icons.Filled.Settings, Screen.Settings.route)
+        MoreItem(R.string.more_settings, Icons.Filled.Settings, Screen.Settings.route),
+        // v1.3.0 new screens
+        MoreItem(R.string.more_misconceptions, Icons.Filled.MenuBook, Screen.Misconceptions.route),
+        MoreItem(R.string.more_namaz_shikkha, Icons.Filled.MenuBook, Screen.NamazShikkha.route),
+        MoreItem(R.string.more_namaz_extras, Icons.Filled.MenuBook, Screen.NamazExtras.route),
+        MoreItem(R.string.more_ai_scholar, Icons.Filled.Bolt, Screen.AiScholar.route),
+        MoreItem(R.string.more_tajweed, Icons.Filled.MenuBook, Screen.TajweedChecker.route),
+        MoreItem(R.string.more_scanner, Icons.Filled.PhotoLibrary, Screen.Scanner.route),
+        MoreItem(R.string.more_stories, Icons.Filled.Book, Screen.Stories.route),
+        MoreItem(R.string.more_kalima, Icons.Filled.Book, Screen.Kalima.route),
+        MoreItem(R.string.more_qa, Icons.Filled.MenuBook, Screen.Qa.route)
     )
 
     Scaffold(

@@ -96,6 +96,20 @@ class SettingsRepository(private val context: Context) {
     // User profile (name)
     val userName: Flow<String> = context.settingsStore.data.map { it[USER_NAME] ?: "" }
 
+    // AI Scholar config
+    val aiApiKey: Flow<String> = context.settingsStore.data.map { it[AI_API_KEY] ?: "" }
+    val aiBaseUrl: Flow<String> = context.settingsStore.data.map {
+        it[AI_BASE_URL] ?: "https://api.openai.com/v1"
+    }
+    val aiModel: Flow<String> = context.settingsStore.data.map {
+        it[AI_MODEL] ?: "gpt-4o-mini"
+    }
+
+    // Firebase config (user can paste google-services.json content)
+    val firebaseEnabled: Flow<Boolean> = context.settingsStore.data.map {
+        it[FIREBASE_ENABLED] ?: false
+    }
+
     suspend fun setQuranFontScale(scale: Float) = withContext(Dispatchers.IO) {
         context.settingsStore.edit { it[FONT_SCALE] = scale.coerceIn(0.7f, 2.0f) }
     }
@@ -148,6 +162,21 @@ class SettingsRepository(private val context: Context) {
         context.settingsStore.edit { it[USER_NAME] = name }
     }
 
+    // AI Scholar settings
+    suspend fun setAiApiKey(key: String) = withContext(Dispatchers.IO) {
+        context.settingsStore.edit { it[AI_API_KEY] = key }
+    }
+    suspend fun setAiBaseUrl(url: String) = withContext(Dispatchers.IO) {
+        context.settingsStore.edit { it[AI_BASE_URL] = url }
+    }
+    suspend fun setAiModel(model: String) = withContext(Dispatchers.IO) {
+        context.settingsStore.edit { it[AI_MODEL] = model }
+    }
+
+    suspend fun setFirebaseEnabled(enabled: Boolean) = withContext(Dispatchers.IO) {
+        context.settingsStore.edit { it[FIREBASE_ENABLED] = enabled }
+    }
+
     suspend fun clearCache() = withContext(Dispatchers.IO) {
         // Clear tafsir cache directory
         val tafsirDir = context.filesDir.resolve("tafsir_cache")
@@ -170,5 +199,9 @@ class SettingsRepository(private val context: Context) {
         private val SHOW_ENGLISH = booleanPreferencesKey("show_english")
         private val ONBOARDING_DONE = booleanPreferencesKey("onboarding_done")
         private val USER_NAME = stringPreferencesKey("user_name")
+        private val AI_API_KEY = stringPreferencesKey("ai_api_key")
+        private val AI_BASE_URL = stringPreferencesKey("ai_base_url")
+        private val AI_MODEL = stringPreferencesKey("ai_model")
+        private val FIREBASE_ENABLED = booleanPreferencesKey("firebase_enabled")
     }
 }

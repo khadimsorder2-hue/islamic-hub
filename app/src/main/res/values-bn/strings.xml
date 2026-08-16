@@ -213,6 +213,25 @@
     <string name="more_khatam">কুরআন খতম</string>
     <string name="more_settings">সেটিংস</string>
     <string name="more_profile">প্রোফাইল</string>
+    <string name="more_misconceptions">ভুল বোঝাবুঝি</string>
+    <string name="more_namaz_shikkha">নামাজ শিক্ষা</string>
+    <string name="more_namaz_extras">অতিরিক্ত নামাজ</string>
+    <string name="more_ai_scholar">AI স্কলার</string>
+    <string name="more_tajweed">তাজবীদ চেকার</string>
+    <string name="more_scanner">AI স্ক্যানার</string>
+    <string name="more_stories">ইসলামিক গল্প</string>
+    <string name="more_kalima">৬ কালিমা</string>
+    <string name="more_qa">প্রশ্ন-উত্তর</string>
+
+    <!-- AI Settings -->
+    <string name="settings_ai_scholar">AI স্কলার</string>
+    <string name="settings_ai_api_key">AI API Key</string>
+    <string name="settings_ai_base_url">AI Base URL</string>
+    <string name="settings_ai_model">AI Model</string>
+    <string name="settings_ai_configured">AI কনফিগারড</string>
+    <string name="settings_ai_not_configured">AI কনফিগার করা নেই — API key দিন</string>
+    <string name="settings_firebase">Firebase</string>
+    <string name="settings_firebase_enabled">Firebase চালু করুন</string>
 
     <!-- Word-by-word -->
     <string name="word_by_word_title">শব্দে শব্দে</string>

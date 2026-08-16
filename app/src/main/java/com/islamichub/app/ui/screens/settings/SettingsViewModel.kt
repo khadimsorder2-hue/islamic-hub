@@ -24,7 +24,11 @@ data class SettingsUiState(
     val showArabic: Boolean = true,
     val showBangla: Boolean = true,
     val showEnglish: Boolean = true,
-    val cacheSizeBytes: Long = 0L
+    val cacheSizeBytes: Long = 0L,
+    val aiApiKey: String = "",
+    val aiBaseUrl: String = "https://api.openai.com/v1",
+    val aiModel: String = "gpt-4o-mini",
+    val firebaseEnabled: Boolean = false
 )
 
 class SettingsViewModel(private val container: AppContainer) : ViewModel() {
@@ -46,6 +50,10 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
             val showBn = container.settingsRepository.showBangla.first()
             val showEn = container.settingsRepository.showEnglish.first()
             val cacheSize = container.tafsirRepository.cacheSizeBytes()
+            val aiKey = container.settingsRepository.aiApiKey.first()
+            val aiUrl = container.settingsRepository.aiBaseUrl.first()
+            val aiModel = container.settingsRepository.aiModel.first()
+            val firebase = container.settingsRepository.firebaseEnabled.first()
 
             _state.value = SettingsUiState(
                 quranFontScale = fontScale,
@@ -58,8 +66,58 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
                 showArabic = showAr,
                 showBangla = showBn,
                 showEnglish = showEn,
-                cacheSizeBytes = cacheSize
+                cacheSizeBytes = cacheSize,
+                aiApiKey = aiKey,
+                aiBaseUrl = aiUrl,
+                aiModel = aiModel,
+                firebaseEnabled = firebase
             )
+        }
+    }
+
+    fun setAiApiKey(key: String) {
+        viewModelScope.launch {
+            container.settingsRepository.setAiApiKey(key)
+            _state.value = _state.value.copy(aiApiKey = key)
+            container.aiService.updateConfig(
+                com.islamichub.app.data.repo.AIService.Config(
+                    apiKey = key,
+                    baseUrl = _state.value.aiBaseUrl,
+                    model = _state.value.aiModel
+                )
+            )
+        }
+    }
+    fun setAiBaseUrl(url: String) {
+        viewModelScope.launch {
+            container.settingsRepository.setAiBaseUrl(url)
+            _state.value = _state.value.copy(aiBaseUrl = url)
+            container.aiService.updateConfig(
+                com.islamichub.app.data.repo.AIService.Config(
+                    apiKey = _state.value.aiApiKey,
+                    baseUrl = url,
+                    model = _state.value.aiModel
+                )
+            )
+        }
+    }
+    fun setAiModel(model: String) {
+        viewModelScope.launch {
+            container.settingsRepository.setAiModel(model)
+            _state.value = _state.value.copy(aiModel = model)
+            container.aiService.updateConfig(
+                com.islamichub.app.data.repo.AIService.Config(
+                    apiKey = _state.value.aiApiKey,
+                    baseUrl = _state.value.aiBaseUrl,
+                    model = model
+                )
+            )
+        }
+    }
+    fun setFirebaseEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            container.settingsRepository.setFirebaseEnabled(enabled)
+            _state.value = _state.value.copy(firebaseEnabled = enabled)
         }
     }
 

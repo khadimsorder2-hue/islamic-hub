@@ -246,6 +246,55 @@ fun IslamicHubNavGraph(container: AppContainer) {
                     onShowQariSelector = { showQariSelector = true }
                 )
             }
+
+            // v1.3.0 screens
+            composable(Screen.Misconceptions.route) {
+                com.islamichub.app.ui.screens.misconceptions.MisconceptionsScreen(
+                    container = container, onBack = { navController.popBackStack() }
+                )
+            }
+            composable(Screen.NamazShikkha.route) {
+                com.islamichub.app.ui.screens.namaz.NamazShikkhaScreen(
+                    container = container, onBack = { navController.popBackStack() }
+                )
+            }
+            composable(Screen.NamazExtras.route) {
+                com.islamichub.app.ui.screens.namaz_extras.NamazExtrasScreen(
+                    container = container, onBack = { navController.popBackStack() }
+                )
+            }
+            composable(Screen.AiScholar.route) {
+                com.islamichub.app.ui.screens.ai_scholar.AiScholarScreen(
+                    container = container,
+                    onBack = { navController.popBackStack() },
+                    onNavigateToSettings = { navController.navigate(Screen.Settings.route) }
+                )
+            }
+            composable(Screen.TajweedChecker.route) {
+                com.islamichub.app.ui.screens.tajweed.TajweedCheckerScreen(
+                    container = container, onBack = { navController.popBackStack() }
+                )
+            }
+            composable(Screen.Scanner.route) {
+                com.islamichub.app.ui.screens.scanner.ScannerScreen(
+                    container = container, onBack = { navController.popBackStack() }
+                )
+            }
+            composable(Screen.Stories.route) {
+                com.islamichub.app.ui.screens.stories.StoriesScreen(
+                    container = container, onBack = { navController.popBackStack() }
+                )
+            }
+            composable(Screen.Kalima.route) {
+                com.islamichub.app.ui.screens.kalima.KalimaScreen(
+                    container = container, onBack = { navController.popBackStack() }
+                )
+            }
+            composable(Screen.Qa.route) {
+                com.islamichub.app.ui.screens.qa.QaScreen(
+                    container = container, onBack = { navController.popBackStack() }
+                )
+            }
         }
     }
 

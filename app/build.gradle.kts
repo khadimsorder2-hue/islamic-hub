@@ -24,8 +24,8 @@ android {
         applicationId = "com.islamichub.app"
         minSdk = 24
         targetSdk = 34
-        versionCode = 3
-        versionName = "1.2.0"
+        versionCode = 4
+        versionName = "1.3.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -167,6 +167,7 @@ dependencies {
     implementation("androidx.media3:media3-ui:1.3.1")
     implementation("androidx.media3:media3-session:1.3.1")
     implementation("androidx.media3:media3-common:1.3.1")
+    implementation("androidx.media3:media3-datasource:1.3.1")
 
     // Debug
     debugImplementation("androidx.compose.ui:ui-tooling")

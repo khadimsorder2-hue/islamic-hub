@@ -48,6 +48,17 @@ sealed class Screen(val route: String) {
     // Trackers
     data object Qada : Screen("qada")
     data object Tracker : Screen("tracker")
+
+    // New v1.3.0 screens
+    data object Misconceptions : Screen("misconceptions")
+    data object NamazShikkha : Screen("namaz_shikkha")
+    data object NamazExtras : Screen("namaz_extras")
+    data object AiScholar : Screen("ai_scholar")
+    data object TajweedChecker : Screen("tajweed_checker")
+    data object Scanner : Screen("scanner")
+    data object Stories : Screen("stories")
+    data object Kalima : Screen("kalima")
+    data object Qa : Screen("qa")
 }
 
 data class BottomNavItem(
