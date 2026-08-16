@@ -16,7 +16,6 @@ import com.islamichub.app.data.repo.DuaRepository
 import com.islamichub.app.data.repo.NamesRepository
 import com.islamichub.app.data.repo.PrayerRepository
 import com.islamichub.app.data.repo.QuranRepository
-import com.islamichub.app.data.repo.TasbihRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import okhttp3.OkHttpClient

@@ -39,6 +39,19 @@ fun PrayerScreen(container: AppContainer) {
     val vm = remember { PrayerViewModel(container) }
     val state by vm.state.collectAsState()
 
+    // Hoist stringResource() calls out of the LazyColumn content lambda — the
+    // LazyListScope receiver does not provide a @Composable scope, so composable
+    // invocations must happen at the function-body level.
+    val fajrName = stringResource(R.string.prayer_fajr)
+    val sunriseName = stringResource(R.string.prayer_sunrise)
+    val dhuhrName = stringResource(R.string.prayer_dhuhr)
+    val asrName = stringResource(R.string.prayer_asr)
+    val maghribName = stringResource(R.string.prayer_maghrib)
+    val ishaName = stringResource(R.string.prayer_isha)
+    val locationFallback = stringResource(R.string.prayer_location)
+    val loadingText = stringResource(R.string.prayer_loading)
+    val errorText = stringResource(R.string.prayer_error)
+
     LazyColumn(
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -62,7 +75,7 @@ fun PrayerScreen(container: AppContainer) {
                         modifier = Modifier.size(16.dp)
                     )
                     Text(
-                        text = state.times?.locationName ?: stringResource(R.string.prayer_location),
+                        text = state.times?.locationName ?: locationFallback,
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -86,7 +99,7 @@ fun PrayerScreen(container: AppContainer) {
                         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
                     ) {
                         Text(
-                            text = stringResource(R.string.prayer_loading),
+                            text = loadingText,
                             modifier = Modifier.padding(24.dp)
                         )
                     }
@@ -96,12 +109,12 @@ fun PrayerScreen(container: AppContainer) {
                 val t = state.times
                 if (t != null) {
                     val rows = listOf(
-                        Triple(stringResource(R.string.prayer_fajr), t.fajr, true),
-                        Triple(stringResource(R.string.prayer_sunrise), t.sunrise, false),
-                        Triple(stringResource(R.string.prayer_dhuhr), t.dhuhr, true),
-                        Triple(stringResource(R.string.prayer_asr), t.asr, true),
-                        Triple(stringResource(R.string.prayer_maghrib), t.maghrib, true),
-                        Triple(stringResource(R.string.prayer_isha), t.isha, true)
+                        Triple(fajrName, t.fajr, true),
+                        Triple(sunriseName, t.sunrise, false),
+                        Triple(dhuhrName, t.dhuhr, true),
+                        Triple(asrName, t.asr, true),
+                        Triple(maghribName, t.maghrib, true),
+                        Triple(ishaName, t.isha, true)
                     )
                     items(rows, key = { it.first }) { row ->
                         PrayerRow(name = row.first, time = row.second, isFard = row.third)
@@ -115,7 +128,7 @@ fun PrayerScreen(container: AppContainer) {
                             color = MaterialTheme.colorScheme.errorContainer
                         ) {
                             Text(
-                                text = stringResource(R.string.prayer_error) + "\n($err)",
+                                text = "$errorText\n($err)",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onErrorContainer,
                                 modifier = Modifier.padding(16.dp)
