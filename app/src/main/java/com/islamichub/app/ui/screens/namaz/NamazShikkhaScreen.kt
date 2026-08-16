@@ -39,6 +39,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -51,6 +52,7 @@ import androidx.compose.ui.unit.dp
 import androidx.media3.common.MediaItem
 import androidx.media3.exoplayer.ExoPlayer
 import com.islamichub.app.data.AppContainer
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -62,6 +64,7 @@ fun NamazShikkhaScreen(
     val state by vm.state.collectAsState()
     val context = LocalContext.current
     val exoPlayer = remember { ExoPlayer.Builder(context).build() }
+    val coroutineScope = rememberCoroutineScope()
     var showMistakes by remember { mutableStateOf(false) }
     var aiAnswer by remember { mutableStateOf<String?>(null) }
     var aiLoading by remember { mutableStateOf(false) }
@@ -230,7 +233,7 @@ fun NamazShikkhaScreen(
                                 aiLoading = true
                                 aiAnswer = null
                                 val prompt = "${prayer.nameBn} নামাজে সাধারণ ভুলগুলো কী কী এবং কীভাবে ঠিক করা যায়? ${state.selectedMadhhab} মাযহাব অনুযায়ী বলুন।"
-                                kotlinx.coroutines.GlobalScope.launch {
+                                coroutineScope.launch {
                                     val result = container.aiService.ask(prompt)
                                     aiLoading = false
                                     if (result.error == null) {

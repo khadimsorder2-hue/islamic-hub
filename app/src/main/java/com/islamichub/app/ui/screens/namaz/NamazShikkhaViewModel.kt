@@ -5,18 +5,16 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import com.islamichub.app.data.AppContainer
-import com.islamichub.app.data.local.NamazShikkhaData
-import com.islamichub.app.data.local.NamazStep
 
 data class NamazShikkhaUiState(
-    val data: NamazShikkhaData? = null,
+    val isLoading: Boolean = true,
     val selectedMadhhab: String = "হানাফী",
     val selectedGender: String = "পুরুষ",
     val selectedPrayer: String = "fajr",
-    val isLoading: Boolean = true,
-    val error: String? = null
+    val apiKeyConfigured: Boolean = false
 )
 
 class NamazShikkhaViewModel(private val container: AppContainer) : ViewModel() {
@@ -27,17 +25,11 @@ class NamazShikkhaViewModel(private val container: AppContainer) : ViewModel() {
 
     private fun load() {
         viewModelScope.launch {
-            try {
-                val data = container.contentRepository.loadNamazShikkha()
-                _state.value = NamazShikkhaUiState(
-                    data = data,
-                    selectedMadhhab = data.defaultMadhhab ?: "হানাফী",
-                    selectedGender = data.defaultGender ?: "পুরুষ",
-                    isLoading = false
-                )
-            } catch (e: Exception) {
-                _state.value = NamazShikkhaUiState(isLoading = false, error = e.message)
-            }
+            val apiKey = container.settingsRepository.aiApiKey.first()
+            _state.value = NamazShikkhaUiState(
+                isLoading = false,
+                apiKeyConfigured = apiKey.isNotBlank()
+            )
         }
     }
 
