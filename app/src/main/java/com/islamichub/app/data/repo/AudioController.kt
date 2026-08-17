@@ -11,21 +11,19 @@ import androidx.media3.exoplayer.ExoPlayer
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import java.util.UUID
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicReference
 
 /**
  * Single authoritative audio controller for the entire app.
  *
- * Uses Media3 ExoPlayer for tilawat (Quran recitation) streaming.
- * State is exposed as a single StateFlow so any screen can observe
- * playback state without spawning its own player instance.
- *
- * Recitation source: AlQuran.cloud CDN (everyayah.com mirrors) — public.
- *
- * v1.2.0 additions:
- *  - Auto-pause / sleep timer (5/15/30/60 min)
- *  - Bangla meaning audio toggle (read translation after Arabic)
- *  - Khatam player (continuous surah-by-surah playback)
- *  - Per-reciter selection (persisted via SettingsRepository)
+ * v2.1.0 changes:
+ *  - playSurah(): plays ayah-by-ayah sequentially, pauses at surah end
+ *  - Khatam player: ayah-by-ayah across surahs
+ *  - Bangla meaning audio: after Arabic ayah, plays Bangla translation
+ *  - Playback speed: 0.5x–2.0x
+ *  - Repeat mode: repeat current ayah
  */
 class AudioController(private val context: Context) {
 
@@ -34,6 +32,7 @@ class AudioController(private val context: Context) {
         val isLoading: Boolean = false,
         val currentSurah: Int? = null,
         val currentAyah: Int? = null,
+        val totalAyahsInSurah: Int = 0,
         val reciter: String = "Alafasy",
         val error: String? = null,
         val durationMs: Long = 0L,
@@ -41,15 +40,25 @@ class AudioController(private val context: Context) {
         val autoPauseMinutesRemaining: Int = 0,
         val isKhatamMode: Boolean = false,
         val playbackSpeed: Float = 1.0f,
-        val isRepeatMode: Boolean = false
+        val isRepeatMode: Boolean = false,
+        val isPlayingBanglaAudio: Boolean = false,
+        val banglaAudioEnabled: Boolean = false,
+        val mode: PlaybackMode = PlaybackMode.NONE
     )
+
+    enum class PlaybackMode {
+        NONE,           // Not playing
+        SURAH_SEQUENTIAL,  // Play ayah-by-ayah within a surah
+        KHATAM_SEQUENTIAL, // Play ayah-by-ayah across surahs (khatam mode)
+        SINGLE_AYAH,       // Play single ayah only
+        REPEAT_AYAH         // Repeat single ayah
+    }
 
     private val _state = MutableStateFlow(AudioState())
     val state: StateFlow<AudioState> = _state.asStateFlow()
 
     private val handler = Handler(Looper.getMainLooper())
 
-    // AlQuran.cloud audio editions — full surah MP3 stream URLs.
     val availableReciters: List<Reciter> = availableRecitersStatic
 
     private var player: ExoPlayer? = null
@@ -60,13 +69,17 @@ class AudioController(private val context: Context) {
     private var autoPauseEndMs: Long = 0L
     private var autoPauseTick: Runnable? = null
 
-    // Bangla meaning audio toggle
+    // Bangla audio state
     private var banglaAudioEnabled: Boolean = false
+    private var isCurrentlyPlayingBangla: Boolean = false
 
     // Khatam player state
-    private var isKhatamMode: Boolean = false
     private var khatamSurahQueue: List<Int> = emptyList()
-    private var khatamCurrentIndex: Int = 0
+    private var khatamCurrentSurahIndex: Int = 0
+
+    // Surah sequential state
+    private var surahSequentialAyahCount: Int = 0
+    private var surahSequentialCurrentAyah: Int = 0
 
     private val listener = object : Player.Listener {
         override fun onIsLoadingChanged(isLoading: Boolean) {
@@ -90,25 +103,7 @@ class AudioController(private val context: Context) {
                     _state.value = _state.value.copy(isLoading = true)
                 }
                 Player.STATE_ENDED -> {
-                    // If repeat mode, replay current ayah
-                    val state = _state.value
-                    if (state.isRepeatMode && state.currentAyah != null && state.currentSurah != null) {
-                        val surah = state.currentSurah!!
-                        val ayah = state.currentAyah!!
-                        playAyah(surah, ayah, currentReciter)
-                    } else if (isKhatamMode && khatamCurrentIndex < khatamSurahQueue.size - 1) {
-                        khatamCurrentIndex++
-                        val nextSurah = khatamSurahQueue[khatamCurrentIndex]
-                        playSurahInternal(nextSurah, currentReciter)
-                    } else {
-                        _state.value = _state.value.copy(
-                            isPlaying = false,
-                            positionMs = 0L,
-                            currentSurah = null,
-                            currentAyah = null,
-                            isKhatamMode = false
-                        )
-                    }
+                    onAyahEnded()
                 }
                 Player.STATE_IDLE -> {
                     _state.value = _state.value.copy(isLoading = false)
@@ -125,6 +120,98 @@ class AudioController(private val context: Context) {
         }
     }
 
+    /**
+     * Called when current ayah audio finishes (STATE_ENDED).
+     * Logic:
+     * 1. If Bangla audio enabled and we just played Arabic → play Bangla meaning
+     * 2. If repeat mode → replay same ayah
+     * 3. If surah sequential → play next ayah; if last ayah → pause
+     * 4. If khatam sequential → play next ayah; if last ayah of surah → next surah
+     * 5. If single ayah → stop
+     */
+    private fun onAyahEnded() {
+        val state = _state.value
+        val surah = state.currentSurah ?: return
+        val ayah = state.currentAyah ?: return
+
+        // Step 1: If bangla audio enabled and we just played Arabic (not Bangla)
+        if (banglaAudioEnabled && !isCurrentlyPlayingBangla) {
+            // Play Bangla meaning audio for this ayah
+            isCurrentlyPlayingBangla = true
+            _state.value = _state.value.copy(isPlayingBanglaAudio = true)
+            playBanglaAyahAudio(surah, ayah)
+            return
+        }
+
+        // Bangla just finished — reset flag
+        if (isCurrentlyPlayingBangla) {
+            isCurrentlyPlayingBangla = false
+            _state.value = _state.value.copy(isPlayingBanglaAudio = false)
+        }
+
+        // Step 2: Repeat mode — replay same ayah
+        if (state.isRepeatMode) {
+            playAyahAudioInternal(surah, ayah, currentReciter)
+            return
+        }
+
+        // Step 3: Surah sequential — play next ayah
+        when (state.mode) {
+            PlaybackMode.SURAH_SEQUENTIAL -> {
+                if (ayah < surahSequentialAyahCount) {
+                    // Play next ayah
+                    val nextAyah = ayah + 1
+                    surahSequentialCurrentAyah = nextAyah
+                    playAyahAudioInternal(surah, nextAyah, currentReciter)
+                } else {
+                    // Last ayah of surah — pause
+                    _state.value = _state.value.copy(
+                        isPlaying = false,
+                        positionMs = 0L,
+                        mode = PlaybackMode.NONE
+                    )
+                }
+            }
+
+            PlaybackMode.KHATAM_SEQUENTIAL -> {
+                if (ayah < surahSequentialAyahCount) {
+                    // Play next ayah within same surah
+                    val nextAyah = ayah + 1
+                    surahSequentialCurrentAyah = nextAyah
+                    playAyahAudioInternal(surah, nextAyah, currentReciter)
+                } else {
+                    // Last ayah of current surah — move to next surah
+                    if (khatamCurrentSurahIndex < khatamSurahQueue.size - 1) {
+                        khatamCurrentSurahIndex++
+                        val nextSurah = khatamSurahQueue[khatamCurrentSurahIndex]
+                        surahSequentialAyahCount = getAyahCount(nextSurah)
+                        surahSequentialCurrentAyah = 1
+                        playAyahAudioInternal(nextSurah, 1, currentReciter)
+                    } else {
+                        // Khatam complete
+                        _state.value = _state.value.copy(
+                            isPlaying = false,
+                            positionMs = 0L,
+                            currentSurah = null,
+                            currentAyah = null,
+                            isKhatamMode = false,
+                            mode = PlaybackMode.NONE
+                        )
+                    }
+                }
+            }
+
+            PlaybackMode.SINGLE_AYAH, PlaybackMode.REPEAT_AYAH, PlaybackMode.NONE -> {
+                // Single ayah finished — stop
+                _state.value = _state.value.copy(
+                    isPlaying = false,
+                    positionMs = 0L,
+                    mode = PlaybackMode.NONE
+                )
+            }
+        }
+    }
+
     private fun ensurePlayer(): ExoPlayer {
         return player ?: synchronized(this) {
             player ?: ExoPlayer.Builder(context)
@@ -137,53 +224,43 @@ class AudioController(private val context: Context) {
     }
 
     /**
-     * Play full surah recitation. URL pattern:
-     *   https://cdn.islamic.network/quran/audio-surah/{edition}/{surah:02d}.mp3
+     * Play full surah — ayah by ayah sequentially.
+     * Plays ayah 1, then automatically ayah 2, 3, ... until last ayah, then pauses.
      */
     fun playSurah(surahNumber: Int, reciter: Reciter = currentReciter) {
         currentReciter = reciter
-        isKhatamMode = false
-        playSurahInternal(surahNumber, reciter)
+        surahSequentialAyahCount = getAyahCount(surahNumber)
+        surahSequentialCurrentAyah = 1
         _state.value = _state.value.copy(
-            reciter = reciter.displayName,
-            error = null,
-            isKhatamMode = false
-        )
-    }
-
-    private fun playSurahInternal(surahNumber: Int, reciter: Reciter) {
-        // audio-surah endpoint returns 403 on CDN.
-        // Instead, we play the first ayah of the surah. User can tap individual
-        // ayahs to continue. This is a known limitation — full surah playback
-        // would require concatenating per-ayah audio which we do in khatam mode.
-        // For now, play ayah 1 of the surah.
-        val url = "https://cdn.islamic.network/quran/audio/128/${reciter.editionId}/" +
-            "${globalAyahNumber(surahNumber, 1)}.mp3"
-        val mediaItem = MediaItem.Builder()
-            .setUri(url)
-            .setMediaMetadata(
-                MediaMetadata.Builder()
-                    .setTitle("Surah #$surahNumber (Ayah 1)")
-                    .setArtist(reciter.displayName)
-                    .build()
-            )
-            .build()
-        val p = ensurePlayer()
-        p.setMediaItem(mediaItem)
-        p.prepare()
-        p.playWhenReady = true
-        _state.value = _state.value.copy(
-            currentSurah = surahNumber,
-            currentAyah = 1,
+            mode = PlaybackMode.SURAH_SEQUENTIAL,
+            isKhatamMode = false,
+            totalAyahsInSurah = surahSequentialAyahCount,
             reciter = reciter.displayName,
             error = null
         )
+        playAyahAudioInternal(surahNumber, 1, reciter)
     }
 
+    /**
+     * Play a single ayah (no auto-advance to next).
+     */
     fun playAyah(surahNumber: Int, ayahNumber: Int, reciter: Reciter = currentReciter) {
         currentReciter = reciter
-        isKhatamMode = false
-        // URL pattern: https://cdn.islamic.network/quran/audio/128/{edition}/{globalAyahNumber}.mp3
+        surahSequentialAyahCount = getAyahCount(surahNumber)
+        _state.value = _state.value.copy(
+            mode = PlaybackMode.SINGLE_AYAH,
+            isKhatamMode = false,
+            totalAyahsInSurah = surahSequentialAyahCount,
+            reciter = reciter.displayName,
+            error = null
+        )
+        playAyahAudioInternal(surahNumber, ayahNumber, reciter)
+    }
+
+    /**
+     * Internal: play Arabic ayah audio from CDN.
+     */
+    private fun playAyahAudioInternal(surahNumber: Int, ayahNumber: Int, reciter: Reciter) {
         val url = "https://cdn.islamic.network/quran/audio/128/${reciter.editionId}/" +
             "${globalAyahNumber(surahNumber, ayahNumber)}.mp3"
         val mediaItem = MediaItem.Builder()
@@ -199,29 +276,58 @@ class AudioController(private val context: Context) {
         p.setMediaItem(mediaItem)
         p.prepare()
         p.playWhenReady = true
+        p.setPlaybackSpeed(_state.value.playbackSpeed)
         _state.value = _state.value.copy(
             currentSurah = surahNumber,
             currentAyah = ayahNumber,
             reciter = reciter.displayName,
             error = null,
-            isKhatamMode = false
+            isPlayingBanglaAudio = false
         )
     }
 
     /**
-     * Khatam player: continuously play surahs from startSurah to 114.
+     * Play Bangla meaning audio for an ayah.
+     * Uses bn.bengali edition from AlQuran.cloud CDN.
+     */
+    private fun playBanglaAyahAudio(surahNumber: Int, ayahNumber: Int) {
+        val url = "https://cdn.islamic.network/quran/audio/128/bn.bengali/" +
+            "${globalAyahNumber(surahNumber, ayahNumber)}.mp3"
+        val mediaItem = MediaItem.Builder()
+            .setUri(url)
+            .setMediaMetadata(
+                MediaMetadata.Builder()
+                    .setTitle("Bangla: Surah $surahNumber Ayah $ayahNumber")
+                    .setArtist("Bangla Translation")
+                    .build()
+            )
+            .build()
+        val p = ensurePlayer()
+        p.setMediaItem(mediaItem)
+        p.prepare()
+        p.playWhenReady = true
+        p.setPlaybackSpeed(_state.value.playbackSpeed)
+    }
+
+    /**
+     * Start khatam player — ayah by ayah across surahs.
+     * Plays from startSurah to 114, each surah ayah by ayah.
      */
     fun startKhatamPlayer(startSurah: Int = 1, reciter: Reciter = currentReciter) {
         currentReciter = reciter
-        isKhatamMode = true
         khatamSurahQueue = (startSurah..114).toList()
-        khatamCurrentIndex = 0
-        val firstSurah = khatamSurahQueue[khatamCurrentIndex]
-        playSurahInternal(firstSurah, reciter)
+        khatamCurrentSurahIndex = 0
+        val firstSurah = khatamSurahQueue[khatamCurrentSurahIndex]
+        surahSequentialAyahCount = getAyahCount(firstSurah)
+        surahSequentialCurrentAyah = 1
         _state.value = _state.value.copy(
+            mode = PlaybackMode.KHATAM_SEQUENTIAL,
             isKhatamMode = true,
-            reciter = reciter.displayName
+            totalAyahsInSurah = surahSequentialAyahCount,
+            reciter = reciter.displayName,
+            error = null
         )
+        playAyahAudioInternal(firstSurah, 1, reciter)
     }
 
     fun pause() {
@@ -234,15 +340,17 @@ class AudioController(private val context: Context) {
 
     fun stop() {
         player?.stop()
-        isKhatamMode = false
         cancelAutoPause()
+        isCurrentlyPlayingBangla = false
         _state.value = _state.value.copy(
             isPlaying = false,
             currentSurah = null,
             currentAyah = null,
             positionMs = 0L,
             isKhatamMode = false,
-            autoPauseMinutesRemaining = 0
+            mode = PlaybackMode.NONE,
+            autoPauseMinutesRemaining = 0,
+            isPlayingBanglaAudio = false
         )
     }
 
@@ -255,25 +363,6 @@ class AudioController(private val context: Context) {
         player?.release()
         player = null
         _state.value = AudioState()
-    }
-
-    /**
-     * Set auto-pause / sleep timer. When minutes > 0, playback stops
-     * automatically after the specified duration.
-     */
-    fun setAutoPause(option: com.islamichub.app.data.repo.AutoPauseOption) {
-        cancelAutoPause()
-        if (option.minutes <= 0) {
-            _state.value = _state.value.copy(autoPauseMinutesRemaining = 0)
-            return
-        }
-        autoPauseMinutes = option.minutes
-        autoPauseEndMs = System.currentTimeMillis() + option.minutes * 60_000L
-        startAutoPauseTicker()
-    }
-
-    fun setBanglaAudioEnabled(enabled: Boolean) {
-        banglaAudioEnabled = enabled
     }
 
     /**
@@ -293,6 +382,29 @@ class AudioController(private val context: Context) {
         _state.value = _state.value.copy(isRepeatMode = newMode)
     }
 
+    /**
+     * Set auto-pause / sleep timer.
+     */
+    fun setAutoPause(option: AutoPauseOption) {
+        cancelAutoPause()
+        if (option.minutes <= 0) {
+            _state.value = _state.value.copy(autoPauseMinutesRemaining = 0)
+            return
+        }
+        autoPauseMinutes = option.minutes
+        autoPauseEndMs = System.currentTimeMillis() + option.minutes * 60_000L
+        startAutoPauseTicker()
+    }
+
+    /**
+     * Toggle Bangla meaning audio on/off.
+     * When enabled, after each Arabic ayah audio, the Bangla translation audio plays.
+     */
+    fun setBanglaAudioEnabled(enabled: Boolean) {
+        banglaAudioEnabled = enabled
+        _state.value = _state.value.copy(banglaAudioEnabled = enabled)
+    }
+
     private fun startAutoPauseTicker() {
         autoPauseTick = object : Runnable {
             override fun run() {
@@ -304,7 +416,7 @@ class AudioController(private val context: Context) {
                 }
                 val remainingMin = (remainingMs / 60_000L).toInt() + 1
                 _state.value = _state.value.copy(autoPauseMinutesRemaining = remainingMin)
-                handler.postDelayed(this, 30_000L)  // tick every 30s
+                handler.postDelayed(this, 30_000L)
             }
         }
         autoPauseTick?.let { handler.post(it) }
@@ -314,6 +426,22 @@ class AudioController(private val context: Context) {
         autoPauseTick?.let { handler.removeCallbacks(it) }
         autoPauseTick = null
         autoPauseMinutes = 0
+    }
+
+    /**
+     * Get ayah count for a surah.
+     */
+    private fun getAyahCount(surah: Int): Int {
+        val counts = intArrayOf(
+            0, 7, 286, 200, 176, 120, 165, 206, 75, 129, 109, 123, 111, 43, 52, 99,
+            128, 111, 110, 98, 135, 112, 78, 64, 77, 227, 93, 88, 69, 60, 34, 30,
+            73, 54, 45, 83, 182, 88, 75, 85, 54, 53, 89, 59, 37, 35, 38, 29, 18,
+            45, 60, 49, 62, 55, 78, 96, 29, 22, 24, 13, 14, 11, 11, 18, 12, 12,
+            30, 52, 52, 44, 28, 28, 20, 56, 40, 31, 50, 40, 46, 42, 29, 19, 36,
+            25, 22, 17, 19, 26, 30, 20, 15, 21, 11, 8, 8, 19, 5, 8, 8, 11, 11,
+            8, 3, 9, 5, 4, 7, 3, 6, 3, 5, 4, 5, 6
+        )
+        return if (surah in 1..114) counts[surah] else 0
     }
 
     /**
@@ -357,4 +485,3 @@ class AudioController(private val context: Context) {
         )
     }
 }
-

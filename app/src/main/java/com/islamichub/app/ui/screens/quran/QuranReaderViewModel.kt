@@ -19,13 +19,18 @@ data class QuranReaderUiState(
     val isPlayingAudio: Boolean = false,
     val isLoadingAudio: Boolean = false,
     val currentPlayingAyah: Int? = null,
+    val totalAyahsInSurah: Int = 0,
     val bookmarkedAyahs: Set<Int> = emptySet(),
     val quranFontScale: Float = 1.0f,
     val showArabic: Boolean = true,
     val showBangla: Boolean = true,
     val showEnglish: Boolean = true,
     val selectedReciterId: String = "ar.alafasy",
-    val selectedReciterName: String = "Mishary Rashid Alafasy"
+    val selectedReciterName: String = "Mishary Rashid Alafasy",
+    val banglaAudioEnabled: Boolean = false,
+    val isPlayingBanglaAudio: Boolean = false,
+    val playbackSpeed: Float = 1.0f,
+    val isRepeatMode: Boolean = false
 )
 
 class QuranReaderViewModel(
@@ -73,7 +78,12 @@ class QuranReaderViewModel(
                     isPlayingAudio = audioState.isPlaying,
                     isLoadingAudio = audioState.isLoading,
                     currentPlayingAyah = if (audioState.currentSurah == surahNumber)
-                        audioState.currentAyah else null
+                        audioState.currentAyah else null,
+                    totalAyahsInSurah = audioState.totalAyahsInSurah,
+                    isPlayingBanglaAudio = audioState.isPlayingBanglaAudio,
+                    banglaAudioEnabled = audioState.banglaAudioEnabled,
+                    playbackSpeed = audioState.playbackSpeed,
+                    isRepeatMode = audioState.isRepeatMode
                 )
             }
         }
@@ -151,6 +161,29 @@ class QuranReaderViewModel(
 
     fun stopAudio() {
         container.audioController.stop()
+    }
+
+    fun toggleBanglaAudio() {
+        val current = _state.value.banglaAudioEnabled
+        val newValue = !current
+        container.audioController.setBanglaAudioEnabled(newValue)
+        viewModelScope.launch {
+            container.settingsRepository.setBanglaAudioEnabled(newValue)
+        }
+    }
+
+    fun increaseFontSize() {
+        val newScale = (_state.value.quranFontScale + 0.1f).coerceAtMost(2.0f)
+        viewModelScope.launch {
+            container.settingsRepository.setQuranFontScale(newScale)
+        }
+    }
+
+    fun decreaseFontSize() {
+        val newScale = (_state.value.quranFontScale - 0.1f).coerceAtLeast(0.7f)
+        viewModelScope.launch {
+            container.settingsRepository.setQuranFontScale(newScale)
+        }
     }
 
     fun toggleBookmark(ayahNumber: Int) {

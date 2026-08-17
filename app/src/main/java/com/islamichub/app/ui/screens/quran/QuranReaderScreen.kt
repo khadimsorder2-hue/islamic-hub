@@ -102,6 +102,23 @@ fun QuranReaderScreen(
                     }
                 },
                 actions = {
+                    // Font size decrease
+                    IconButton(onClick = { vm.decreaseFontSize() }) {
+                        Text("A-", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                    // Font size increase
+                    IconButton(onClick = { vm.increaseFontSize() }) {
+                        Text("A+", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                    // Bangla audio toggle
+                    IconButton(onClick = { vm.toggleBanglaAudio() }) {
+                        Icon(
+                            imageVector = if (state.banglaAudioEnabled) Icons.Filled.GraphicEq else Icons.Filled.PlayArrow,
+                            contentDescription = "Bangla audio",
+                            tint = if (state.banglaAudioEnabled) MaterialTheme.colorScheme.primary
+                                   else MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                     // Qari selector button
                     IconButton(onClick = { showQariSelector = true }) {
                         Icon(Icons.Filled.Person, contentDescription = "Select reciter")
@@ -159,7 +176,7 @@ fun QuranReaderScreen(
                     contentPadding = PaddingValues(16.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    // Reciter banner
+                    // Reciter + Bangla audio + font size banner
                     item {
                         Surface(
                             modifier = Modifier.fillMaxWidth(),
@@ -190,8 +207,21 @@ fun QuranReaderScreen(
                                     fontWeight = FontWeight.SemiBold,
                                     color = MaterialTheme.colorScheme.onSecondaryContainer
                                 )
+                                if (state.banglaAudioEnabled) {
+                                    Surface(
+                                        shape = RoundedCornerShape(50),
+                                        color = MaterialTheme.colorScheme.primary
+                                    ) {
+                                        Text(
+                                            text = " 🎧 বাংলা অডিও চালু ",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = MaterialTheme.colorScheme.onPrimary,
+                                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                        )
+                                    }
+                                }
                                 Text(
-                                    text = "  (পরিবর্তন করুন)",
+                                    text = "  ফন্ট: ${"%.0f".format(state.quranFontScale * 100)}%",
                                     style = MaterialTheme.typography.labelSmall,
                                     color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f)
                                 )
@@ -205,8 +235,10 @@ fun QuranReaderScreen(
                             PremiumMiniAudioPlayer(
                                 isPlaying = state.isPlayingAudio,
                                 isLoading = state.isLoadingAudio,
-                                title = state.currentPlayingAyah?.let { "আয়াত $it" } ?: "সম্পূর্ণ সূরা",
-                                subtitle = state.selectedReciterName,
+                                title = if (state.isPlayingBanglaAudio)
+                                    "বাংলা অনুবাদ: আয়াত ${state.currentPlayingAyah}"
+                                    else state.currentPlayingAyah?.let { "আয়াত $it / ${state.totalAyahsInSurah}" } ?: "সম্পূর্ণ সূরা",
+                                subtitle = if (state.isPlayingBanglaAudio) "বাংলা অডিও" else state.selectedReciterName,
                                 onPlayPause = { vm.toggleAudio() },
                                 onStop = { vm.stopAudio() }
                             )
