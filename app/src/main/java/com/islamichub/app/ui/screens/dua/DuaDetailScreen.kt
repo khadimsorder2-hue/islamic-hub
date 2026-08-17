@@ -161,6 +161,37 @@ fun DuaDetailScreen(
                     color = MaterialTheme.colorScheme.secondary,
                     modifier = Modifier.padding(8.dp)
                 )
+
+                // AI explanation button
+                var showAI by remember { mutableStateOf(false) }
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .clip(androidx.compose.foundation.shape.RoundedCornerShape(50))
+                            .background(MaterialTheme.colorScheme.primaryContainer)
+                            .clickable { showAI = true }
+                            .padding(horizontal = 12.dp, vertical = 6.dp)
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Filled.Bolt, contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(16.dp))
+                            Text("  AI বিস্তারিত", style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.SemiBold)
+                        }
+                    }
+                }
+
+                com.islamichub.app.ui.components.AIExplanationPopup(
+                    container = container,
+                    title = "দোয়া ব্যাখ্যা",
+                    question = "${d.titleBn}\n${d.arabic}",
+                    context = "দোয়া ও তার অর্থ",
+                    show = showAI,
+                    onDismiss = { showAI = false }
+                )
             }
         }
     }

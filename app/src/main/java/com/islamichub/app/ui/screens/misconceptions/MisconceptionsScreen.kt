@@ -107,7 +107,7 @@ fun MisconceptionsScreen(
                     )
                 }
                 items(category.questions, key = { it.id }) { item ->
-                    MisconceptionCard(item)
+                    MisconceptionCard(item, container)
                 }
             }
         }
@@ -115,8 +115,9 @@ fun MisconceptionsScreen(
 }
 
 @Composable
-private fun MisconceptionCard(item: MisconceptionItem) {
+private fun MisconceptionCard(item: MisconceptionItem, container: com.islamichub.app.data.AppContainer) {
     var expanded by remember { androidx.compose.runtime.mutableStateOf(false) }
+    var showAI by remember { mutableStateOf(false) }
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -141,6 +142,30 @@ private fun MisconceptionCard(item: MisconceptionItem) {
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+                // AI explanation button
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 4.dp),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(50))
+                            .background(MaterialTheme.colorScheme.primaryContainer)
+                            .clickable { showAI = true }
+                            .padding(horizontal = 12.dp, vertical = 6.dp)
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Filled.Bolt, contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(16.dp))
+                            Text("  AI বিস্তারিত", style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.primary,
+                                fontWeight = FontWeight.SemiBold)
+                        }
+                    }
+                }
             } else {
                 Text(
                     text = "tap to read answer →",
@@ -150,4 +175,14 @@ private fun MisconceptionCard(item: MisconceptionItem) {
             }
         }
     }
+
+    // AI popup
+    com.islamichub.app.ui.components.AIExplanationPopup(
+        container = container,
+        title = "ভুল বোঝাবুঝি",
+        question = item.question,
+        context = "ইসলামিক বিশ্বাস",
+        show = showAI,
+        onDismiss = { showAI = false }
+    )
 }
