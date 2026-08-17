@@ -12,11 +12,27 @@ import com.islamichub.app.data.local.AnsCategory
 import com.islamichub.app.data.local.AnsQA
 
 data class QaUiState(
-    val categories: List<AnsCategory> = emptyList(),
+    val categories: List<QaCategory> = emptyList(),
     val isLoading: Boolean = true,
     val verifyingId: String? = null,
     val verificationResult: String? = null,
     val apiKeyConfigured: Boolean = false
+)
+
+data class QaCategory(
+    val id: String,
+    val name: String,
+    val icon: String?,
+    val color: String?,
+    val items: List<QaItem>
+)
+
+data class QaItem(
+    val id: String,
+    val question: String,
+    val answer: String,
+    val reference: String?,
+    val arabic: String?
 )
 
 class QaViewModel(private val container: AppContainer) : ViewModel() {
@@ -28,15 +44,34 @@ class QaViewModel(private val container: AppContainer) : ViewModel() {
     private fun load() {
         viewModelScope.launch {
             try {
-                val data = container.contentRepository.loadAnsData()
+                val ansData = container.contentRepository.loadAnsData()
                 val apiKey = container.settingsRepository.aiApiKey.first()
                 val baseUrl = container.settingsRepository.aiBaseUrl.first()
                 val model = container.settingsRepository.aiModel.first()
                 container.aiService.updateConfig(
                     com.islamichub.app.data.repo.AIService.Config(apiKey = apiKey, baseUrl = baseUrl, model = model)
                 )
+
+                val categories = ansData.toList().map { (key, cat) ->
+                    QaCategory(
+                        id = key,
+                        name = cat.name ?: key,
+                        icon = cat.icon,
+                        color = cat.color,
+                        items = (cat.questions ?: emptyList()).mapIndexed { idx, qa ->
+                            QaItem(
+                                id = "${key}_$idx",
+                                question = qa.question ?: "",
+                                answer = qa.answer ?: "",
+                                reference = qa.reference,
+                                arabic = qa.arabic
+                            )
+                        }
+                    )
+                }
+
                 _state.value = QaUiState(
-                    categories = data.categories ?: emptyList(),
+                    categories = categories,
                     isLoading = false,
                     apiKeyConfigured = apiKey.isNotBlank()
                 )
@@ -46,24 +81,24 @@ class QaViewModel(private val container: AppContainer) : ViewModel() {
         }
     }
 
-    fun verifyWithAi(qa: AnsQA) {
+    fun verifyWithAi(item: QaItem) {
         viewModelScope.launch {
             _state.value = _state.value.copy(
-                verifyingId = qa.id,
+                verifyingId = item.id,
                 verificationResult = null
             )
-            val prompt = """Verify the following Islamic Q&A for accuracy. Check if the answer is consistent with authentic Islamic sources (Quran and Sahih Hadith). If the answer is correct, confirm with sources. If there are any issues or missing context, point them out.
+            val prompt = """নিচের ইসলামিক প্রশ্নোত্তরটি যাচাই করুন। উত্তরটি কুরআন ও সহীহ হাদিসের সাথে সঙ্গতিপূর্ণ কিনা নিশ্চিত করুন।
 
-Question: ${qa.question ?: qa.questionBn}
-Answer: ${qa.answer ?: qa.answerBn}
-Reference: ${qa.reference ?: "N/A"}
+প্রশ্ন: ${item.question}
+উত্তর: ${item.answer}
+${item.reference?.let { "সূত্র: $it" } ?: ""}
 
-Provide verification in Bangla."""
+বাংলায় যাচাই করুন।"""
             val result = container.aiService.ask(prompt)
             if (result.error != null && result.error != "stale") {
                 _state.value = _state.value.copy(
                     verifyingId = null,
-                    verificationResult = "Error: ${result.error}"
+                    verificationResult = "ত্রুটি: ${result.error}"
                 )
             } else if (result.error == null) {
                 _state.value = _state.value.copy(

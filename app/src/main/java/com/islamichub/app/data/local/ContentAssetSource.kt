@@ -10,19 +10,7 @@ import java.io.IOException
 
 /**
  * Loads extended content data from bundled JSON assets.
- *
- * Files (all in assets/data/):
- *  - misconceptions.json     — 300 misconceptions, categorized
- *  - questions.json          — categorized Q&A
- *  - ans.json                — Answer database (345 KB)
- *  - namaz_shikkha.json      — Complete Namaz learning (Hanafi/Shafii, Male/Female)
- *  - namaz_extras.json       — Jumma, Janaza, Eid, Nafl + small surahs
- *  - duas_extended.json      — Extended dua collection
- *  - stories.json            — Islamic stories (Prophets, Khalifas, Me'raj, Sirat)
- *  - kalima.json             — 6 Kalimas
- *  - hadith_extended.json    — Extended hadith collection
- *  - asmaul_husna_extended.json — 99 names with extended metadata
- *  - location_data.json      — Bangladesh locations
+ * Fixed to match actual JSON structure from web source.
  */
 class ContentAssetSource(private val context: Context) {
 
@@ -75,26 +63,77 @@ data class MisconceptionItem(
     @SerializedName("a") val answer: String?
 )
 
-// ─── Q&A ───────────────────────────────────────────────────────────────────
+// ─── Q&A (ans.json) — web source format: {categoryKey: {name, icon, color, questions: [{q, a, ...}]}} ───
 
-data class QuestionData(
-    @SerializedName("metadata") val metadata: Map<String, Any>?,
-    @SerializedName("categories") val categories: Map<String, QuestionCategory>?
+data class AnsData(
+    @SerializedName("namaz") val namaz: AnsCategory? = null,
+    @SerializedName("roza") val roza: AnsCategory? = null,
+    @SerializedName("hajj") val hajj: AnsCategory? = null,
+    @SerializedName("zakat") val zakat: AnsCategory? = null,
+    @SerializedName("quran") val quran: AnsCategory? = null,
+    @SerializedName("hadith") val hadith: AnsCategory? = null,
+    @SerializedName("wudu") val wudu: AnsCategory? = null,
+    @SerializedName("ghusl") val ghusl: AnsCategory? = null,
+    @SerializedName("tayammum") val tayammum: AnsCategory? = null,
+    @SerializedName("lifestyle") val lifestyle: AnsCategory? = null,
+    @SerializedName("dua") val dua: AnsCategory? = null
 ) {
-    /**
-     * The questions.json file uses category keys at top level (e.g., "namaz", "rojha").
-     * Each value has {name, icon, color, questions: [...]}
-     */
+    /** Returns all categories as a list with their keys. */
+    fun toList(): List<Pair<String, AnsCategory>> {
+        return listOf(
+            "namaz" to namaz, "roza" to roza, "hajj" to hajj, "zakat" to zakat,
+            "quran" to quran, "hadith" to hadith, "wudu" to wudu, "ghusl" to ghusl,
+            "tayammum" to tayammum, "lifestyle" to lifestyle, "dua" to dua
+        ).filter { it.second != null } as List<Pair<String, AnsCategory>>
+    }
 }
 
-data class QuestionCategory(
-    @SerializedName("name") val name: String,
+data class AnsCategory(
+    @SerializedName("name") val name: String?,
     @SerializedName("icon") val icon: String?,
     @SerializedName("color") val color: String?,
-    @SerializedName("questions") val questions: List<String>
+    @SerializedName("questions") val questions: List<AnsQA>? = null
 )
 
-// ─── Namaz Shikkha ─────────────────────────────────────────────────────────
+data class AnsQA(
+    @SerializedName("q") val question: String?,
+    @SerializedName("a") val answer: String?,
+    @SerializedName("ref") val reference: String?,
+    @SerializedName("arabic") val arabic: String?
+)
+
+// ─── Extended Duas — web source format: {categories: [{id, name, icon, color}], duas: [{id, category, title, arabic, ...}]} ───
+
+data class ExtendedDuasData(
+    @SerializedName("categories") val categories: List<ExtendedDuaCategory>?,
+    @SerializedName("duas") val duas: List<ExtendedDua>?
+) {
+    /** Groups duas by their category field. */
+    fun getGroupedDuas(): Map<String, List<ExtendedDua>> {
+        val allDuas = duas ?: emptyList()
+        return allDuas.groupBy { it.category ?: "misc" }
+    }
+}
+
+data class ExtendedDuaCategory(
+    @SerializedName("id") val id: String,
+    @SerializedName("name") val name: String?,
+    @SerializedName("icon") val icon: String?,
+    @SerializedName("color") val color: String?
+)
+
+data class ExtendedDua(
+    @SerializedName("id") val id: String,
+    @SerializedName("category") val category: String?,
+    @SerializedName("title") val title: String?,
+    @SerializedName("arabic") val arabic: String?,
+    @SerializedName("transliteration") val transliteration: String?,
+    @SerializedName("bangla") val bangla: String?,
+    @SerializedName("ref") val reference: String?,
+    @SerializedName("virtue") val virtue: String?
+)
+
+// ─── Namaz Shikkha (full from web source) ─────────────────────────────────
 
 data class NamazShikkhaData(
     @SerializedName("metadata") val metadata: NamazShikkhaMetadata?,
@@ -103,7 +142,7 @@ data class NamazShikkhaData(
     @SerializedName("gender_options") val genderOptions: List<String>?,
     @SerializedName("default_gender") val defaultGender: String?,
     @SerializedName("common_steps") val commonSteps: Map<String, NamazStep>?,
-    @SerializedName("prayers") val prayers: Map<String, NamazPrayer>?
+    @SerializedName("categories") val categories: List<NamazShikkhaCategory>?
 )
 
 data class NamazShikkhaMetadata(
@@ -113,31 +152,35 @@ data class NamazShikkhaMetadata(
     @SerializedName("source") val source: String?
 )
 
+data class NamazShikkhaCategory(
+    @SerializedName("id") val id: String,
+    @SerializedName("name_bn") val nameBn: String,
+    @SerializedName("icon") val icon: String?,
+    @SerializedName("prayers") val prayers: List<NamazShikkhaPrayer>?
+)
+
 data class NamazStep(
     @SerializedName("name_bn") val nameBn: String?,
-    @SerializedName("name_en") val nameEn: String?,
     @SerializedName("content") val content: NamazStepContent?,
-    @SerializedName("audio") val audio: String?
+    @SerializedName("gender_notes") val genderNotes: Map<String, String>?,
+    @SerializedName("audio_url") val audioUrl: String?
 )
 
 data class NamazStepContent(
     @SerializedName("arabic") val arabic: String?,
     @SerializedName("transliteration") val transliteration: String?,
-    @SerializedName("translation") val translation: String?,
-    @SerializedName("bangla") val bangla: String?
+    @SerializedName("translation") val translation: String?
 )
 
-data class NamazPrayer(
-    @SerializedName("name_bn") val nameBn: String?,
-    @SerializedName("name_en") val nameEn: String?,
-    @SerializedName("rakat") val rakat: Int?,
-    @SerializedName("steps") val steps: List<String>?,
-    @SerializedName("wajib") val wajib: List<String>?,
-    @SerializedName("fard") val fard: List<String>?,
-    @SerializedName("sunnah") val sunnah: List<String>?
+data class NamazShikkhaPrayer(
+    @SerializedName("id") val id: String,
+    @SerializedName("name_bn") val nameBn: String,
+    @SerializedName("type") val type: String?,
+    @SerializedName("total_rakats") val rakat: Int?,
+    @SerializedName("niyyah") val niyyah: String?
 )
 
-// ─── Namaz Extras (Jumma, Janaza, Eid, Nafl, etc.) ─────────────────────────
+// ─── Namaz Extras ──────────────────────────────────────────────────────────
 
 data class NamazExtrasData(
     @SerializedName("namazSurahs") val namazSurahs: List<NamazSurah>?,
@@ -201,56 +244,4 @@ data class Kalima(
     @SerializedName("arabic") val arabic: String?,
     @SerializedName("transliteration") val transliteration: String?,
     @SerializedName("translation") val translation: String?
-)
-
-// ─── Extended Duas ─────────────────────────────────────────────────────────
-
-data class ExtendedDuasData(
-    @SerializedName("metadata") val metadata: Map<String, Any>?,
-    @SerializedName("categories") val categories: List<ExtendedDuaCategory>?
-)
-
-data class ExtendedDuaCategory(
-    @SerializedName("id") val id: String,
-    @SerializedName("name") val name: String?,
-    @SerializedName("name_bn") val nameBn: String?,
-    @SerializedName("icon") val icon: String?,
-    @SerializedName("duas") val duas: List<ExtendedDua>?
-)
-
-data class ExtendedDua(
-    @SerializedName("id") val id: String,
-    @SerializedName("title") val title: String?,
-    @SerializedName("title_bn") val titleBn: String?,
-    @SerializedName("arabic") val arabic: String?,
-    @SerializedName("transliteration") val transliteration: String?,
-    @SerializedName("translation") val translation: String?,
-    @SerializedName("translation_bn") val translationBn: String?,
-    @SerializedName("reference") val reference: String?,
-    @SerializedName("audio") val audio: String?
-)
-
-// ─── ANS data (Q&A answers) ────────────────────────────────────────────────
-
-data class AnsData(
-    @SerializedName("metadata") val metadata: Map<String, Any>?,
-    @SerializedName("categories") val categories: List<AnsCategory>?
-)
-
-data class AnsCategory(
-    @SerializedName("id") val id: String,
-    @SerializedName("name") val name: String?,
-    @SerializedName("name_bn") val nameBn: String?,
-    @SerializedName("icon") val icon: String?,
-    @SerializedName("qa") val qa: List<AnsQA>?
-)
-
-data class AnsQA(
-    @SerializedName("id") val id: String,
-    @SerializedName("q") val question: String?,
-    @SerializedName("q_bn") val questionBn: String?,
-    @SerializedName("a") val answer: String?,
-    @SerializedName("a_bn") val answerBn: String?,
-    @SerializedName("reference") val reference: String?,
-    @SerializedName("grade") val grade: String?
 )

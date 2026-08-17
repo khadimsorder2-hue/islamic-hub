@@ -7,10 +7,12 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import com.islamichub.app.data.AppContainer
-import com.islamichub.app.data.model.Dua
+import com.islamichub.app.data.local.ExtendedDua
+import com.islamichub.app.data.local.ExtendedDuaCategory
 
 data class DuaListUiState(
-    val duas: List<Dua> = emptyList(),
+    val categories: List<ExtendedDuaCategory> = emptyList(),
+    val duasByCategory: Map<String, List<ExtendedDua>> = emptyMap(),
     val isLoading: Boolean = true
 )
 
@@ -22,10 +24,17 @@ class DuaListViewModel(private val container: AppContainer) : ViewModel() {
 
     private fun load() {
         viewModelScope.launch {
-            val list = container.duaRepository.allDiary()
-            _state.value = DuaListUiState(duas = list, isLoading = false)
+            try {
+                val data = container.contentRepository.loadExtendedDuas()
+                val grouped = data.getGroupedDuas()
+                _state.value = DuaListUiState(
+                    categories = data.categories ?: emptyList(),
+                    duasByCategory = grouped,
+                    isLoading = false
+                )
+            } catch (e: Exception) {
+                _state.value = DuaListUiState(isLoading = false)
+            }
         }
     }
 }
-
-private suspend fun com.islamichub.app.data.repo.DuaRepository.allDiary(): List<Dua> = allDuas()

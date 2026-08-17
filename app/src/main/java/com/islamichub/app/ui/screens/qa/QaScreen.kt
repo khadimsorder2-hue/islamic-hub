@@ -43,13 +43,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.islamichub.app.data.AppContainer
-import com.islamichub.app.data.local.AnsCategory
-import com.islamichub.app.data.local.AnsQA
+import com.islamichub.app.ui.components.PremiumHeroCard
+import com.islamichub.app.ui.components.PremiumSectionHeader
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -64,7 +65,7 @@ fun QaScreen(
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text("প্রশ্ন-উত্তর" + " / Q&A") },
+                title = { Text("প্রশ্ন-উত্তর") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
@@ -74,10 +75,10 @@ fun QaScreen(
         }
     ) { padding ->
         if (state.isLoading) {
-            Column(
-                modifier = Modifier.padding(padding).fillMaxWidth().padding(32.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) { CircularProgressIndicator() }
+            Column(modifier = Modifier.padding(padding).fillMaxWidth().padding(32.dp),
+                horizontalAlignment = Alignment.CenterHorizontally) {
+                CircularProgressIndicator()
+            }
             return@Scaffold
         }
 
@@ -86,21 +87,38 @@ fun QaScreen(
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
+            // Premium hero
+            item {
+                val ctx = androidx.compose.ui.platform.LocalContext.current
+                PremiumHeroCard(
+                    backgroundImage = "topics-premium-bg.webp",
+                    context = ctx,
+                    height = 160
+                ) {
+                    Column(
+                        modifier = Modifier.fillMaxSize().padding(20.dp),
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Text("প্রশ্ন-উত্তর", style = MaterialTheme.typography.headlineMedium,
+                            fontWeight = FontWeight.Bold, color = Color.White)
+                        val totalQa = state.categories.sumOf { it.items.size }
+                        Text("${state.categories.size} বিভাগ • $totalQa টি প্রশ্ন-উত্তর",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Color.White.copy(alpha = 0.9f))
+                    }
+                }
+            }
+
+            // Categories
             state.categories.forEach { category ->
                 item {
-                    Text(
-                        text = category.icon + "  " + (category.nameBn ?: category.name ?: category.id),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.padding(top = 12.dp, bottom = 4.dp)
-                    )
+                    PremiumSectionHeader(title = "${category.icon ?: "📖"}  ${category.name} (${category.items.size})")
                 }
-                items(category.qa ?: emptyList(), key = { it.id }) { qa ->
+                items(category.items, key = { it.id }) { item ->
                     QaCard(
-                        qa = qa,
+                        item = item,
                         onCopy = {
-                            val text = "প্রশ্ন: ${qa.question ?: qa.questionBn}\n\nউত্তর: ${qa.answer ?: qa.answerBn}\n\nReference: ${qa.reference ?: "N/A"}"
+                            val text = "প্রশ্ন: ${item.question}\n\nউত্তর: ${item.answer}\n\n${item.reference?.let { "সূত্র: $it" } ?: ""}"
                             val shareIntent = Intent(Intent.ACTION_SEND).apply {
                                 type = "text/plain"
                                 putExtra(Intent.EXTRA_TEXT, text)
@@ -108,9 +126,9 @@ fun QaScreen(
                             context.startActivity(Intent.createChooser(shareIntent, "Copy / Share"))
                         },
                         onVerify = if (state.apiKeyConfigured) {
-                            { vm.verifyWithAi(qa) }
+                            { vm.verifyWithAi(item) }
                         } else null,
-                        isVerifying = state.verifyingId == qa.id
+                        isVerifying = state.verifyingId == item.id
                     )
                 }
             }
@@ -121,37 +139,30 @@ fun QaScreen(
     state.verificationResult?.let { result ->
         AlertDialog(
             onDismissRequest = vm::clearVerification,
-            title = { Text("AI Verification") },
+            title = { Text("AI যাচাই") },
             text = {
                 Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
-                    Text(
-                        text = result,
-                        style = MaterialTheme.typography.bodyMedium
-                    )
+                    Text(result, style = MaterialTheme.typography.bodyMedium)
                 }
             },
-            confirmButton = {
-                TextButton(onClick = vm::clearVerification) { Text("Close") }
-            }
+            confirmButton = { TextButton(onClick = vm::clearVerification) { Text("বন্ধ করুন") } }
         )
     }
 }
 
 @Composable
 private fun QaCard(
-    qa: AnsQA,
+    item: QaItem,
     onCopy: () -> Unit,
     onVerify: (() -> Unit)?,
     isVerifying: Boolean
 ) {
-    var expanded by remember { androidx.compose.runtime.mutableStateOf(false) }
+    var expanded by remember { mutableStateOf(false) }
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
-            .clickable { expanded = !expanded },
+        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).clickable { expanded = !expanded },
+        shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(
             modifier = Modifier.padding(16.dp),
@@ -159,54 +170,40 @@ private fun QaCard(
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = qa.question ?: qa.questionBn ?: "",
+                    text = item.question,
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.weight(1f)
                 )
                 IconButton(onClick = onCopy, modifier = Modifier.size(32.dp)) {
-                    Icon(
-                        imageVector = Icons.Filled.ContentCopy,
-                        contentDescription = "Copy",
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(18.dp)
-                    )
+                    Icon(Icons.Filled.ContentCopy, contentDescription = "Copy",
+                        tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp))
                 }
             }
             if (expanded) {
-                Text(
-                    text = qa.answer ?: qa.answerBn ?: "",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                qa.reference?.let { ref ->
-                    if (ref.isNotBlank()) {
-                        Text(
-                            text = "Reference: $ref",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.primary
-                        )
+                // Arabic if available
+                item.arabic?.let { ar ->
+                    if (ar.isNotBlank()) {
+                        Text(ar, style = MaterialTheme.typography.titleMedium,
+                            modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.End,
+                            color = MaterialTheme.colorScheme.onSurface)
                     }
                 }
-                qa.grade?.let { grade ->
-                    if (grade.isNotBlank()) {
-                        Text(
-                            text = "Grade: $grade",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.secondary
-                        )
+                Text(item.answer, style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface)
+                item.reference?.let { ref ->
+                    if (ref.isNotBlank()) {
+                        Text("সূত্র: $ref", style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.primary)
                     }
                 }
                 if (onVerify != null) {
                     Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 8.dp),
+                        modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
                         horizontalArrangement = Arrangement.End
                     ) {
                         if (isVerifying) {
@@ -220,29 +217,19 @@ private fun QaCard(
                                     .padding(horizontal = 12.dp, vertical = 6.dp)
                             ) {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Icon(
-                                        imageVector = Icons.Filled.Bolt,
-                                        contentDescription = null,
-                                        tint = MaterialTheme.colorScheme.primary,
-                                        modifier = Modifier.size(16.dp)
-                                    )
-                                    Text(
-                                        text = "  AI Verify",
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = MaterialTheme.colorScheme.primary,
-                                        fontWeight = FontWeight.SemiBold
-                                    )
+                                    Icon(Icons.Filled.Bolt, contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(16.dp))
+                                    Text("  AI যাচাই", style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.SemiBold)
                                 }
                             }
                         }
                     }
                 }
             } else {
-                Text(
-                    text = "tap to read answer →",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.primary
-                )
+                Text(item.answer.take(100) + if (item.answer.length > 100) "…" else "",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2)
             }
         }
     }

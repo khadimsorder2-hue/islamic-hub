@@ -19,8 +19,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -29,13 +32,20 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.islamichub.app.R
 import com.islamichub.app.data.AppContainer
-import com.islamichub.app.data.model.Dua
+import com.islamichub.app.data.local.ExtendedDua
+import com.islamichub.app.ui.components.PremiumHeroCard
+import com.islamichub.app.ui.components.PremiumSectionHeader
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DuaListScreen(
     container: AppContainer,
@@ -43,54 +53,74 @@ fun DuaListScreen(
 ) {
     val vm = remember { DuaListViewModel(container) }
     val state by vm.state.collectAsState()
-    val context = androidx.compose.ui.platform.LocalContext.current
+    val context = LocalContext.current
 
-    LazyColumn(
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        // Premium hero
-        item {
-            com.islamichub.app.ui.components.PremiumHeroCard(
-                backgroundImage = "dua-premium-bg.webp",
-                context = context,
-                height = 160
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(20.dp),
-                    verticalArrangement = Arrangement.Center
+    Scaffold(
+        topBar = {
+            CenterAlignedTopAppBar(
+                title = { Text(stringResource(R.string.dua_title)) }
+            )
+        }
+    ) { padding ->
+        if (state.isLoading) {
+            Column(modifier = Modifier.padding(padding).fillMaxWidth().padding(32.dp),
+                horizontalAlignment = Alignment.CenterHorizontally) {
+                androidx.compose.material3.CircularProgressIndicator()
+            }
+            return@Scaffold
+        }
+
+        LazyColumn(
+            modifier = Modifier.padding(padding),
+            contentPadding = PaddingValues(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            // Premium hero
+            item {
+                PremiumHeroCard(
+                    backgroundImage = "dua-premium-bg.webp",
+                    context = context,
+                    height = 160
                 ) {
-                    Text(
-                        text = stringResource(R.string.dua_title),
-                        style = MaterialTheme.typography.headlineMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = androidx.compose.ui.graphics.Color.White
-                    )
-                    Text(
-                        text = "প্রতিদিনের দোয়া সংগ্রহ",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.9f)
-                    )
+                    Column(
+                        modifier = Modifier.fillMaxSize().padding(20.dp),
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Text("দোয়া সংগ্রহ", style = MaterialTheme.typography.headlineMedium,
+                            fontWeight = FontWeight.Bold, color = Color.White)
+                        val total = state.duasByCategory.values.sumOf { it.size }
+                        Text("${state.categories.size} বিভাগ • $total টি দোয়া",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Color.White.copy(alpha = 0.9f))
+                    }
                 }
             }
-        }
-        items(state.duas, key = { it.id }) { dua ->
-            DuaRow(dua = dua, onClick = { onDuaClick(dua.id) })
+
+            // Group by category
+            state.categories.forEach { category ->
+                val duas = state.duasByCategory[category.id] ?: emptyList()
+                if (duas.isNotEmpty()) {
+                    item {
+                        PremiumSectionHeader(
+                            title = "${category.icon ?: "🤲"}  ${category.name ?: category.id} (${duas.size})"
+                        )
+                    }
+                    items(duas, key = { it.id }) { dua ->
+                        ExtendedDuaRow(dua) { onDuaClick(dua.id) }
+                    }
+                }
+            }
         }
     }
 }
 
 @Composable
-private fun DuaRow(dua: Dua, onClick: () -> Unit) {
+private fun ExtendedDuaRow(dua: ExtendedDua, onClick: () -> Unit) {
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
-            .clickable(onClick = onClick),
+        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).clickable(onClick = onClick),
+        shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Row(
             modifier = Modifier.padding(16.dp),
@@ -98,36 +128,22 @@ private fun DuaRow(dua: Dua, onClick: () -> Unit) {
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Box(
-                modifier = Modifier
-                    .size(40.dp)
-                    .clip(CircleShape)
+                modifier = Modifier.size(40.dp).clip(CircleShape)
                     .background(MaterialTheme.colorScheme.secondaryContainer),
                 contentAlignment = Alignment.Center
             ) {
-                Text(
-                    text = "۞",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSecondaryContainer
-                )
+                Text("🤲", style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer)
             }
             Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = dua.titleBengali,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                Text(
-                    text = dua.titleEnglish,
+                Text(dua.title ?: "", style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
+                Text(dua.bangla?.take(80) + if ((dua.bangla?.length ?: 0) > 80) "…" else "",
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                    color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2)
             }
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+            Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }
