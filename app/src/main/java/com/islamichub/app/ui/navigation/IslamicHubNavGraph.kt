@@ -1,19 +1,31 @@
 package com.islamichub.app.ui.navigation
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -64,30 +76,76 @@ fun IslamicHubNavGraph(container: AppContainer) {
     Scaffold(
         bottomBar = {
             Column {
-                // Floating audio player (above bottom bar)
-                com.islamichub.app.ui.components.FloatingAudioPlayer(
-                    container = container
-                )
+                // Floating audio player
+                com.islamichub.app.ui.components.FloatingAudioPlayer(container = container)
                 if (showBottomBar) {
-                    NavigationBar {
-                        bottomNavItems.forEach { item ->
-                            val selected = currentRoute == item.screen.route
-                            NavigationBarItem(
-                                selected = selected,
-                                onClick = {
-                                    if (!selected) {
-                                        navController.navigate(item.screen.route) {
-                                            popUpTo(navController.graph.findStartDestination().id) {
-                                                saveState = true
+                    // Premium glassmorphism nav bar
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f),
+                        shadowElevation = 8.dp
+                    ) {
+                        NavigationBar(
+                            containerColor = androidx.compose.ui.graphics.Color.Transparent,
+                            tonalElevation = 0.dp
+                        ) {
+                            bottomNavItems.forEach { item ->
+                                val selected = currentRoute == item.screen.route
+                                NavigationBarItem(
+                                    selected = selected,
+                                    onClick = {
+                                        if (!selected) {
+                                            navController.navigate(item.screen.route) {
+                                                popUpTo(navController.graph.findStartDestination().id) {
+                                                    saveState = true
+                                                }
+                                                launchSingleTop = true
+                                                restoreState = true
                                             }
-                                            launchSingleTop = true
-                                            restoreState = true
                                         }
+                                    },
+                                    icon = {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(36.dp)
+                                                .clip(androidx.compose.foundation.shape.CircleShape)
+                                                .background(
+                                                    if (selected)
+                                                        brush = Brush.linearGradient(
+                                                            colors = listOf(
+                                                                MaterialTheme.colorScheme.primary,
+                                                                MaterialTheme.colorScheme.secondary
+                                                            )
+                                                        )
+                                                    else Brush.linearGradient(
+                                                        colors = listOf(
+                                                            androidx.compose.ui.graphics.Color.Transparent,
+                                                            androidx.compose.ui.graphics.Color.Transparent
+                                                        )
+                                                    )
+                                                ),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Icon(
+                                                imageVector = item.icon,
+                                                contentDescription = null,
+                                                tint = if (selected) androidx.compose.ui.graphics.Color.White
+                                                       else MaterialTheme.colorScheme.onSurfaceVariant,
+                                                modifier = Modifier.size(20.dp)
+                                            )
+                                        }
+                                    },
+                                    label = {
+                                        Text(
+                                            text = stringResource(item.labelRes),
+                                            style = MaterialTheme.typography.labelSmall,
+                                            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
+                                            color = if (selected) MaterialTheme.colorScheme.primary
+                                                   else MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
                                     }
-                                },
-                                icon = { Icon(item.icon, contentDescription = null) },
-                                label = { Text(stringResource(item.labelRes)) }
-                            )
+                                )
+                            }
                         }
                     }
                 }
