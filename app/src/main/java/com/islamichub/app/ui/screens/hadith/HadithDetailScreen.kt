@@ -15,6 +15,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -31,6 +32,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -42,6 +44,7 @@ import androidx.compose.ui.unit.dp
 import com.islamichub.app.R
 import com.islamichub.app.data.AppContainer
 import com.islamichub.app.data.local.HadithJson
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -127,8 +130,8 @@ private fun HadithRow(hadith: HadithJson, onClick: () -> Unit) {
                 Box(
                     modifier = Modifier
                         .size(32.dp)
-                        .clip(CircleShape)
-                        .clip(RoundedCornerShape(50))
+                        .clip(RoundedCornerShape(50)),
+                    contentAlignment = Alignment.Center
                 ) {
                     Text(
                         text = hadith.hadithNumber.toString(),
@@ -177,10 +180,14 @@ fun HadithDetailScreen(
     var collectionName by remember { mutableStateOf("") }
 
     LaunchedEffect(collectionId, hadithNumber) {
-        val coll = container.hadithRepository.getCollection(collectionId)
-        collectionName = coll.collectionName
-        hadith = coll.hadiths.firstOrNull { it.hadithNumber == hadithNumber }
-        container.trackerRepository.recordHadithRead()
+        try {
+            val coll = container.hadithRepository.getCollection(collectionId)
+            collectionName = coll.collectionName
+            hadith = coll.hadiths.firstOrNull { it.hadithNumber == hadithNumber }
+            container.trackerRepository.recordHadithRead()
+        } catch (_: Exception) {
+            hadith = null
+        }
     }
 
     Scaffold(
@@ -215,9 +222,15 @@ fun HadithDetailScreen(
                     .padding(padding)
                     .fillMaxWidth()
                     .padding(32.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 CircularProgressIndicator()
+                Text(
+                    text = "হাদিস লোড হচ্ছে…",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
         } else {
             LazyColumn(
@@ -238,7 +251,7 @@ fun HadithDetailScreen(
                             verticalArrangement = Arrangement.spacedBy(4.dp)
                         ) {
                             Text(
-                                text = "Hadith #${h.hadithNumber}",
+                                text = "হাদিস #${h.hadithNumber}",
                                 style = MaterialTheme.typography.labelMedium,
                                 color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
                             )
@@ -296,6 +309,77 @@ fun HadithDetailScreen(
                                 style = MaterialTheme.typography.bodyLarge,
                                 color = MaterialTheme.colorScheme.onSecondaryContainer
                             )
+                        }
+                    }
+                }
+                // AI Explanation button
+                item {
+                    var aiLoading by remember { mutableStateOf(false) }
+                    var aiResult by remember { mutableStateOf<String?>(null) }
+                    val scope = rememberCoroutineScope()
+
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                aiLoading = true
+                                aiResult = null
+                                scope.launch {
+                                    val prompt = "হাদিস: ${h.arabic}\n\nবাংলা: ${h.bangla}\n\nএই হাদিসের সম্পূর্ণ ব্যাখ্যা দিন।"
+                                    val result = container.aiService.ask(prompt)
+                                    aiLoading = false
+                                    if (result.error == null) {
+                                        aiResult = result.answer
+                                    } else {
+                                        aiResult = "ত্রুটি: ${result.error}"
+                                    }
+                                }
+                            },
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = if (container.settingsRepository.toString().isNotEmpty())
+                                MaterialTheme.colorScheme.secondaryContainer
+                                else MaterialTheme.colorScheme.surfaceVariant
+                        )
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.Bolt,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                            Text(
+                                text = "AI দিয়ে হাদিসের ব্যাখ্যা",
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+                    }
+                    if (aiLoading) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.padding(16.dp).align(Alignment.CenterHorizontally)
+                        )
+                    }
+                    aiResult?.let { result ->
+                        Card(
+                            modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                            shape = RoundedCornerShape(16.dp),
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.secondaryContainer
+                            )
+                        ) {
+                            Column(modifier = Modifier.padding(16.dp)) {
+                                Text(
+                                    text = result,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSecondaryContainer
+                                )
+                            }
                         }
                     }
                 }

@@ -110,14 +110,21 @@ fun QuranReaderScreen(
                     IconButton(onClick = { vm.increaseFontSize() }) {
                         Text("A+", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
-                    // Bangla audio toggle
+                    // Bangla audio toggle (clear icon)
                     IconButton(onClick = { vm.toggleBanglaAudio() }) {
                         Icon(
                             imageVector = if (state.banglaAudioEnabled) Icons.Filled.GraphicEq else Icons.Filled.PlayArrow,
-                            contentDescription = "Bangla audio",
+                            contentDescription = "বাংলা অডিও",
                             tint = if (state.banglaAudioEnabled) MaterialTheme.colorScheme.primary
                                    else MaterialTheme.colorScheme.onSurfaceVariant
                         )
+                        if (state.banglaAudioEnabled) {
+                            Text(
+                                text = "বাংলা",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
                     }
                     // Qari selector button
                     IconButton(onClick = { showQariSelector = true }) {

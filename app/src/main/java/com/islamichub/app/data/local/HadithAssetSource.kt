@@ -151,10 +151,10 @@ data class HadithChapterJson(
 )
 
 data class HadithJson(
-    @SerializedName("hadithNumber") val hadithNumber: Int,
-    @SerializedName("chapterId") val chapterId: Int,
-    @SerializedName("arabic") val arabic: String,
-    @SerializedName("bangla") val bangla: String,
+    @SerializedName("hadithNumber") val hadithNumber: Int = 0,
+    @SerializedName("chapterId") val chapterId: Int = 0,
+    @SerializedName("arabic") val arabic: String = "",
+    @SerializedName("bangla") val bangla: String = "",
     @SerializedName("grades") val grades: List<Map<String, String>>? = null,
     @SerializedName("reference") val reference: Map<String, Any>? = null
 )
