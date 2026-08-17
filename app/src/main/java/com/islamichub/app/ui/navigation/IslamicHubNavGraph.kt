@@ -108,10 +108,10 @@ fun IslamicHubNavGraph(container: AppContainer) {
                                         Box(
                                             modifier = Modifier
                                                 .size(36.dp)
-                                                .clip(androidx.compose.foundation.shape.CircleShape)
+                                                .clip(CircleShape)
                                                 .background(
                                                     if (selected)
-                                                        brush = Brush.linearGradient(
+                                                        Brush.linearGradient(
                                                             colors = listOf(
                                                                 MaterialTheme.colorScheme.primary,
                                                                 MaterialTheme.colorScheme.secondary
