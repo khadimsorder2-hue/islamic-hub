@@ -110,7 +110,7 @@ fun TopicStudyListScreen(
                                 tint = Color.White.copy(alpha = 0.95f), modifier = Modifier.size(16.dp))
                             val topicCount = if (state.isLoading) "…" else state.topics.size.toString()
                             val ayahCount = if (state.isLoading) "…" else state.topics.sumOf { it.allAyahs.size }.toString()
-                            Text("  $topicCountটি বিষয় • $ayahCount+ আয়াত",
+                            Text("  ${topicCount}টি বিষয় • ${ayahCount}+ আয়াত",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = Color.White.copy(alpha = 0.95f))
                             Spacer(Modifier.width(12.dp))
@@ -157,6 +157,7 @@ fun TopicStudyListScreen(
 
             // Error state
             if (state.error != null && !state.isLoading) {
+                val errorMsg = state.error ?: ""
                 item {
                     Card(
                         modifier = Modifier.fillMaxWidth(),
@@ -174,7 +175,7 @@ fun TopicStudyListScreen(
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onErrorContainer)
                             Spacer(Modifier.height(8.dp))
-                            Text(state.error,
+                            Text(errorMsg,
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onErrorContainer,
                                 textAlign = androidx.compose.ui.text.style.TextAlign.Center)

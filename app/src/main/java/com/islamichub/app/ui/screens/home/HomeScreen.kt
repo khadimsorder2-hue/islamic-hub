@@ -518,7 +518,7 @@ private fun DailyProgressCard(state: HomeUiState) {
 }
 
 @Composable
-private fun ProgressCell(label: String, value: String, icon: ImageVector, color: Color) {
+private fun androidx.compose.foundation.layout.RowScope.ProgressCell(label: String, value: String, icon: ImageVector, color: Color) {
     Column(
         modifier = Modifier
             .weight(1f)

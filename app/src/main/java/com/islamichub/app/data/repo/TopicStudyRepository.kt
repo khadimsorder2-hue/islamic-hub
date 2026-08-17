@@ -286,7 +286,7 @@ class TopicStudyRepository(
             nameBn = nameBn ?: name ?: nameEn ?: slug ?: "",
             nameEn = nameEn ?: name ?: slug ?: "",
             nameAr = nameAr ?: "",
-            domain = domainNameBn ?: domainName ?: domainNameEn ?: "",
+            domain = domainNameBn ?: domainName ?: "",
             categoryBn = categoryNameBn ?: "",
             overviewBn = descriptionBn ?: description ?: descriptionEn ?: "",
             keyAyahs = emptyList(),

@@ -15,3 +15,6 @@ local.properties
 # For production, replace with your own keystore and add these to .gitignore:
 # *.keystore
 # keystore/keystore.properties
+app/build/
+build/
+.kotlin/

@@ -11,6 +11,7 @@ import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
@@ -103,16 +104,12 @@ class FastingRepository(private val context: Context) {
             } else break
         }
 
-        val prefs = context.fastingStore.data.let {
-            // Read longest streak (already stored)
-            val all = it.let { p -> p[KEY_LONGEST] ?: 0 }
-            all
-        }
+        val longestStreakStored = context.fastingStore.data.first()[KEY_LONGEST] ?: 0
 
-        val longestStreak = maxOf(streak, prefs)
+        val longestStreak = maxOf(streak, longestStreakStored)
 
         // Update longest if new record
-        if (streak > prefs) {
+        if (streak > longestStreakStored) {
             context.fastingStore.edit { it[KEY_LONGEST] = streak }
         }
 

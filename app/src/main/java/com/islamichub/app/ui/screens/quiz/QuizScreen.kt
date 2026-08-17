@@ -546,7 +546,7 @@ private fun ResultScreen(
 }
 
 @Composable
-private fun StatCard(label: String, value: String, color: Color) {
+private fun androidx.compose.foundation.layout.RowScope.StatCard(label: String, value: String, color: Color) {
     Card(
         modifier = Modifier.weight(1f).aspectRatio(1.2f),
         shape = RoundedCornerShape(16.dp),
