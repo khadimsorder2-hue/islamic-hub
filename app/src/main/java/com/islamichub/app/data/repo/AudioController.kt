@@ -91,9 +91,10 @@ class AudioController(private val context: Context) {
                 }
                 Player.STATE_ENDED -> {
                     // If repeat mode, replay current ayah
-                    if (_state.value.isRepeatMode && currentAyah != null && currentSurah != null) {
-                        val surah = currentSurah!!
-                        val ayah = currentAyah!!
+                    val state = _state.value
+                    if (state.isRepeatMode && state.currentAyah != null && state.currentSurah != null) {
+                        val surah = state.currentSurah!!
+                        val ayah = state.currentAyah!!
                         playAyah(surah, ayah, currentReciter)
                     } else if (isKhatamMode && khatamCurrentIndex < khatamSurahQueue.size - 1) {
                         khatamCurrentIndex++
