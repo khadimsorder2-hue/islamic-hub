@@ -17,6 +17,8 @@ import com.islamichub.app.data.local.QuranData
 import com.islamichub.app.data.remote.AladhanApi
 import com.islamichub.app.data.repo.AIService
 import com.islamichub.app.data.repo.AudioController
+import com.islamichub.app.data.repo.AudioDownloadService
+import com.islamichub.app.data.repo.BackupRestoreService
 import com.islamichub.app.data.repo.BookmarkRepository
 import com.islamichub.app.data.repo.ContentRepository
 import com.islamichub.app.data.repo.DuaRepository
@@ -92,6 +94,19 @@ class AppContainer(private val context: Context) {
     val settingsRepository: SettingsRepository by lazy { SettingsRepository(context) }
     val tafsirRepository: TafsirRepository by lazy { TafsirRepository(context) }
     val khatamRepository: KhatamRepository by lazy { KhatamRepository(context) }
+
+    // v1.9.0 new services
+    val audioDownloadService: AudioDownloadService by lazy { AudioDownloadService(context) }
+    val backupRestoreService: BackupRestoreService by lazy {
+        BackupRestoreService(
+            context = context,
+            bookmarkRepo = bookmarkRepository,
+            qadaRepo = qadaRepository,
+            trackerRepo = trackerRepository,
+            khatamRepo = khatamRepository,
+            settingsRepo = settingsRepository
+        )
+    }
 }
 
 /** Tiny preferences wrapper for tasbih counts. */

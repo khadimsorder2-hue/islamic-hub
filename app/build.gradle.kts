@@ -169,6 +169,12 @@ dependencies {
     implementation("androidx.media3:media3-common:1.3.1")
     implementation("androidx.media3:media3-datasource:1.3.1")
 
+    // WorkManager (daily ayah notification)
+    implementation("androidx.work:work-runtime-ktx:2.9.0")
+
+    // Biometric (app lock)
+    implementation("androidx.biometric:biometric:1.1.0")
+
     // Debug
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")

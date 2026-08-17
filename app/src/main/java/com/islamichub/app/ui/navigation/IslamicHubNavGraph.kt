@@ -1,5 +1,6 @@
 package com.islamichub.app.ui.navigation
 
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
@@ -62,26 +63,32 @@ fun IslamicHubNavGraph(container: AppContainer) {
 
     Scaffold(
         bottomBar = {
-            if (showBottomBar) {
-                NavigationBar {
-                    bottomNavItems.forEach { item ->
-                        val selected = currentRoute == item.screen.route
-                        NavigationBarItem(
-                            selected = selected,
-                            onClick = {
-                                if (!selected) {
-                                    navController.navigate(item.screen.route) {
-                                        popUpTo(navController.graph.findStartDestination().id) {
-                                            saveState = true
+            Column {
+                // Floating audio player (above bottom bar)
+                com.islamichub.app.ui.components.FloatingAudioPlayer(
+                    container = container
+                )
+                if (showBottomBar) {
+                    NavigationBar {
+                        bottomNavItems.forEach { item ->
+                            val selected = currentRoute == item.screen.route
+                            NavigationBarItem(
+                                selected = selected,
+                                onClick = {
+                                    if (!selected) {
+                                        navController.navigate(item.screen.route) {
+                                            popUpTo(navController.graph.findStartDestination().id) {
+                                                saveState = true
+                                            }
+                                            launchSingleTop = true
+                                            restoreState = true
                                         }
-                                        launchSingleTop = true
-                                        restoreState = true
                                     }
-                                }
-                            },
-                            icon = { Icon(item.icon, contentDescription = null) },
-                            label = { Text(stringResource(item.labelRes)) }
-                        )
+                                },
+                                icon = { Icon(item.icon, contentDescription = null) },
+                                label = { Text(stringResource(item.labelRes)) }
+                            )
+                        }
                     }
                 }
             }
