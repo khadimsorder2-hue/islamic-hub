@@ -48,7 +48,7 @@ private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(na
  * Manual DI container. Avoids Hilt to keep the build simple and fast.
  * Single instance created in [IslamicHubApp].
  */
-class AppContainer(private val context: Context) {
+class AppContainer(internal val context: Context) {
 
     private val okHttp: OkHttpClient by lazy {
         OkHttpClient.Builder()
@@ -108,6 +108,11 @@ class AppContainer(private val context: Context) {
             khatamRepo = khatamRepository,
             settingsRepo = settingsRepository
         )
+    }
+
+    // v3.1.0 new services
+    val fastingRepository by lazy {
+        com.islamichub.app.ui.screens.fasting.FastingRepository(context)
     }
 }
 

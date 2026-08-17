@@ -222,6 +222,9 @@
     <string name="more_stories">Islamic Stories</string>
     <string name="more_kalima">Six Kalimas</string>
     <string name="more_qa">Q&amp;A</string>
+    <string name="more_zakat">Zakat Calculator</string>
+    <string name="more_quiz">Islamic Quiz</string>
+    <string name="more_fasting">Fasting Tracker</string>
 
     <!-- AI Settings -->
     <string name="settings_ai_scholar">AI Scholar</string>

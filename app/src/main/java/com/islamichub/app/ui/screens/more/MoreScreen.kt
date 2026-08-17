@@ -21,8 +21,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.Book
 import androidx.compose.material.icons.filled.Bookmark
+import androidx.compose.material.icons.filled.Calculate
 import androidx.compose.material.icons.filled.CompassCalibration
 import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.MenuBook
@@ -30,6 +32,7 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Spa
+import androidx.compose.material.icons.filled.WbSunny
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -82,7 +85,10 @@ fun MoreScreen(
         MoreItem(R.string.more_scanner, Icons.Filled.PhotoLibrary, Screen.Scanner.route, "topics-premium-bg.webp", Color(0xFF43A047)),
         MoreItem(R.string.more_stories, Icons.Filled.Book, Screen.Stories.route, "stories-premium-bg.webp", Color(0xFF8D6E63)),
         MoreItem(R.string.more_kalima, Icons.Filled.Book, Screen.Kalima.route, "quran-premium-bg.webp", Color(0xFF5C6BC0)),
-        MoreItem(R.string.more_qa, Icons.Filled.MenuBook, Screen.Qa.route, "topics-premium-bg.webp", Color(0xFF00897B))
+        MoreItem(R.string.more_qa, Icons.Filled.MenuBook, Screen.Qa.route, "topics-premium-bg.webp", Color(0xFF00897B)),
+        MoreItem(R.string.more_zakat, Icons.Filled.Calculate, Screen.Zakat.route, "salah-premium-bg.webp", Color(0xFF00ACC1)),
+        MoreItem(R.string.more_quiz, Icons.Filled.EmojiEvents, Screen.Quiz.route, "topics-premium-bg.webp", Color(0xFFFF6B35)),
+        MoreItem(R.string.more_fasting, Icons.Filled.WbSunny, Screen.Fasting.route, "salah-premium-bg.webp", Color(0xFFD84315))
     )
 
     Scaffold(

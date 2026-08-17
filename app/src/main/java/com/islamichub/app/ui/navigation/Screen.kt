@@ -60,6 +60,11 @@ sealed class Screen(val route: String) {
     data object Stories : Screen("stories")
     data object Kalima : Screen("kalima")
     data object Qa : Screen("qa")
+
+    // New v3.1.0 screens
+    data object Zakat : Screen("zakat")
+    data object Quiz : Screen("quiz")
+    data object Fasting : Screen("fasting")
 }
 
 data class BottomNavItem(

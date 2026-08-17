@@ -366,6 +366,23 @@ fun IslamicHubNavGraph(container: AppContainer) {
                     container = container, onBack = { navController.popBackStack() }
                 )
             }
+
+            // v3.1.0 screens
+            composable(Screen.Zakat.route) {
+                com.islamichub.app.ui.screens.zakat.ZakatScreen(
+                    container = container, onBack = { navController.popBackStack() }
+                )
+            }
+            composable(Screen.Quiz.route) {
+                com.islamichub.app.ui.screens.quiz.QuizScreen(
+                    container = container, onBack = { navController.popBackStack() }
+                )
+            }
+            composable(Screen.Fasting.route) {
+                com.islamichub.app.ui.screens.fasting.FastingScreen(
+                    container = container, onBack = { navController.popBackStack() }
+                )
+            }
         }
     }
 

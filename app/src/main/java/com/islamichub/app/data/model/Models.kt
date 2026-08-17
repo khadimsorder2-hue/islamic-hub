@@ -22,7 +22,8 @@ data class Ayah(
     val numberInSurah: Int,
     val arabic: String,
     val english: String,
-    val bengali: String
+    val bengali: String,
+    val reference: String? = null
 )
 
 /** One of the 99 names of Allah (Asma ul Husna). */

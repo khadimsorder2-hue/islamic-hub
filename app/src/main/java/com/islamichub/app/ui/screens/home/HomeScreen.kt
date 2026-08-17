@@ -9,41 +9,57 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoStories
 import androidx.compose.material.icons.filled.Bedtime
 import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.Book
 import androidx.compose.material.icons.filled.Bookmark
+import androidx.compose.material.icons.filled.Calculate
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.CompassCalibration
 import androidx.compose.material.icons.filled.Dashboard
+import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.filled.MenuBook
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Psychology
 import androidx.compose.material.icons.filled.QuestionAnswer
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Spa
+import androidx.compose.material.icons.filled.TrendingUp
 import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material.icons.filled.WbSunny
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -53,10 +69,11 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import com.islamichub.app.R
+import androidx.compose.ui.unit.sp
 import com.islamichub.app.data.AppContainer
 import com.islamichub.app.ui.components.PremiumCard
 import com.islamichub.app.ui.components.PremiumHeroCard
@@ -73,6 +90,7 @@ fun HomeScreen(
     val vm = remember { HomeViewModel(container) }
     val state by vm.uiState.collectAsState()
     val context = LocalContext.current
+    var searchQuery by rememberSaveable { mutableStateOf("") }
 
     LazyColumn(
         contentPadding = PaddingValues(16.dp),
@@ -94,7 +112,6 @@ fun HomeScreen(
                         modifier = Modifier.fillMaxSize(),
                         contentScale = ContentScale.Crop
                     )
-                    // Multi-layer gradient
                     Box(
                         modifier = Modifier.fillMaxSize().background(
                             brush = Brush.verticalGradient(
@@ -123,7 +140,6 @@ fun HomeScreen(
                     modifier = Modifier.fillMaxSize().padding(28.dp),
                     verticalArrangement = Arrangement.SpaceBetween
                 ) {
-                    // Top: greeting + hijri
                     Column {
                         Text(
                             text = "আসসালামু আলাইকুম",
@@ -138,7 +154,6 @@ fun HomeScreen(
                         )
                     }
 
-                    // Middle: next prayer card (glassmorphism)
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
@@ -155,7 +170,6 @@ fun HomeScreen(
                                 style = MaterialTheme.typography.titleMedium,
                                 color = Color.White.copy(alpha = 0.9f))
                         }
-                        // Countdown badge (glassmorphism)
                         Column(
                             horizontalAlignment = Alignment.CenterHorizontally,
                             modifier = Modifier
@@ -178,6 +192,55 @@ fun HomeScreen(
                 }
             }
         }
+
+        // ─── Smart Search Bar ───
+        item {
+            OutlinedTextField(
+                value = searchQuery,
+                onValueChange = { searchQuery = it },
+                modifier = Modifier.fillMaxWidth(),
+                placeholder = { Text("সার্চ করুন: সূরা, হাদিস, দোয়া…", style = MaterialTheme.typography.bodyMedium) },
+                leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
+                shape = RoundedCornerShape(28.dp),
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                    focusedIndicatorColor = Color.Transparent,
+                    unfocusedIndicatorColor = Color.Transparent,
+                    disabledIndicatorColor = Color.Transparent
+                ),
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Text,
+                    imeAction = ImeAction.Search
+                ),
+                singleLine = true
+            )
+        }
+
+        // ─── Quick-jump chips (horizontal scroll) ───
+        item {
+            val chips = listOf(
+                ChipItem("কুরআন", Icons.Filled.AutoStories, Screen.Quran.route, Color(0xFF6D45C7)),
+                ChipItem("নামাজ", Icons.Filled.MenuBook, Screen.NamazShikkha.route, Color(0xFFC9A34E)),
+                ChipItem("নামাজের সময়", Icons.Filled.CalendarMonth, Screen.Prayer.route, Color(0xFF7E8CE0)),
+                ChipItem("কিবলা", Icons.Filled.CompassCalibration, Screen.Qibla.route, Color(0xFF2E7D32)),
+                ChipItem("তসবিহ", Icons.Filled.Spa, Screen.Tasbih.route, Color(0xFFB36283)),
+                ChipItem("জাকাত", Icons.Filled.Calculate, Screen.Zakat.route, Color(0xFF00ACC1)),
+                ChipItem("কুইজ", Icons.Filled.EmojiEvents, Screen.Quiz.route, Color(0xFFFF6B35)),
+                ChipItem("রোজা", Icons.Filled.WbSunny, Screen.Fasting.route, Color(0xFFD84315)),
+                ChipItem("AI স্কলার", Icons.Filled.Psychology, Screen.AiScholar.route, Color(0xFF8E24AA))
+            )
+            LazyRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                items(chips) { chip ->
+                    QuickChip(chip) { onNavigate(chip.route) }
+                }
+            }
+        }
+
+        // ─── Daily Progress Card ───
+        item { DailyProgressCard(state = state) }
 
         // ─── Quick Access (4 cards) ───
         item { PremiumSectionHeader(title = "দ্রুত অ্যাক্সেস") }
@@ -207,16 +270,44 @@ fun HomeScreen(
             }
         }
 
+        // ─── New v3.1.0 features (highlighted) ───
+        item { PremiumSectionHeader(title = "নতুন ফিচার") }
+        item {
+            val features = listOf(
+                GridFeature("জাকাত ক্যালকুলেটর", "২.৫% হিসাব", Icons.Filled.Calculate, Screen.Zakat.route, "salah-premium-bg.webp", Color(0xFF00ACC1)),
+                GridFeature("ইসলামিক কুইজ", "৬ ক্যাটাগরি", Icons.Filled.EmojiEvents, Screen.Quiz.route, "topics-premium-bg.webp", Color(0xFFFF6B35)),
+                GridFeature("রোজা ট্র্যাকার", "স্ট্রিক সহ", Icons.Filled.WbSunny, Screen.Fasting.route, "salah-premium-bg.webp", Color(0xFFD84315)),
+                GridFeature("AI স্কলার", "জিজ্ঞাসা করুন", Icons.Filled.Psychology, Screen.AiScholar.route, "voice-ai-bg.webp", Color(0xFF8E24AA))
+            )
+            features.chunked(2).forEach { rowFeatures ->
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    rowFeatures.forEach { feature ->
+                        Box(modifier = Modifier.weight(1f)) {
+                            PremiumCard(backgroundImage = feature.bgImage, context = context,
+                                onClick = { onNavigate(feature.route) }, height = 130,
+                                overlayColor = feature.color) {
+                                PremiumCardContent(feature)
+                            }
+                        }
+                    }
+                    if (rowFeatures.size == 1) { Box(modifier = Modifier.weight(1f)) {} }
+                }
+            }
+        }
+
         // ─── Knowledge & Research ───
         item { PremiumSectionHeader(title = "জ্ঞান ও গবেষণা") }
         item {
             val features = listOf(
                 GridFeature("হাদিস", "২৪,৪২৪টি", Icons.Filled.Book, Screen.Hadith.route, "hadith-premium-bg.webp", Color(0xFF1B5E20)),
                 GridFeature("হাদিস বিষয়াদি", "৩১ বিষয়", Icons.Filled.Book, Screen.HadithTopics.route, "hadith-premium-bg.webp", Color(0xFF0F766E)),
-                GridFeature("AI স্কলার", "জিজ্ঞাসা করুন", Icons.Filled.Bolt, Screen.AiScholar.route, "voice-ai-bg.webp", Color(0xFF8E24AA)),
                 GridFeature("ভুল বোঝাবুঝি", "১৯২+", Icons.Filled.Warning, Screen.Misconceptions.route, null, Color(0xFFEF6C00)),
                 GridFeature("প্রশ্ন-উত্তর", "৮৮৭ টি", Icons.Filled.QuestionAnswer, Screen.Qa.route, null, Color(0xFF00897B)),
-                GridFeature("তাজবীদ", "চেকার", Icons.Filled.AutoStories, Screen.TajweedChecker.route, "tajweed-premium-bg.webp", Color(0xFF3949AB))
+                GridFeature("তাজবীদ", "চেকার", Icons.Filled.AutoStories, Screen.TajweedChecker.route, "tajweed-premium-bg.webp", Color(0xFF3949AB)),
+                GridFeature("AI টাফসির", "খতিব ভাষায়", Icons.Filled.Bolt, Screen.Quran.route, "premium-quran-bg.webp", Color(0xFF8E24AA))
             )
             features.chunked(2).forEach { rowFeatures ->
                 Row(
@@ -324,39 +415,138 @@ fun HomeScreen(
             }
         }
 
-        // ─── Ayah of the day ───
+        // ─── Ayah of the day (premium shareable card) ───
         item {
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(24.dp),
                 colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.secondaryContainer
+                    containerColor = Color.Transparent
                 ),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
             ) {
-                Column(
-                    modifier = Modifier.padding(24.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(
+                            brush = Brush.verticalGradient(
+                                colors = listOf(
+                                    MaterialTheme.colorScheme.primary,
+                                    MaterialTheme.colorScheme.secondary
+                                )
+                            )
+                        )
+                        .padding(24.dp)
                 ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Filled.AutoStories, contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f))
-                        Text("  আজকের আয়াত",
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f))
-                    }
-                    state.ayahOfDay?.arabic?.let { arabic ->
-                        Text(arabic, style = MaterialTheme.typography.displaySmall,
-                            color = MaterialTheme.colorScheme.onSecondaryContainer,
-                            modifier = Modifier.fillMaxWidth())
-                    }
-                    state.ayahOfDay?.bengali?.let { bn ->
-                        Text(bn, style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.85f))
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Filled.AutoStories, contentDescription = null, tint = Color.White)
+                            Text("  আজকের আয়াত",
+                                style = MaterialTheme.typography.labelMedium,
+                                color = Color.White.copy(alpha = 0.9f))
+                        }
+                        state.ayahOfDay?.arabic?.let { arabic ->
+                            Text(arabic, style = MaterialTheme.typography.displaySmall,
+                                color = Color.White, modifier = Modifier.fillMaxWidth())
+                        }
+                        state.ayahOfDay?.bengali?.let { bn ->
+                            Text(bn, style = MaterialTheme.typography.bodyMedium,
+                                color = Color.White.copy(alpha = 0.95f))
+                        }
+                        state.ayahOfDay?.reference?.let { ref ->
+                            Text("— $ref",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = Color.White.copy(alpha = 0.85f),
+                                modifier = Modifier.padding(top = 4.dp))
+                        }
                     }
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun DailyProgressCard(state: HomeUiState) {
+    val today = remember {
+        val sdf = java.text.SimpleDateFormat("EEEE, d MMMM", java.util.Locale("bn", "BD"))
+        sdf.format(java.util.Date())
+    }
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Filled.TrendingUp, contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary)
+                    Text("  আজকের অগ্রগতি",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold)
+                }
+                Text(today,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                ProgressCell("৫ ওয়াক্ত নামাজ", "${state.todayPrayersDone}/5", Icons.Filled.CheckCircle, Color(0xFF1B5E20))
+                ProgressCell("তসবিহ", "${state.todayTasbihCount}", Icons.Filled.Spa, Color(0xFFB36283))
+                ProgressCell("স্ট্রিক", "${state.streakDays}", Icons.Filled.LocalFireDepartment, Color(0xFFFF6B35))
+            }
+        }
+    }
+}
+
+@Composable
+private fun ProgressCell(label: String, value: String, icon: ImageVector, color: Color) {
+    Column(
+        modifier = Modifier
+            .weight(1f)
+            .clip(RoundedCornerShape(14.dp))
+            .background(color.copy(alpha = 0.1f))
+            .padding(12.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        Icon(icon, contentDescription = null, tint = color, modifier = Modifier.size(20.dp))
+        Text(value, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = color)
+        Text(label, style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+    }
+}
+
+@Composable
+private fun QuickChip(chip: ChipItem, onClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .clip(RoundedCornerShape(20.dp))
+            .background(MaterialTheme.colorScheme.surfaceVariant)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 14.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+        Icon(chip.icon, contentDescription = null, tint = chip.color, modifier = Modifier.size(16.dp))
+        Text(chip.label, style = MaterialTheme.typography.labelMedium,
+            fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurface)
     }
 }
 
@@ -382,5 +572,12 @@ private data class GridFeature(
     val icon: ImageVector,
     val route: String,
     val bgImage: String?,
+    val color: Color
+)
+
+private data class ChipItem(
+    val label: String,
+    val icon: ImageVector,
+    val route: String,
     val color: Color
 )

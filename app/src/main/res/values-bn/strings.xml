@@ -222,6 +222,9 @@
     <string name="more_stories">ইসলামিক গল্প</string>
     <string name="more_kalima">৬ কালিমা</string>
     <string name="more_qa">প্রশ্ন-উত্তর</string>
+    <string name="more_zakat">জাকাত ক্যালকুলেটর</string>
+    <string name="more_quiz">ইসলামিক কুইজ</string>
+    <string name="more_fasting">রোজা ট্র্যাকার</string>
 
     <!-- AI Settings -->
     <string name="settings_ai_scholar">AI স্কলার</string>

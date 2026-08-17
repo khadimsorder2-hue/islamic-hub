@@ -11,6 +11,7 @@ import androidx.compose.runtime.setValue
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import com.islamichub.app.data.AppContainer
 import com.islamichub.app.data.model.Ayah
@@ -25,7 +26,11 @@ data class HomeUiState(
     val hadithOfDay: String = "",
     val hadithReference: String = "",
     val prayerTimes: PrayerTimes? = null,
-    val isLoading: Boolean = true
+    val isLoading: Boolean = true,
+    // v3.1.0 daily progress
+    val todayPrayersDone: Int = 0,
+    val todayTasbihCount: Int = 0,
+    val streakDays: Int = 0
 )
 
 class HomeViewModel(
@@ -59,6 +64,11 @@ class HomeViewModel(
 
             val nextPrayer = times?.let { computeNextPrayer(it) }
 
+            // Daily progress (v3.1.0)
+            val todayTracker = container.trackerRepository.today.first()
+            val tasbihTotal = container.tasbihRepository.total.first()
+            val streak = container.trackerRepository.prayerStreak.first()
+
             _uiState.value = HomeUiState(
                 hijriDate = times?.hijriDate ?: "",
                 nextPrayerName = nextPrayer?.first ?: "",
@@ -68,7 +78,10 @@ class HomeViewModel(
                 hadithOfDay = hadith,
                 hadithReference = ref,
                 prayerTimes = times,
-                isLoading = false
+                isLoading = false,
+                todayPrayersDone = todayTracker.prayersDone(),
+                todayTasbihCount = tasbihTotal,
+                streakDays = streak
             )
         }
     }
