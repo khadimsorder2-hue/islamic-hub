@@ -71,24 +71,56 @@ fun HomeScreen(
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // ─── Premium Hero with background image ───
+        // ─── Premium Hero (splash-like) ───
         item {
-            PremiumHeroCard(
-                backgroundImage = "hero-premium-masjid.webp",
-                context = context,
-                height = 240
+            val heroBitmap = remember { loadAssetImage(context, "img/hero-premium-masjid.webp") }
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(280.dp)
+                    .clip(RoundedCornerShape(32.dp))
             ) {
+                if (heroBitmap != null) {
+                    Image(
+                        bitmap = heroBitmap.asImageBitmap(),
+                        contentDescription = null,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                    // Multi-layer gradient
+                    Box(
+                        modifier = Modifier.fillMaxSize().background(
+                            brush = Brush.verticalGradient(
+                                colors = listOf(
+                                    Color.Black.copy(alpha = 0.2f),
+                                    Color.Black.copy(alpha = 0.4f),
+                                    Color.Black.copy(alpha = 0.75f)
+                                )
+                            )
+                        )
+                    )
+                } else {
+                    Box(
+                        modifier = Modifier.fillMaxSize().background(
+                            brush = Brush.verticalGradient(
+                                colors = listOf(
+                                    MaterialTheme.colorScheme.primary,
+                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.8f)
+                                )
+                            )
+                        )
+                    )
+                }
+
                 Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(24.dp),
+                    modifier = Modifier.fillMaxSize().padding(28.dp),
                     verticalArrangement = Arrangement.SpaceBetween
                 ) {
-                    // Top: greeting + hijri date
+                    // Top: greeting + hijri
                     Column {
                         Text(
-                            text = stringResource(R.string.home_greeting),
-                            style = MaterialTheme.typography.headlineMedium,
+                            text = "আসসালামু আলাইকুম",
+                            style = MaterialTheme.typography.displaySmall,
                             fontWeight = FontWeight.Bold,
                             color = Color.White
                         )
@@ -99,278 +131,211 @@ fun HomeScreen(
                         )
                     }
 
-                    // Bottom: next prayer + countdown
+                    // Middle: next prayer card (glassmorphism)
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.Bottom
                     ) {
                         Column {
-                            Text(
-                                text = stringResource(R.string.home_next_prayer),
+                            Text("পরবর্তী নামাজ",
                                 style = MaterialTheme.typography.labelMedium,
-                                color = Color.White.copy(alpha = 0.85f)
-                            )
-                            Text(
-                                text = state.nextPrayerName.ifBlank { "—" },
-                                style = MaterialTheme.typography.headlineSmall,
-                                fontWeight = FontWeight.Bold,
-                                color = Color.White
-                            )
-                            Text(
-                                text = state.nextPrayerTime.ifBlank { "--:--" },
+                                color = Color.White.copy(alpha = 0.85f))
+                            Text(state.nextPrayerName.ifBlank { "—" },
+                                style = MaterialTheme.typography.headlineMedium,
+                                fontWeight = FontWeight.Bold, color = Color.White)
+                            Text(state.nextPrayerTime.ifBlank { "--:--" },
                                 style = MaterialTheme.typography.titleMedium,
-                                color = Color.White.copy(alpha = 0.9f)
-                            )
+                                color = Color.White.copy(alpha = 0.9f))
                         }
-                        // Countdown badge
+                        // Countdown badge (glassmorphism)
                         Column(
                             horizontalAlignment = Alignment.CenterHorizontally,
                             modifier = Modifier
-                                .clip(RoundedCornerShape(16.dp))
-                                .background(Color.White.copy(alpha = 0.2f))
-                                .padding(horizontal = 16.dp, vertical = 8.dp)
+                                .clip(RoundedCornerShape(20.dp))
+                                .background(Color.White.copy(alpha = 0.15f))
+                                .padding(horizontal = 20.dp, vertical = 12.dp)
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(
-                                    imageVector = Icons.Filled.LocalFireDepartment,
-                                    contentDescription = null,
-                                    tint = Color.White,
-                                    modifier = Modifier.size(14.dp)
-                                )
-                                Text(
-                                    text = " বাকি",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = Color.White.copy(alpha = 0.85f)
-                                )
+                                Icon(Icons.Filled.LocalFireDepartment,
+                                    contentDescription = null, tint = Color.White,
+                                    modifier = Modifier.size(16.dp))
+                                Text(" বাকি", style = MaterialTheme.typography.labelSmall,
+                                    color = Color.White.copy(alpha = 0.85f))
                             }
-                            Text(
-                                text = state.timeRemaining.ifBlank { "--" },
-                                style = MaterialTheme.typography.titleLarge,
-                                fontWeight = FontWeight.Bold,
-                                color = Color.White
-                            )
+                            Text(state.timeRemaining.ifBlank { "--" },
+                                style = MaterialTheme.typography.headlineSmall,
+                                fontWeight = FontWeight.Bold, color = Color.White)
                         }
                     }
                 }
             }
         }
 
-        // ─── Quick Access (4 cards in 2x2) ───
+        // ─── Quick Access (4 cards) ───
+        item { PremiumSectionHeader(title = "দ্রুত অ্যাক্সেস") }
         item {
-            PremiumSectionHeader(title = "দ্রুত অ্যাক্সেস")
-        }
-        item {
-            val quickFeatures = listOf(
+            val features = listOf(
                 GridFeature("আল-কুরআন", "১১৪ সূরা", Icons.Filled.AutoStories, Screen.Quran.route, "quran-premium-bg.webp", Color(0xFF6D45C7)),
                 GridFeature("নামাজ শিক্ষা", "সম্পূর্ণ", Icons.Filled.MenuBook, Screen.NamazShikkha.route, "namaz-premium-bg.webp", Color(0xFFC9A34E)),
                 GridFeature("নামাজের সময়", "৫ ওয়াক্ত", Icons.Filled.CalendarMonth, Screen.Prayer.route, "prayer-premium-bg.webp", Color(0xFF7E8CE0)),
                 GridFeature("কিবলা", "কম্পাস", Icons.Filled.CompassCalibration, Screen.Qibla.route, "qibla-premium-bg.webp", Color(0xFF2E7D32))
             )
-            val rows = quickFeatures.chunked(2)
-            rows.forEach { rowFeatures ->
+            features.chunked(2).forEach { rowFeatures ->
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 4.dp),
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     rowFeatures.forEach { feature ->
                         Box(modifier = Modifier.weight(1f)) {
-                            PremiumCard(
-                                backgroundImage = feature.bgImage,
-                                context = context,
-                                onClick = { onNavigate(feature.route) },
-                                height = 130,
-                                overlayColor = feature.color
-                            ) {
+                            PremiumCard(feature.bgImage, context, { onNavigate(feature.route) }, 130, feature.color) {
                                 PremiumCardContent(feature)
                             }
                         }
                     }
+                    if (rowFeatures.size == 1) { Box(modifier = Modifier.weight(1f)) {} }
                 }
             }
         }
 
-        // ─── Hadith & AI ───
+        // ─── Knowledge & Research ───
+        item { PremiumSectionHeader(title = "জ্ঞান ও গবেষণা") }
         item {
-            PremiumSectionHeader(title = "জ্ঞান ও গবেষণা")
-        }
-        item {
-            val knowledgeFeatures = listOf(
+            val features = listOf(
                 GridFeature("হাদিস", "২৪,৪২৪টি", Icons.Filled.Book, Screen.Hadith.route, "hadith-premium-bg.webp", Color(0xFF1B5E20)),
+                GridFeature("হাদিস বিষয়াদি", "৩১ বিষয়", Icons.Filled.Book, Screen.HadithTopics.route, "hadith-premium-bg.webp", Color(0xFF0F766E)),
                 GridFeature("AI স্কলার", "জিজ্ঞাসা করুন", Icons.Filled.Bolt, Screen.AiScholar.route, "voice-ai-bg.webp", Color(0xFF8E24AA)),
-                GridFeature("ভুল বোঝাবুঝি", "৩০০+", Icons.Filled.Warning, Screen.Misconceptions.route, null, Color(0xFFEF6C00)),
-                GridFeature("প্রশ্ন-উত্তর", "Q&A", Icons.Filled.QuestionAnswer, Screen.Qa.route, null, Color(0xFF00897B))
+                GridFeature("ভুল বোঝাবুঝি", "১৯২+", Icons.Filled.Warning, Screen.Misconceptions.route, null, Color(0xFFEF6C00)),
+                GridFeature("প্রশ্ন-উত্তর", "৮৮৭ টি", Icons.Filled.QuestionAnswer, Screen.Qa.route, null, Color(0xFF00897B)),
+                GridFeature("তাজবীদ", "চেকার", Icons.Filled.AutoStories, Screen.TajweedChecker.route, "tajweed-premium-bg.webp", Color(0xFF3949AB))
             )
-            val rows = knowledgeFeatures.chunked(2)
-            rows.forEach { rowFeatures ->
+            features.chunked(2).forEach { rowFeatures ->
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 4.dp),
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     rowFeatures.forEach { feature ->
                         Box(modifier = Modifier.weight(1f)) {
-                            PremiumCard(
-                                backgroundImage = feature.bgImage,
-                                context = context,
-                                onClick = { onNavigate(feature.route) },
-                                height = 130,
-                                overlayColor = feature.color
-                            ) {
+                            PremiumCard(feature.bgImage, context, { onNavigate(feature.route) }, 130, feature.color) {
                                 PremiumCardContent(feature)
                             }
                         }
                     }
+                    if (rowFeatures.size == 1) { Box(modifier = Modifier.weight(1f)) {} }
                 }
             }
         }
 
         // ─── Tools ───
+        item { PremiumSectionHeader(title = "টুলস") }
         item {
-            PremiumSectionHeader(title = "টুলস")
-        }
-        item {
-            val toolFeatures = listOf(
+            val features = listOf(
                 GridFeature("তসবিহ", "কাউন্টার", Icons.Filled.Spa, Screen.Tasbih.route, "tasbih-bg.webp", Color(0xFFB36283)),
                 GridFeature("৯৯ নাম", "আসমাউল হুসনা", Icons.Filled.Favorite, Screen.Names.route, "asmaul_husna_light_bg.webp", Color(0xFFE91E63)),
-                GridFeature("দোয়া", "প্রতিদিনের", Icons.Filled.Bedtime, Screen.Duas.route, "dua-premium-bg.webp", Color(0xFF6B6E91)),
-                GridFeature("তাজবীদ", "চেকার", Icons.Filled.AutoStories, Screen.TajweedChecker.route, "tajweed-premium-bg.webp", Color(0xFF3949AB))
+                GridFeature("দোয়া", "২৮ টি", Icons.Filled.Bedtime, Screen.Duas.route, "dua-premium-bg.webp", Color(0xFF6B6E91)),
+                GridFeature("AI স্ক্যানার", "ছবি বিশ্লেষণ", Icons.Filled.CameraAlt, Screen.Scanner.route, null, Color(0xFF43A047))
             )
-            val rows = toolFeatures.chunked(2)
-            rows.forEach { rowFeatures ->
+            features.chunked(2).forEach { rowFeatures ->
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 4.dp),
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     rowFeatures.forEach { feature ->
                         Box(modifier = Modifier.weight(1f)) {
-                            PremiumCard(
-                                backgroundImage = feature.bgImage,
-                                context = context,
-                                onClick = { onNavigate(feature.route) },
-                                height = 130,
-                                overlayColor = feature.color
-                            ) {
+                            PremiumCard(feature.bgImage, context, { onNavigate(feature.route) }, 130, feature.color) {
                                 PremiumCardContent(feature)
                             }
                         }
                     }
+                    if (rowFeatures.size == 1) { Box(modifier = Modifier.weight(1f)) {} }
                 }
             }
         }
 
         // ─── Tracker ───
+        item { PremiumSectionHeader(title = "ট্র্যাকার") }
         item {
-            PremiumSectionHeader(title = "ট্র্যাকার")
-        }
-        item {
-            val trackerFeatures = listOf(
-                GridFeature("কাযা", "ট্র্যাকার", Icons.Filled.History, Screen.Qada.route, null, Color(0xFFD84315)),
+            val features = listOf(
+                GridFeature("কাযা", "ট্র্যাকার", Icons.Filled.History, Screen.Qada.route, "salah-premium-bg.webp", Color(0xFFD84315)),
                 GridFeature("ট্র্যাকার", "দৈনিক", Icons.Filled.Dashboard, Screen.Tracker.route, "salah-premium-bg.webp", Color(0xFF00ACC1)),
                 GridFeature("বুকমার্ক", "সংরক্ষিত", Icons.Filled.Bookmark, Screen.Bookmarks.route, null, Color(0xFF66BB6A)),
                 GridFeature("খতম", "কুরআন", Icons.Filled.MenuBook, Screen.Khatam.route, "premium-quran-bg.webp", Color(0xFF26A69A))
             )
-            val rows = trackerFeatures.chunked(2)
-            rows.forEach { rowFeatures ->
+            features.chunked(2).forEach { rowFeatures ->
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 4.dp),
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     rowFeatures.forEach { feature ->
                         Box(modifier = Modifier.weight(1f)) {
-                            PremiumCard(
-                                backgroundImage = feature.bgImage,
-                                context = context,
-                                onClick = { onNavigate(feature.route) },
-                                height = 130,
-                                overlayColor = feature.color
-                            ) {
+                            PremiumCard(feature.bgImage, context, { onNavigate(feature.route) }, 130, feature.color) {
                                 PremiumCardContent(feature)
                             }
                         }
                     }
+                    if (rowFeatures.size == 1) { Box(modifier = Modifier.weight(1f)) {} }
                 }
             }
         }
 
         // ─── More ───
+        item { PremiumSectionHeader(title = "আরও") }
         item {
-            PremiumSectionHeader(title = "আরও")
-        }
-        item {
-            val moreFeatures = listOf(
-                GridFeature("গল্প", "নবী ও খলিফা", Icons.Filled.Book, Screen.Stories.route, "stories-premium-bg.webp", Color(0xFF8D6E63)),
+            val features = listOf(
+                GridFeature("গল্প", "৯ নবী + ৪ খলিফা", Icons.Filled.Book, Screen.Stories.route, "stories-premium-bg.webp", Color(0xFF8D6E63)),
                 GridFeature("৬ কালিমা", "কালিমা", Icons.Filled.MenuBook, Screen.Kalima.route, null, Color(0xFF5C6BC0)),
-                GridFeature("AI স্ক্যানার", "ছবি বিশ্লেষণ", Icons.Filled.CameraAlt, Screen.Scanner.route, null, Color(0xFF43A047)),
-                GridFeature("ক্যালেন্ডার", "হিজরি", Icons.Filled.CalendarMonth, Screen.Calendar.route, null, Color(0xFF7E57C2)),
+                GridFeature("ক্যালেন্ডার", "হিজরি", Icons.Filled.CalendarMonth, Screen.Calendar.route, "quran-premium-bg.webp", Color(0xFF7E57C2)),
                 GridFeature("অতিরিক্ত নামাজ", "জুমআ, ঈদ", Icons.Filled.MenuBook, Screen.NamazExtras.route, "namaz-premium-bg.webp", Color(0xFF558B2F)),
                 GridFeature("আরও", "সব দেখুন", Icons.Filled.Dashboard, Screen.More.route, "topics-premium-bg.webp", Color(0xFF455A64)),
                 GridFeature("প্রোফাইল", "আপনার", Icons.Filled.Person, Screen.Profile.route, "profile-premium-bg.webp", Color(0xFF5E35B1)),
                 GridFeature("সেটিংস", "কনফিগ", Icons.Filled.Dashboard, Screen.Settings.route, null, Color(0xFF607D8B))
             )
-            val rows = moreFeatures.chunked(2)
-            rows.forEach { rowFeatures ->
+            features.chunked(2).forEach { rowFeatures ->
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 4.dp),
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     rowFeatures.forEach { feature ->
                         Box(modifier = Modifier.weight(1f)) {
-                            PremiumCard(
-                                backgroundImage = feature.bgImage,
-                                context = context,
-                                onClick = { onNavigate(feature.route) },
-                                height = 130,
-                                overlayColor = feature.color
-                            ) {
+                            PremiumCard(feature.bgImage, context, { onNavigate(feature.route) }, 130, feature.color) {
                                 PremiumCardContent(feature)
                             }
                         }
                     }
+                    if (rowFeatures.size == 1) { Box(modifier = Modifier.weight(1f)) {} }
                 }
             }
         }
 
         // ─── Ayah of the day ───
         item {
-            PremiumSectionHeader(title = stringResource(R.string.home_ayah_of_day))
-        }
-        item {
-            androidx.compose.material3.Card(
+            Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(20.dp),
-                colors = androidx.compose.material3.CardDefaults.cardColors(
+                shape = RoundedCornerShape(24.dp),
+                colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.secondaryContainer
                 ),
-                elevation = androidx.compose.material3.CardDefaults.cardElevation(defaultElevation = 1.dp)
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
             ) {
                 Column(
-                    modifier = Modifier.padding(20.dp),
+                    modifier = Modifier.padding(24.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Filled.AutoStories, contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f))
+                        Text("  আজকের আয়াত",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f))
+                    }
                     state.ayahOfDay?.arabic?.let { arabic ->
-                        Text(
-                            text = arabic,
-                            style = MaterialTheme.typography.displaySmall,
+                        Text(arabic, style = MaterialTheme.typography.displaySmall,
                             color = MaterialTheme.colorScheme.onSecondaryContainer,
-                            modifier = Modifier.fillMaxWidth()
-                        )
+                            modifier = Modifier.fillMaxWidth())
                     }
                     state.ayahOfDay?.bengali?.let { bn ->
-                        Text(
-                            text = bn,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.85f)
-                        )
+                        Text(bn, style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.85f))
                     }
                 }
             }
@@ -381,24 +346,15 @@ fun HomeScreen(
 @Composable
 private fun androidx.compose.foundation.layout.BoxScope.PremiumCardContent(feature: GridFeature) {
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
+        modifier = Modifier.fillMaxSize().padding(16.dp),
         verticalArrangement = Arrangement.SpaceBetween
     ) {
         PremiumIconBadge(icon = feature.icon, size = 40)
         Column {
-            Text(
-                text = feature.title,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = Color.White
-            )
-            Text(
-                text = feature.subtitle,
-                style = MaterialTheme.typography.bodySmall,
-                color = Color.White.copy(alpha = 0.9f)
-            )
+            Text(feature.title, style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold, color = Color.White)
+            Text(feature.subtitle, style = MaterialTheme.typography.bodySmall,
+                color = Color.White.copy(alpha = 0.9f))
         }
     }
 }

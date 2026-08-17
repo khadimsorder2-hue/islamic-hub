@@ -33,6 +33,7 @@ sealed class Screen(val route: String) {
 
     // Hadith
     data object Hadith : Screen("hadith")
+    data object HadithTopics : Screen("hadith_topics")
     data object HadithDetail : Screen("hadith/{collection}/{hadithNumber}") {
         fun createRoute(collection: String, hadithNumber: Int) = "hadith/$collection/$hadithNumber"
     }

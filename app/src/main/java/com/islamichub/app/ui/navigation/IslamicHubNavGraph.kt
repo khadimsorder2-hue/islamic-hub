@@ -272,6 +272,12 @@ fun IslamicHubNavGraph(container: AppContainer) {
                     }
                 )
             }
+            composable(Screen.HadithTopics.route) {
+                com.islamichub.app.ui.screens.hadith.HadithTopicsScreen(
+                    container = container,
+                    onBack = { navController.popBackStack() }
+                )
+            }
 
             // ─── More screens ─────────────────────────────────────────
             composable(Screen.More.route) {
