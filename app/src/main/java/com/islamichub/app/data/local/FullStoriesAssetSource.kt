@@ -26,7 +26,7 @@ data class FullStoriesData(
     @SerializedName("meraj") val meraj: FullStorySection?,
     @SerializedName("sirat") val sirat: FullStorySection?,
     @SerializedName("prophets") val prophets: List<FullProphet>?,
-    @SerializedName("khalifas") val List<FullKhalifa>?
+    @SerializedName("khalifas") val khalifas: List<FullKhalifa>?
 )
 
 data class FullStorySection(
