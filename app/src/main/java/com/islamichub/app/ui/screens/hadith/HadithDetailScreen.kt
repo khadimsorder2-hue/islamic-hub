@@ -362,7 +362,7 @@ fun HadithDetailScreen(
                     }
                     if (aiLoading) {
                         CircularProgressIndicator(
-                            modifier = Modifier.padding(16.dp).align(Alignment.CenterHorizontally)
+                            modifier = Modifier.padding(16.dp)
                         )
                     }
                     aiResult?.let { result ->
