@@ -98,4 +98,10 @@ class PrayerViewModel(private val container: AppContainer) : ViewModel() {
             }
         }
     }
+
+    fun saveJamatTime(jamat: com.islamichub.app.data.repo.JamatTime) {
+        viewModelScope.launch {
+            container.jamatTimeRepository.setJamatTime(jamat)
+        }
+    }
 }

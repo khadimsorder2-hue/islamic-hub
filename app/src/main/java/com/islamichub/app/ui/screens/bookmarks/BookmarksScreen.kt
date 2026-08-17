@@ -4,8 +4,11 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -43,6 +46,7 @@ fun BookmarksScreen(
     onBookmarkClick: (Int) -> Unit
 ) {
     val bookmarks by remember { container.bookmarkRepository.bookmarks }.collectAsState(initial = emptyList())
+    val context = androidx.compose.ui.platform.LocalContext.current
 
     Scaffold(
         topBar = {
@@ -58,25 +62,15 @@ fun BookmarksScreen(
     ) { padding ->
         if (bookmarks.isEmpty()) {
             Column(
-                modifier = Modifier
-                    .padding(padding)
-                    .fillMaxWidth()
-                    .padding(32.dp),
+                modifier = Modifier.padding(padding).fillMaxWidth().padding(32.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Icon(
-                    imageVector = Icons.Filled.Bookmark,
-                    contentDescription = null,
+                Icon(Icons.Filled.Bookmark, contentDescription = null,
                     tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
-                    modifier = Modifier.padding(16.dp)
-                )
-                Text(
-                    text = stringResource(R.string.bookmarks_empty),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center
-                )
+                    modifier = Modifier.size(64.dp))
+                Text(stringResource(R.string.bookmarks_empty), style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
             }
         } else {
             LazyColumn(
@@ -84,8 +78,41 @@ fun BookmarksScreen(
                 contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                items(bookmarks, key = { "${it.surahNumber}:${it.ayahNumber}" }) { bm ->
-                    BookmarkCard(bm, onClick = { onBookmarkClick(bm.surahNumber) })
+                // Premium hero showing count
+                item {
+                    com.islamichub.app.ui.components.PremiumHeroCard(
+                        backgroundImage = "quran-premium-bg.webp",
+                        context = context,
+                        height = 120
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxSize().padding(20.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Icon(Icons.Filled.Bookmark, contentDescription = null,
+                                tint = androidx.compose.ui.graphics.Color.White, modifier = Modifier.size(32.dp))
+                            Column {
+                                Text("${bookmarks.size}টি বুকমার্ক", style = MaterialTheme.typography.headlineSmall,
+                                    fontWeight = FontWeight.Bold, color = androidx.compose.ui.graphics.Color.White)
+                                Text("সংরক্ষিত আয়াতসমূহ", style = MaterialTheme.typography.bodySmall,
+                                    color = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.9f))
+                            }
+                        }
+                    }
+                }
+
+                // Group bookmarks by surah
+                val grouped = bookmarks.groupBy { it.surahNumber }
+                grouped.forEach { (surahNum, surahBookmarks) ->
+                    item {
+                        com.islamichub.app.ui.components.PremiumSectionHeader(
+                            title = surahBookmarks.firstOrNull()?.surahName ?: "Surah $surahNum"
+                        )
+                    }
+                    items(surahBookmarks, key = { "${it.surahNumber}:${it.ayahNumber}" }) { bm ->
+                        BookmarkCard(bm, onClick = { onBookmarkClick(bm.surahNumber) })
+                    }
                 }
             }
         }

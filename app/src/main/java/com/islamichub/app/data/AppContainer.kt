@@ -23,6 +23,7 @@ import com.islamichub.app.data.repo.BookmarkRepository
 import com.islamichub.app.data.repo.ContentRepository
 import com.islamichub.app.data.repo.DuaRepository
 import com.islamichub.app.data.repo.HadithRepository
+import com.islamichub.app.data.repo.JamatTimeRepository
 import com.islamichub.app.data.repo.KhatamRepository
 import com.islamichub.app.data.repo.LastReadRepository
 import com.islamichub.app.data.repo.NamesRepository
@@ -94,6 +95,7 @@ class AppContainer(private val context: Context) {
     val settingsRepository: SettingsRepository by lazy { SettingsRepository(context) }
     val tafsirRepository: TafsirRepository by lazy { TafsirRepository(context) }
     val khatamRepository: KhatamRepository by lazy { KhatamRepository(context) }
+    val jamatTimeRepository: JamatTimeRepository by lazy { JamatTimeRepository(context) }
 
     // v1.9.0 new services
     val audioDownloadService: AudioDownloadService by lazy { AudioDownloadService(context) }
