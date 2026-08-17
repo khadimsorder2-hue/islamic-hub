@@ -1,5 +1,6 @@
 package com.islamichub.app.ui.screens.stories
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -45,14 +46,16 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.islamichub.app.data.AppContainer
-import com.islamichub.app.data.local.StoryItem
+import com.islamichub.app.data.local.FullProphet
+import com.islamichub.app.data.local.FullKhalifa
+import com.islamichub.app.data.local.FullStoryChapter
 import com.islamichub.app.ui.components.PremiumHeroCard
 import com.islamichub.app.ui.components.PremiumSectionHeader
-import androidx.compose.foundation.Image
-import androidx.compose.ui.graphics.asImageBitmap
 import com.islamichub.app.ui.components.loadAssetImage
+import androidx.compose.ui.graphics.asImageBitmap
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -62,8 +65,10 @@ fun StoriesScreen(
 ) {
     val vm = remember { StoriesViewModel(container) }
     val state by vm.state.collectAsState()
-    var selectedStory by remember { mutableStateOf<StoryItem?>(null) }
     val context = LocalContext.current
+    var selectedProphet by remember { mutableStateOf<FullProphet?>(null) }
+    var selectedKhalifa by remember { mutableStateOf<FullKhalifa?>(null) }
+    var selectedChapter by remember { mutableStateOf<Pair<String, FullStoryChapter>?>(null) }
 
     Scaffold(
         topBar = {
@@ -77,12 +82,11 @@ fun StoriesScreen(
             )
         }
     ) { padding ->
-        val data = state.data
-        if (state.isLoading || data == null) {
-            Column(
-                modifier = Modifier.padding(padding).fillMaxWidth().padding(32.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) { androidx.compose.material3.CircularProgressIndicator() }
+        if (state.isLoading) {
+            Column(modifier = Modifier.padding(padding).fillMaxWidth().padding(32.dp),
+                horizontalAlignment = Alignment.CenterHorizontally) {
+                androidx.compose.material3.CircularProgressIndicator()
+            }
             return@Scaffold
         }
 
@@ -99,190 +103,216 @@ fun StoriesScreen(
                     height = 180
                 ) {
                     Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(20.dp),
+                        modifier = Modifier.fillMaxSize().padding(20.dp),
                         verticalArrangement = Arrangement.Center
                     ) {
-                        Text(
-                            text = "ইসলামিক গল্প",
+                        Text("ইসলামিক গল্প",
                             style = MaterialTheme.typography.headlineMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White
-                        )
-                        Text(
-                            text = "নবী, রাসূল ও খুলাফায়ে রাশেদীনের জীবনী",
+                            fontWeight = FontWeight.Bold, color = Color.White)
+                        Text("নবী, রাসূল, খুলাফায়ে রাশেদীন, মে'রাজ ও সীরাত",
                             style = MaterialTheme.typography.bodyMedium,
-                            color = Color.White.copy(alpha = 0.9f)
-                        )
+                            color = Color.White.copy(alpha = 0.9f))
                     }
                 }
             }
 
-            // Prophets section
-            data.prophets?.let { prophets ->
-                if (prophets.isNotEmpty()) {
+            // ─── Prophets ───
+            if (state.prophets.isNotEmpty()) {
+                item { PremiumSectionHeader(title = "নবী ও রাসূলগণের জীবনী") }
+                items(state.prophets, key = { it.id }) { prophet ->
+                    StoryCardProphet(prophet, context) { selectedProphet = prophet }
+                }
+            }
+
+            // ─── Khalifas ───
+            if (state.khalifas.isNotEmpty()) {
+                item { PremiumSectionHeader(title = "খুলাফায়ে রাশেদীন") }
+                items(state.khalifas, key = { it.id }) { khalifa ->
+                    StoryCardKhalifa(khalifa, context) { selectedKhalifa = khalifa }
+                }
+            }
+
+            // ─── Meraj ───
+            if (state.merajChapters.isNotEmpty()) {
+                item { PremiumSectionHeader(title = state.merajTitle) }
+                items(state.merajChapters, key = { it.id ?: it.title ?: "" }) { chapter ->
+                    ChapterCard(chapter, context) {
+                        selectedChapter = state.merajTitle to chapter
+                    }
+                }
+            }
+
+            // ─── Sirat ───
+            if (state.siratChapters.isNotEmpty()) {
+                item { PremiumSectionHeader(title = state.siratTitle) }
+                items(state.siratChapters.take(10), key = { it.id ?: it.title ?: "" }) { chapter ->
+                    ChapterCard(chapter, context) {
+                        selectedChapter = state.siratTitle to chapter
+                    }
+                }
+                if (state.siratChapters.size > 10) {
                     item {
-                        PremiumSectionHeader(title = "নবী ও রাসূলগণের জীবনী")
-                    }
-                    items(prophets, key = { it.id }) { story ->
-                        StoryCard(story, context) { selectedStory = story }
-                    }
-                }
-            }
-
-            // Khalifas section
-            data.khalifas?.let { khalifas ->
-                if (khalifas.isNotEmpty()) {
-                    item {
-                        PremiumSectionHeader(title = "খুলাফায়ে রাশেদীন")
-                    }
-                    items(khalifas, key = { it.id }) { story ->
-                        StoryCard(story, context) { selectedStory = story }
+                        Text("এবং আরও ${state.siratChapters.size - 10}টি অধ্যায়...",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(8.dp))
                     }
                 }
-            }
-
-            // Miraj
-            data.miraj?.let { miraj ->
-                item {
-                    PremiumSectionHeader(title = "মে'রাজের ঘটনা")
-                }
-                item { StoryCard(miraj, context) { selectedStory = miraj } }
-            }
-
-            // Sirat
-            data.sirat?.let { sirat ->
-                item {
-                    PremiumSectionHeader(title = "সীরাত সারসংক্ষেপ")
-                }
-                item { StoryCard(sirat, context) { selectedStory = sirat } }
             }
         }
     }
 
-    // Story detail dialog
-    selectedStory?.let { story ->
+    // Prophet detail
+    selectedProphet?.let { prophet ->
         AlertDialog(
-            onDismissRequest = { selectedStory = null },
-            title = { Text(story.titleBn ?: story.title ?: story.nameBn ?: story.name ?: "") },
+            onDismissRequest = { selectedProphet = null },
+            title = { Text(prophet.name ?: "", style = MaterialTheme.typography.titleLarge) },
             text = {
                 Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
-                    story.period?.let { p ->
-                        if (p.isNotBlank()) {
-                            Text(
-                                text = "কাল: $p",
-                                style = MaterialTheme.typography.labelMedium,
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                        }
-                    }
-                    Text(
-                        text = story.content ?: story.story ?: story.description ?: "",
-                        style = MaterialTheme.typography.bodyMedium
-                    )
+                    Text(prophet.title ?: "", style = MaterialTheme.typography.titleSmall,
+                        color = MaterialTheme.colorScheme.primary)
+                    Text(prophet.summary ?: "", style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.padding(top = 8.dp))
+                    Text(prophet.details ?: "", style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.padding(top = 12.dp))
+                    prophet.ref?.let { Text("সূত্র: $it", style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.secondary, modifier = Modifier.padding(top = 8.dp)) }
                 }
             },
-            confirmButton = {
-                TextButton(onClick = { selectedStory = null }) { Text("বন্ধ করুন") }
-            }
+            confirmButton = { TextButton(onClick = { selectedProphet = null }) { Text("বন্ধ করুন") } }
+        )
+    }
+
+    // Khalifa detail
+    selectedKhalifa?.let { khalifa ->
+        AlertDialog(
+            onDismissRequest = { selectedKhalifa = null },
+            title = { Text(khalifa.name ?: "", style = MaterialTheme.typography.titleLarge) },
+            text = {
+                Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+                    Text(khalifa.title ?: "", style = MaterialTheme.typography.titleSmall,
+                        color = MaterialTheme.colorScheme.primary)
+                    Text(khalifa.summary ?: "", style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.padding(top = 8.dp))
+                    Text(khalifa.details ?: "", style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.padding(top = 12.dp))
+                }
+            },
+            confirmButton = { TextButton(onClick = { selectedKhalifa = null }) { Text("বন্ধ করুন") } }
+        )
+    }
+
+    // Chapter detail
+    selectedChapter?.let { (sectionTitle, chapter) ->
+        AlertDialog(
+            onDismissRequest = { selectedChapter = null },
+            title = { Text(chapter.title ?: "", style = MaterialTheme.typography.titleLarge) },
+            text = {
+                Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+                    Text(chapter.content ?: "", style = MaterialTheme.typography.bodyMedium)
+                    chapter.highlight?.let {
+                        if (it.isNotBlank()) {
+                            Text(it, style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.secondary,
+                                modifier = Modifier.padding(top = 12.dp))
+                        }
+                    }
+                }
+            },
+            confirmButton = { TextButton(onClick = { selectedChapter = null }) { Text("বন্ধ করুন") } }
         )
     }
 }
 
 @Composable
-private fun StoryCard(story: StoryItem, context: android.content.Context, onClick: () -> Unit) {
-    val bgBitmap = remember(story.id) {
-        when {
-            story.id.contains("prophet", ignoreCase = true) -> loadAssetImage(context, "img/prophets-premium-bg.webp")
-            story.id.contains("khalif", ignoreCase = true) -> loadAssetImage(context, "img/khalifas-premium-bg.webp")
-            else -> loadAssetImage(context, "img/stories-premium-bg.webp")
-        }
-    }
+private fun StoryCardProphet(
+    prophet: FullProphet,
+    context: android.content.Context,
+    onClick: () -> Unit
+) {
+    val bgBitmap = remember(prophet.id) { loadAssetImage(context, "img/prophets-premium-bg.webp") }
+    StoryCardBase(
+        title = prophet.name ?: "",
+        subtitle = prophet.title ?: "",
+        summary = prophet.summary ?: "",
+        bgBitmap = bgBitmap,
+        onClick = onClick
+    )
+}
+
+@Composable
+private fun StoryCardKhalifa(
+    khalifa: FullKhalifa,
+    context: android.content.Context,
+    onClick: () -> Unit
+) {
+    val bgBitmap = remember(khalifa.id) { loadAssetImage(context, "img/khalifas-premium-bg.webp") }
+    StoryCardBase(
+        title = khalifa.name ?: "",
+        subtitle = khalifa.title ?: "",
+        summary = khalifa.summary ?: "",
+        bgBitmap = bgBitmap,
+        onClick = onClick
+    )
+}
+
+@Composable
+private fun ChapterCard(
+    chapter: FullStoryChapter,
+    context: android.content.Context,
+    onClick: () -> Unit
+) {
+    val bgBitmap = remember(chapter.id) { loadAssetImage(context, "img/stories-premium-bg.webp") }
+    StoryCardBase(
+        title = chapter.title ?: "",
+        subtitle = chapter.content?.take(80) + if ((chapter.content?.length ?: 0) > 80) "…" else "",
+        summary = "",
+        bgBitmap = bgBitmap,
+        onClick = onClick
+    )
+}
+
+@Composable
+private fun StoryCardBase(
+    title: String,
+    subtitle: String,
+    summary: String,
+    bgBitmap: android.graphics.Bitmap?,
+    onClick: () -> Unit
+) {
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
-            .clickable(onClick = onClick),
+        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).clickable(onClick = onClick),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(100.dp)
-        ) {
-            // Background image
+        Box(modifier = Modifier.fillMaxWidth().height(100.dp)) {
             if (bgBitmap != null) {
-                Image(
-                    bitmap = bgBitmap.asImageBitmap(),
-                    contentDescription = null,
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Crop
-                )
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(
-                            brush = Brush.verticalGradient(
-                                colors = listOf(
-                                    Color.Black.copy(alpha = 0.3f),
-                                    Color.Black.copy(alpha = 0.7f)
-                                )
-                            )
-                        )
-                )
-            } else {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(
-                            brush = Brush.verticalGradient(
-                                colors = listOf(
-                                    MaterialTheme.colorScheme.primary,
-                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
-                                )
-                            )
-                        )
-                )
-            }
-            Row(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(16.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(48.dp)
-                        .clip(CircleShape)
-                        .background(Color.White.copy(alpha = 0.25f)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = (story.nameBn ?: story.titleBn ?: "?").take(1),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
+                Image(bitmap = bgBitmap.asImageBitmap(), contentDescription = null,
+                    modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+                Box(modifier = Modifier.fillMaxSize().background(
+                    brush = Brush.verticalGradient(
+                        colors = listOf(Color.Black.copy(alpha = 0.3f), Color.Black.copy(alpha = 0.7f))
                     )
+                ))
+            } else {
+                Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.primary))
+            }
+            Row(modifier = Modifier.fillMaxSize().padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Box(modifier = Modifier.size(48.dp).clip(CircleShape)
+                    .background(Color.White.copy(alpha = 0.25f)),
+                    contentAlignment = Alignment.Center) {
+                    Text(title.take(1), style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold, color = Color.White)
                 }
                 Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = story.titleBn ?: story.nameBn ?: "",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        color = Color.White
-                    )
-                    story.period?.let { p ->
-                        if (p.isNotBlank()) {
-                            Text(
-                                text = p,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = Color.White.copy(alpha = 0.85f)
-                            )
-                        }
+                    Text(title, style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold, color = Color.White)
+                    if (subtitle.isNotBlank()) {
+                        Text(subtitle, style = MaterialTheme.typography.bodySmall,
+                            color = Color.White.copy(alpha = 0.85f), maxLines = 2)
                     }
                 }
             }
