@@ -39,7 +39,9 @@ class AudioController(private val context: Context) {
         val durationMs: Long = 0L,
         val positionMs: Long = 0L,
         val autoPauseMinutesRemaining: Int = 0,
-        val isKhatamMode: Boolean = false
+        val isKhatamMode: Boolean = false,
+        val playbackSpeed: Float = 1.0f,
+        val isRepeatMode: Boolean = false
     )
 
     private val _state = MutableStateFlow(AudioState())
@@ -88,8 +90,12 @@ class AudioController(private val context: Context) {
                     _state.value = _state.value.copy(isLoading = true)
                 }
                 Player.STATE_ENDED -> {
-                    // If khatam mode, advance to next surah
-                    if (isKhatamMode && khatamCurrentIndex < khatamSurahQueue.size - 1) {
+                    // If repeat mode, replay current ayah
+                    if (_state.value.isRepeatMode && currentAyah != null && currentSurah != null) {
+                        val surah = currentSurah!!
+                        val ayah = currentAyah!!
+                        playAyah(surah, ayah, currentReciter)
+                    } else if (isKhatamMode && khatamCurrentIndex < khatamSurahQueue.size - 1) {
                         khatamCurrentIndex++
                         val nextSurah = khatamSurahQueue[khatamCurrentIndex]
                         playSurahInternal(nextSurah, currentReciter)
@@ -267,6 +273,23 @@ class AudioController(private val context: Context) {
 
     fun setBanglaAudioEnabled(enabled: Boolean) {
         banglaAudioEnabled = enabled
+    }
+
+    /**
+     * Set playback speed (0.5x to 2.0x).
+     */
+    fun setPlaybackSpeed(speed: Float) {
+        val p = player ?: return
+        p.setPlaybackSpeed(speed.coerceIn(0.5f, 2.0f))
+        _state.value = _state.value.copy(playbackSpeed = speed)
+    }
+
+    /**
+     * Toggle repeat mode for current ayah.
+     */
+    fun toggleRepeatMode() {
+        val newMode = !_state.value.isRepeatMode
+        _state.value = _state.value.copy(isRepeatMode = newMode)
     }
 
     private fun startAutoPauseTicker() {
