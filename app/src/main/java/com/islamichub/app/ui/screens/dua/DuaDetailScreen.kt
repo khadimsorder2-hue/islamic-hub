@@ -195,7 +195,7 @@ fun DuaDetailScreen(
                 com.islamichub.app.ui.components.AIExplanationPopup(
                     container = container,
                     title = "দোয়া ব্যাখ্যা",
-                    question = "${d.titleBn}\n${d.arabic}",
+                    question = "${d.title}\n${d.arabic}",
                     context = "দোয়া ও তার অর্থ",
                     show = showAI,
                     onDismiss = { showAI = false }
