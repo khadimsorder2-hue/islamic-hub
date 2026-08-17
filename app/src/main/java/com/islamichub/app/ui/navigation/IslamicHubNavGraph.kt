@@ -408,6 +408,25 @@ fun IslamicHubNavGraph(container: AppContainer) {
                     }
                 )
             }
+
+            // v3.3.0 — Hadith Topic Study
+            composable(Screen.HadithTopicStudyList.route) {
+                com.islamichub.app.ui.screens.hadith_topic_study.HadithTopicStudyListScreen(
+                    onBack = { navController.popBackStack() },
+                    onTopicClick = { slug -> navController.navigate(Screen.HadithTopicStudyDetail.createRoute(slug)) }
+                )
+            }
+            composable(
+                route = Screen.HadithTopicStudyDetail.route,
+                arguments = listOf(navArgument("slug") { type = NavType.StringType })
+            ) { backStackEntry ->
+                val slug = backStackEntry.arguments?.getString("slug").orEmpty()
+                com.islamichub.app.ui.screens.hadith_topic_study.HadithTopicStudyDetailScreen(
+                    container = container,
+                    topicSlug = slug,
+                    onBack = { navController.popBackStack() }
+                )
+            }
         }
     }
 

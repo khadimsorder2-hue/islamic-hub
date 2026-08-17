@@ -108,69 +108,31 @@ fun TopicStudyListScreen(
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(Icons.Filled.AccountTree, contentDescription = null,
                                 tint = Color.White.copy(alpha = 0.95f), modifier = Modifier.size(16.dp))
-                            Text("  ${state.topics.size}টি ভেরিফায়েড বিষয় • ${state.topics.sumOf { it.allAyahs.size }}+ আয়াত",
+                            val topicCount = if (state.isLoading) "…" else state.topics.size.toString()
+                            val ayahCount = if (state.isLoading) "…" else state.topics.sumOf { it.allAyahs.size }.toString()
+                            Text("  $topicCountটি বিষয় • $ayahCount+ আয়াত",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = Color.White.copy(alpha = 0.95f))
+                            Spacer(Modifier.width(12.dp))
+                            state.source?.let { src ->
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(10.dp))
+                                        .background(Color.White.copy(alpha = 0.15f))
+                                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                                ) {
+                                    Text(if (src == com.islamichub.app.data.repo.TopicSource.API) "API লাইভ" else "অফলাইন",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = Color.White)
+                                }
+                            }
                         }
                     }
                 }
             }
 
-            // Search bar
-            item {
-                OutlinedTextField(
-                    value = state.searchQuery,
-                    onValueChange = vm::updateSearch,
-                    modifier = Modifier.fillMaxWidth(),
-                    placeholder = { Text("বিষয় সার্চ করুন: সবর, ক্ষমা, জান্নাত…") },
-                    leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
-                    shape = RoundedCornerShape(28.dp),
-                    colors = TextFieldDefaults.colors(
-                        focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                        unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                        focusedIndicatorColor = Color.Transparent,
-                        unfocusedIndicatorColor = Color.Transparent,
-                        disabledIndicatorColor = Color.Transparent
-                    ),
-                    keyboardOptions = KeyboardOptions(
-                        keyboardType = KeyboardType.Text,
-                        imeAction = ImeAction.Search
-                    ),
-                    singleLine = true
-                )
-            }
-
-            // Domain filter chips
-            item {
-                LazyRow(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    item {
-                        DomainChip(
-                            label = "সব বিষয়",
-                            isSelected = state.selectedDomain == null,
-                            color = MaterialTheme.colorScheme.primary,
-                            onClick = { vm.selectDomain(null) }
-                        )
-                    }
-                    items(state.domains) { domain ->
-                        DomainChip(
-                            label = domain,
-                            isSelected = state.selectedDomain == domain,
-                            color = MaterialTheme.colorScheme.secondary,
-                            onClick = { vm.selectDomain(domain) }
-                        )
-                    }
-                }
-            }
-
-            // Topics grid
-            items(state.filteredTopics) { topic ->
-                TopicCard(topic = topic, context = context) { onTopicClick(topic.slug) }
-            }
-
-            // Empty state
-            if (state.filteredTopics.isEmpty()) {
+            // Loading state
+            if (state.isLoading) {
                 item {
                     Card(
                         modifier = Modifier.fillMaxWidth(),
@@ -183,13 +145,124 @@ fun TopicStudyListScreen(
                             modifier = Modifier.padding(32.dp),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            Icon(Icons.Filled.Search, contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.size(48.dp))
+                            androidx.compose.material3.CircularProgressIndicator()
                             Spacer(Modifier.height(12.dp))
-                            Text("কোনো বিষয় পাওয়া যায়নি",
-                                style = MaterialTheme.typography.bodyLarge,
+                            Text("Islamic.app Topics API থেকে লোড হচ্ছে…",
+                                style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    }
+                }
+            }
+
+            // Error state
+            if (state.error != null && !state.isLoading) {
+                item {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.errorContainer
+                        )
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(20.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text("⚠️ লোড করতে সমস্যা",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onErrorContainer)
+                            Spacer(Modifier.height(8.dp))
+                            Text(state.error,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onErrorContainer,
+                                textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+                            Spacer(Modifier.height(12.dp))
+                            androidx.compose.material3.OutlinedButton(onClick = { vm.loadTopics() }) {
+                                Text("আবার চেষ্টা করুন")
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Search bar (only when not loading)
+            if (!state.isLoading && state.error == null) {
+                item {
+                    OutlinedTextField(
+                        value = state.searchQuery,
+                        onValueChange = vm::updateSearch,
+                        modifier = Modifier.fillMaxWidth(),
+                        placeholder = { Text("বিষয় সার্চ করুন: সবর, ক্ষমা, জান্নাত…") },
+                        leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
+                        shape = RoundedCornerShape(28.dp),
+                        colors = TextFieldDefaults.colors(
+                            focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                            focusedIndicatorColor = Color.Transparent,
+                            unfocusedIndicatorColor = Color.Transparent,
+                            disabledIndicatorColor = Color.Transparent
+                        ),
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Text,
+                            imeAction = ImeAction.Search
+                        ),
+                        singleLine = true
+                    )
+                }
+
+                // Domain filter chips
+                if (state.domains.isNotEmpty()) {
+                    item {
+                        LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            item {
+                                DomainChip(
+                                    label = "সব বিষয়",
+                                    isSelected = state.selectedDomain == null,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    onClick = { vm.selectDomain(null) }
+                                )
+                            }
+                            items(state.domains) { domain ->
+                                DomainChip(
+                                    label = domain,
+                                    isSelected = state.selectedDomain == domain,
+                                    color = MaterialTheme.colorScheme.secondary,
+                                    onClick = { vm.selectDomain(domain) }
+                                )
+                            }
+                        }
+                    }
+                }
+
+                // Topics grid
+                items(state.filteredTopics) { topic ->
+                    TopicCard(topic = topic, context = context) { onTopicClick(topic.slug) }
+                }
+
+                // Empty state
+                if (state.filteredTopics.isEmpty()) {
+                    item {
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(16.dp),
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.surfaceVariant
+                            )
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(32.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Icon(Icons.Filled.Search, contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.size(48.dp))
+                                Spacer(Modifier.height(12.dp))
+                                Text("কোনো বিষয় পাওয়া যায়নি",
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
                         }
                     }
                 }

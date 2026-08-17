@@ -90,7 +90,8 @@ fun MoreScreen(
         MoreItem(R.string.more_zakat, Icons.Filled.Calculate, Screen.Zakat.route, "salah-premium-bg.webp", Color(0xFF00ACC1)),
         MoreItem(R.string.more_quiz, Icons.Filled.EmojiEvents, Screen.Quiz.route, "topics-premium-bg.webp", Color(0xFFFF6B35)),
         MoreItem(R.string.more_fasting, Icons.Filled.WbSunny, Screen.Fasting.route, "salah-premium-bg.webp", Color(0xFFD84315)),
-        MoreItem(R.string.more_topic_study, Icons.Filled.AccountTree, Screen.TopicStudyList.route, "premium-quran-bg.webp", Color(0xFF8E24AA))
+        MoreItem(R.string.more_topic_study, Icons.Filled.AccountTree, Screen.TopicStudyList.route, "premium-quran-bg.webp", Color(0xFF8E24AA)),
+        MoreItem(R.string.more_hadith_topic_study, Icons.Filled.MenuBook, Screen.HadithTopicStudyList.route, "hadith-premium-bg.webp", Color(0xFF1B5E20))
     )
 
     Scaffold(

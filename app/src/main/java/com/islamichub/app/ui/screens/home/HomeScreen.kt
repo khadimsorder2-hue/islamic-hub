@@ -275,7 +275,8 @@ fun HomeScreen(
         item { PremiumSectionHeader(title = "নতুন ফিচার") }
         item {
             val features = listOf(
-                GridFeature("বিষয়ভিত্তিক কুরআন", "৬+ থিম", Icons.Filled.AccountTree, Screen.TopicStudyList.route, "premium-quran-bg.webp", Color(0xFF8E24AA)),
+                GridFeature("বিষয়ভিত্তিক কুরআন", "৩৩৮+ থিম", Icons.Filled.AccountTree, Screen.TopicStudyList.route, "premium-quran-bg.webp", Color(0xFF8E24AA)),
+                GridFeature("হাদিস বিষয়ভিত্তিক", "১২+ থিম", Icons.Filled.MenuBook, Screen.HadithTopicStudyList.route, "hadith-premium-bg.webp", Color(0xFF1B5E20)),
                 GridFeature("জাকাত ক্যালকুলেটর", "২.৫% হিসাব", Icons.Filled.Calculate, Screen.Zakat.route, "salah-premium-bg.webp", Color(0xFF00ACC1)),
                 GridFeature("ইসলামিক কুইজ", "৬ ক্যাটাগরি", Icons.Filled.EmojiEvents, Screen.Quiz.route, "topics-premium-bg.webp", Color(0xFFFF6B35)),
                 GridFeature("রোজা ট্র্যাকার", "স্ট্রিক সহ", Icons.Filled.WbSunny, Screen.Fasting.route, "salah-premium-bg.webp", Color(0xFFD84315)),

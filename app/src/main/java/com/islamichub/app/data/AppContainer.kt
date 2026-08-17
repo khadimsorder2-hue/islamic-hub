@@ -68,7 +68,18 @@ class AppContainer(internal val context: Context) {
             .build()
     }
 
+    private val islamicAppRetrofit: Retrofit by lazy {
+        Retrofit.Builder()
+            .baseUrl(com.islamichub.app.data.remote.IslamicAppApi.BASE_URL)
+            .client(okHttp)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+    }
+
     val aladhanApi: AladhanApi by lazy { retrofit.create(AladhanApi::class.java) }
+    val islamicAppApi: com.islamichub.app.data.remote.IslamicAppApi by lazy {
+        islamicAppRetrofit.create(com.islamichub.app.data.remote.IslamicAppApi::class.java)
+    }
 
     private val quranAssetSource: QuranAssetSource by lazy { QuranAssetSource(context) }
     private val hadithAssetSource: HadithAssetSource by lazy { HadithAssetSource(context) }
@@ -113,6 +124,19 @@ class AppContainer(internal val context: Context) {
     // v3.1.0 new services
     val fastingRepository by lazy {
         com.islamichub.app.ui.screens.fasting.FastingRepository(context)
+    }
+
+    // v3.3.0 — API-driven topic study + Hadith topic study
+    val topicStudyRepository by lazy {
+        com.islamichub.app.data.repo.TopicStudyRepository(
+            api = islamicAppApi,
+            quranData = QuranData,
+            quranAssetSource = quranAssetSource
+        )
+    }
+
+    val hadithTopicRepository by lazy {
+        com.islamichub.app.data.repo.HadithTopicRepository(hadithAssetSource)
     }
 }
 

@@ -3,15 +3,15 @@ package com.islamichub.app.ui.screens.topic_study
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.islamichub.app.data.AppContainer
-import com.islamichub.app.data.model.Ayah
-import com.islamichub.app.data.model.Surah
-import kotlinx.coroutines.Dispatchers
+import com.islamichub.app.data.repo.TopicDetailResult
+import com.islamichub.app.data.repo.TopicListResult
+import com.islamichub.app.data.repo.TopicSource
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 /** A single ayah resolved with full Quran text + topic context */
 data class ResolvedAyah(
@@ -34,6 +34,7 @@ data class TopicDetailUiState(
     val isLoading: Boolean = true,
     val error: String? = null,
     val expandedAyahRef: String? = null,    // "3:133"
+    val source: TopicSource? = null,
     val searchQuery: String = "",
     val filteredTopics: List<ThematicTopic> = emptyList()
 )
@@ -43,7 +44,10 @@ data class TopicListUiState(
     val searchQuery: String = "",
     val filteredTopics: List<ThematicTopic> = emptyList(),
     val domains: List<String> = emptyList(),
-    val selectedDomain: String? = null
+    val selectedDomain: String? = null,
+    val isLoading: Boolean = true,
+    val error: String? = null,
+    val source: TopicSource? = null
 )
 
 class TopicListViewModel(private val container: AppContainer) : ViewModel() {
@@ -51,13 +55,37 @@ class TopicListViewModel(private val container: AppContainer) : ViewModel() {
     private val _uiState = MutableStateFlow(TopicListUiState())
     val uiState: StateFlow<TopicListUiState> = _uiState.asStateFlow()
 
-    init {
-        _uiState.update {
-            it.copy(
-                topics = TopicStudyData.topics,
-                filteredTopics = TopicStudyData.topics,
-                domains = TopicStudyData.domains()
-            )
+    private var loadJob: Job? = null
+    private var currentRequestId: Int = 0
+
+    init { loadTopics() }
+
+    fun loadTopics() {
+        // Stale response protection: cancel previous load, increment request ID
+        loadJob?.cancel()
+        val requestId = ++currentRequestId
+        loadJob = viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true, error = null) }
+            try {
+                val result: TopicListResult = container.topicStudyRepository.listTopics()
+                // Only apply if this is still the latest request
+                if (requestId != currentRequestId) return@launch
+                val domains = result.topics.map { it.domain }.distinct().filter { it.isNotBlank() }
+                _uiState.update {
+                    it.copy(
+                        topics = result.topics,
+                        filteredTopics = result.topics,
+                        domains = domains,
+                        isLoading = false,
+                        source = result.source
+                    )
+                }
+            } catch (e: Exception) {
+                if (requestId != currentRequestId) return@launch
+                _uiState.update {
+                    it.copy(isLoading = false, error = "লোড করতে ব্যর্থ: ${e.message}")
+                }
+            }
         }
     }
 
@@ -65,14 +93,7 @@ class TopicListViewModel(private val container: AppContainer) : ViewModel() {
         _uiState.update {
             it.copy(
                 searchQuery = query,
-                filteredTopics = if (query.isBlank()) {
-                    if (it.selectedDomain == null) it.topics
-                    else it.topics.filter { t -> t.domain == it.selectedDomain }
-                } else {
-                    TopicStudyData.search(query).filter { t ->
-                        it.selectedDomain == null || t.domain == it.selectedDomain
-                    }
-                }
+                filteredTopics = filterTopics(it.topics, query, it.selectedDomain)
             )
         }
     }
@@ -81,18 +102,26 @@ class TopicListViewModel(private val container: AppContainer) : ViewModel() {
         _uiState.update {
             it.copy(
                 selectedDomain = domain,
-                filteredTopics = if (domain == null) {
-                    if (it.searchQuery.isBlank()) it.topics
-                    else TopicStudyData.search(it.searchQuery)
-                } else {
-                    TopicStudyData.byDomain(domain).filter { t ->
-                        it.searchQuery.isBlank() ||
-                            t.nameBn.contains(it.searchQuery) ||
-                            t.nameEn.lowercase().contains(it.searchQuery.lowercase())
-                    }
-                }
+                filteredTopics = filterTopics(it.topics, it.searchQuery, domain)
             )
         }
+    }
+
+    private fun filterTopics(
+        topics: List<ThematicTopic>,
+        query: String,
+        domain: String?
+    ): List<ThematicTopic> {
+        var filtered = topics
+        if (domain != null) filtered = filtered.filter { it.domain == domain }
+        if (query.isNotBlank()) {
+            val q = query.trim().lowercase()
+            filtered = filtered.filter {
+                it.nameBn.contains(query) || it.nameEn.lowercase().contains(q) ||
+                    it.nameAr.contains(query) || it.categoryBn.contains(query)
+            }
+        }
+        return filtered
     }
 }
 
@@ -101,32 +130,41 @@ class TopicDetailViewModel(private val container: AppContainer) : ViewModel() {
     private val _uiState = MutableStateFlow(TopicDetailUiState())
     val uiState: StateFlow<TopicDetailUiState> = _uiState.asStateFlow()
 
+    private var loadJob: Job? = null
+    private var currentRequestId: Int = 0
+
     fun load(slug: String) {
-        viewModelScope.launch {
-            val topic = TopicStudyData.getTopic(slug)
-            if (topic == null) {
-                _uiState.update { it.copy(isLoading = false, error = "Topic not found") }
-                return@launch
-            }
+        // Stale response protection
+        loadJob?.cancel()
+        val requestId = ++currentRequestId
+        loadJob = viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true, error = null, expandedAyahRef = null) }
             try {
-                val resolvedKey = resolveAyahs(topic.keyAyahs)
-                val resolvedAll = resolveAyahs(topic.allAyahs)
-                _uiState.update {
-                    it.copy(
-                        topic = topic,
-                        resolvedKeyAyahs = resolvedKey,
-                        resolvedAllAyahs = resolvedAll,
-                        isLoading = false,
-                        error = null
-                    )
+                val result = container.topicStudyRepository.getTopicDetail(slug)
+                if (requestId != currentRequestId) return@launch
+                when (result) {
+                    is TopicDetailResult.Success -> {
+                        _uiState.update {
+                            it.copy(
+                                topic = result.topic,
+                                resolvedKeyAyahs = result.keyAyahs,
+                                resolvedAllAyahs = result.resolvedAyahs,
+                                isLoading = false,
+                                error = null,
+                                source = result.source
+                            )
+                        }
+                    }
+                    is TopicDetailResult.Error -> {
+                        _uiState.update {
+                            it.copy(isLoading = false, error = result.message)
+                        }
+                    }
                 }
             } catch (e: Exception) {
+                if (requestId != currentRequestId) return@launch
                 _uiState.update {
-                    it.copy(
-                        topic = topic,
-                        isLoading = false,
-                        error = "Failed to load ayahs: ${e.message}"
-                    )
+                    it.copy(isLoading = false, error = "লোড করতে ব্যর্থ: ${e.message}")
                 }
             }
         }
@@ -136,59 +174,5 @@ class TopicDetailViewModel(private val container: AppContainer) : ViewModel() {
         _uiState.update {
             it.copy(expandedAyahRef = if (it.expandedAyahRef == reference) null else reference)
         }
-    }
-
-    /**
-     * Resolve ayah references by fetching actual Surah text from QuranRepository.
-     * Groups by surah to minimize asset loads.
-     */
-    private suspend fun resolveAyahs(refs: List<TopicAyahRef>): List<ResolvedAyah> = withContext(Dispatchers.IO) {
-        if (refs.isEmpty()) return@withContext emptyList()
-        // group by surah
-        val bySurah = refs.groupBy { it.surahNumber }
-        val resolved = mutableListOf<ResolvedAyah>()
-        for ((surahNum, refsForSurah) in bySurah) {
-            val surah: Surah? = container.quranRepository.getSurah(surahNum)
-            if (surah == null) {
-                // fallback — use tafsir as Bengali, leave Arabic empty
-                for (ref in refsForSurah) {
-                    resolved.add(
-                        ResolvedAyah(
-                            surahNumber = surahNum,
-                            ayahNumber = ref.ayahNumber,
-                            surahNameBn = "",
-                            surahNameEn = "",
-                            arabic = "",
-                            bengali = ref.tafsirBn,
-                            english = "",
-                            tafsirBn = ref.tafsirBn,
-                            relation = ref.relation,
-                            reference = "${ref.surahNumber}:${ref.ayahNumber}"
-                        )
-                    )
-                }
-                continue
-            }
-            for (ref in refsForSurah) {
-                val ayah: Ayah? = surah.ayahs.find { it.numberInSurah == ref.ayahNumber }
-                resolved.add(
-                    ResolvedAyah(
-                        surahNumber = surahNum,
-                        ayahNumber = ref.ayahNumber,
-                        surahNameBn = surah.nameBengali,
-                        surahNameEn = surah.nameEnglish,
-                        arabic = ayah?.arabic ?: "",
-                        bengali = ayah?.bengali ?: ref.tafsirBn,
-                        english = ayah?.english ?: "",
-                        tafsirBn = ref.tafsirBn,
-                        relation = ref.relation,
-                        reference = "${ref.surahNumber}:${ref.ayahNumber}"
-                    )
-                )
-            }
-        }
-        // preserve original order (sorted by surah, then ayah)
-        resolved.sortBy { it.surahNumber * 10000 + it.ayahNumber }
-        resolved
     }
 }
