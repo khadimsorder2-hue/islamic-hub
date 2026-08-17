@@ -1,4 +1,4 @@
-package com.islamichub.app.ui.screens.namaz
+package com.islamichub.app.data.local
 
 import android.content.Context
 import com.google.gson.Gson
