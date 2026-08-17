@@ -383,6 +383,31 @@ fun IslamicHubNavGraph(container: AppContainer) {
                     container = container, onBack = { navController.popBackStack() }
                 )
             }
+
+            // v3.2.0 — Thematic Quran Study
+            composable(Screen.TopicStudyList.route) {
+                com.islamichub.app.ui.screens.topic_study.TopicStudyListScreen(
+                    container = container,
+                    onBack = { navController.popBackStack() },
+                    onTopicClick = { slug -> navController.navigate(Screen.TopicStudyDetail.createRoute(slug)) }
+                )
+            }
+            composable(
+                route = Screen.TopicStudyDetail.route,
+                arguments = listOf(navArgument("slug") { type = NavType.StringType })
+            ) { backStackEntry ->
+                val slug = backStackEntry.arguments?.getString("slug").orEmpty()
+                com.islamichub.app.ui.screens.topic_study.TopicStudyDetailScreen(
+                    container = container,
+                    topicSlug = slug,
+                    onBack = { navController.popBackStack() },
+                    onRelatedTopicClick = { newSlug ->
+                        navController.navigate(Screen.TopicStudyDetail.createRoute(newSlug)) {
+                            popUpTo(Screen.TopicStudyList.route)
+                        }
+                    }
+                )
+            }
         }
     }
 

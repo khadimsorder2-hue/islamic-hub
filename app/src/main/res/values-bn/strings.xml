@@ -225,6 +225,7 @@
     <string name="more_zakat">জাকাত ক্যালকুলেটর</string>
     <string name="more_quiz">ইসলামিক কুইজ</string>
     <string name="more_fasting">রোজা ট্র্যাকার</string>
+    <string name="more_topic_study">বিষয়ভিত্তিক কুরআন</string>
 
     <!-- AI Settings -->
     <string name="settings_ai_scholar">AI স্কলার</string>

@@ -225,6 +225,7 @@
     <string name="more_zakat">Zakat Calculator</string>
     <string name="more_quiz">Islamic Quiz</string>
     <string name="more_fasting">Fasting Tracker</string>
+    <string name="more_topic_study">Thematic Quran Study</string>
 
     <!-- AI Settings -->
     <string name="settings_ai_scholar">AI Scholar</string>

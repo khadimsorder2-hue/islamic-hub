@@ -18,6 +18,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountTree
 import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.Book
 import androidx.compose.material.icons.filled.Bookmark
@@ -88,7 +89,8 @@ fun MoreScreen(
         MoreItem(R.string.more_qa, Icons.Filled.MenuBook, Screen.Qa.route, "topics-premium-bg.webp", Color(0xFF00897B)),
         MoreItem(R.string.more_zakat, Icons.Filled.Calculate, Screen.Zakat.route, "salah-premium-bg.webp", Color(0xFF00ACC1)),
         MoreItem(R.string.more_quiz, Icons.Filled.EmojiEvents, Screen.Quiz.route, "topics-premium-bg.webp", Color(0xFFFF6B35)),
-        MoreItem(R.string.more_fasting, Icons.Filled.WbSunny, Screen.Fasting.route, "salah-premium-bg.webp", Color(0xFFD84315))
+        MoreItem(R.string.more_fasting, Icons.Filled.WbSunny, Screen.Fasting.route, "salah-premium-bg.webp", Color(0xFFD84315)),
+        MoreItem(R.string.more_topic_study, Icons.Filled.AccountTree, Screen.TopicStudyList.route, "premium-quran-bg.webp", Color(0xFF8E24AA))
     )
 
     Scaffold(

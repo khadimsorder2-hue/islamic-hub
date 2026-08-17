@@ -65,6 +65,12 @@ sealed class Screen(val route: String) {
     data object Zakat : Screen("zakat")
     data object Quiz : Screen("quiz")
     data object Fasting : Screen("fasting")
+
+    // New v3.2.0 screens — Thematic Quran Study
+    data object TopicStudyList : Screen("topic_study")
+    data object TopicStudyDetail : Screen("topic_study/{slug}") {
+        fun createRoute(slug: String) = "topic_study/$slug"
+    }
 }
 
 data class BottomNavItem(
