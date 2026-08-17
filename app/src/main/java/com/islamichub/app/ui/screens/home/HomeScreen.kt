@@ -1,5 +1,7 @@
 package com.islamichub.app.ui.screens.home
 
+import android.graphics.BitmapFactory
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -45,7 +47,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -56,6 +60,7 @@ import com.islamichub.app.ui.components.PremiumCard
 import com.islamichub.app.ui.components.PremiumHeroCard
 import com.islamichub.app.ui.components.PremiumIconBadge
 import com.islamichub.app.ui.components.PremiumSectionHeader
+import com.islamichub.app.ui.components.loadAssetImage
 import com.islamichub.app.ui.navigation.Screen
 
 @Composable
@@ -188,7 +193,9 @@ fun HomeScreen(
                 ) {
                     rowFeatures.forEach { feature ->
                         Box(modifier = Modifier.weight(1f)) {
-                            PremiumCard(feature.bgImage, context, { onNavigate(feature.route) }, 130, feature.color) {
+                            PremiumCard(backgroundImage = feature.bgImage, context = context,
+                                onClick = { onNavigate(feature.route) }, height = 130,
+                                overlayColor = feature.color) {
                                 PremiumCardContent(feature)
                             }
                         }
@@ -216,7 +223,9 @@ fun HomeScreen(
                 ) {
                     rowFeatures.forEach { feature ->
                         Box(modifier = Modifier.weight(1f)) {
-                            PremiumCard(feature.bgImage, context, { onNavigate(feature.route) }, 130, feature.color) {
+                            PremiumCard(backgroundImage = feature.bgImage, context = context,
+                                onClick = { onNavigate(feature.route) }, height = 130,
+                                overlayColor = feature.color) {
                                 PremiumCardContent(feature)
                             }
                         }
@@ -242,7 +251,9 @@ fun HomeScreen(
                 ) {
                     rowFeatures.forEach { feature ->
                         Box(modifier = Modifier.weight(1f)) {
-                            PremiumCard(feature.bgImage, context, { onNavigate(feature.route) }, 130, feature.color) {
+                            PremiumCard(backgroundImage = feature.bgImage, context = context,
+                                onClick = { onNavigate(feature.route) }, height = 130,
+                                overlayColor = feature.color) {
                                 PremiumCardContent(feature)
                             }
                         }
@@ -268,7 +279,9 @@ fun HomeScreen(
                 ) {
                     rowFeatures.forEach { feature ->
                         Box(modifier = Modifier.weight(1f)) {
-                            PremiumCard(feature.bgImage, context, { onNavigate(feature.route) }, 130, feature.color) {
+                            PremiumCard(backgroundImage = feature.bgImage, context = context,
+                                onClick = { onNavigate(feature.route) }, height = 130,
+                                overlayColor = feature.color) {
                                 PremiumCardContent(feature)
                             }
                         }
@@ -297,7 +310,9 @@ fun HomeScreen(
                 ) {
                     rowFeatures.forEach { feature ->
                         Box(modifier = Modifier.weight(1f)) {
-                            PremiumCard(feature.bgImage, context, { onNavigate(feature.route) }, 130, feature.color) {
+                            PremiumCard(backgroundImage = feature.bgImage, context = context,
+                                onClick = { onNavigate(feature.route) }, height = 130,
+                                overlayColor = feature.color) {
                                 PremiumCardContent(feature)
                             }
                         }
