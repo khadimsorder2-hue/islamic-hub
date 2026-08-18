@@ -29,14 +29,27 @@ data class SettingsUiState(
     val aiBaseUrl: String = "https://generativelanguage.googleapis.com/v1beta",
     val aiModel: String = "gemini-2.5-flash",
     val aiProvider: String = "gemini",
-    val firebaseEnabled: Boolean = false
+    val firebaseEnabled: Boolean = false,
+    /** Number of cached AI responses */
+    val cacheCount: Int = 0
 )
 
 class SettingsViewModel(private val container: AppContainer) : ViewModel() {
     private val _state = MutableStateFlow(SettingsUiState())
     val state: StateFlow<SettingsUiState> = _state.asStateFlow()
 
-    init { load() }
+    init {
+        load()
+        observeAICache()
+    }
+
+    private fun observeAICache() {
+        viewModelScope.launch {
+            container.aiCacheRepository.count.collect { count ->
+                _state.value = _state.value.copy(cacheCount = count)
+            }
+        }
+    }
 
     private fun load() {
         viewModelScope.launch {
@@ -221,6 +234,12 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
             container.settingsRepository.clearCache()
             val newSize = container.tafsirRepository.cacheSizeBytes()
             _state.value = _state.value.copy(cacheSizeBytes = newSize)
+        }
+    }
+
+    fun clearAICache() {
+        viewModelScope.launch {
+            container.settingsRepository.clearAICache()
         }
     }
 }

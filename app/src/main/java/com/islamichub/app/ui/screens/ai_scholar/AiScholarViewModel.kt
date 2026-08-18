@@ -17,14 +17,32 @@ data class AiScholarUiState(
     val warning: String? = null,
     val apiKeyConfigured: Boolean = false,
     val provider: String = "gemini",
-    val model: String = "gemini-2.5-flash"
+    val model: String = "gemini-2.5-flash",
+    /** Set true if last AI answer came from cache (instant) */
+    val lastAnswerFromCache: Boolean = false,
+    /** Total cached entries (for display in cache button) */
+    val cacheCount: Int = 0,
+    /** Search results from web (if user asked for current events) */
+    val webResults: List<WebSearchResult> = emptyList(),
+    val isWebSearching: Boolean = false
+)
+
+/** Web search result (used when AI needs current info) */
+data class WebSearchResult(
+    val title: String,
+    val url: String,
+    val snippet: String,
+    val source: String
 )
 
 class AiScholarViewModel(private val container: AppContainer) : ViewModel() {
     private val _state = MutableStateFlow(AiScholarUiState())
     val state: StateFlow<AiScholarUiState> = _state.asStateFlow()
 
-    init { loadConfig() }
+    init {
+        loadConfig()
+        observeCache()
+    }
 
     private fun loadConfig() {
         viewModelScope.launch {
@@ -48,6 +66,14 @@ class AiScholarViewModel(private val container: AppContainer) : ViewModel() {
         }
     }
 
+    private fun observeCache() {
+        viewModelScope.launch {
+            container.aiCacheRepository.count.collect { count ->
+                _state.value = _state.value.copy(cacheCount = count)
+            }
+        }
+    }
+
     fun sendQuestion(question: String) {
         if (question.isBlank()) return
         viewModelScope.launch {
@@ -57,17 +83,18 @@ class AiScholarViewModel(private val container: AppContainer) : ViewModel() {
                 messages = newMessages,
                 isThinking = true,
                 error = null,
-                warning = null
+                warning = null,
+                lastAnswerFromCache = false,
+                webResults = emptyList()
             )
 
             // Build history (last 10 messages)
             val history = newMessages.dropLast(1).takeLast(10)
 
-            // Call AI service
-            val result = container.aiService.ask(question, history)
+            // Call AI service (auto-cache inside AIService.ask)
+            val result = container.aiService.ask(question, history, cacheType = "scholar")
 
             if (result.error == "stale") {
-                // Stale response — ignore
                 return@launch
             }
             if (result.error != null) {
@@ -83,8 +110,56 @@ class AiScholarViewModel(private val container: AppContainer) : ViewModel() {
             _state.value = _state.value.copy(
                 messages = finalMessages,
                 isThinking = false,
-                warning = result.warning
+                warning = result.warning,
+                lastAnswerFromCache = result.fromCache
             )
+        }
+    }
+
+    /**
+     * Regenerate the last AI response — bypasses cache for a fresh answer.
+     */
+    fun regenerateLast() {
+        val msgs = _state.value.messages
+        if (msgs.isEmpty()) return
+        // Find last user message
+        val lastUserIdx = msgs.indexOfLast { it.role == "user" }
+        if (lastUserIdx < 0) return
+        val question = msgs[lastUserIdx].content
+        // Truncate messages to remove the previous AI answer
+        val truncated = msgs.subList(0, lastUserIdx + 1).toList()
+        _state.value = _state.value.copy(messages = truncated)
+        // Re-ask with useCache=false
+        viewModelScope.launch {
+            _state.value = _state.value.copy(isThinking = true, error = null, lastAnswerFromCache = false)
+            val history = truncated.dropLast(1).takeLast(10)
+            val result = container.aiService.ask(question, history, useCache = false, cacheType = "scholar")
+            if (result.error != null && result.error != "stale") {
+                _state.value = _state.value.copy(isThinking = false, error = result.error)
+                return@launch
+            }
+            val final = truncated + AIService.ChatMessage("assistant", result.answer)
+            _state.value = _state.value.copy(
+                messages = final,
+                isThinking = false,
+                warning = result.warning,
+                lastAnswerFromCache = false
+            )
+        }
+    }
+
+    /**
+     * Trigger web search (placeholder for future integration — actual search
+     * happens in AIService via a configured search provider).
+     */
+    fun performWebSearch(query: String) {
+        if (query.isBlank()) return
+        viewModelScope.launch {
+            _state.value = _state.value.copy(isWebSearching = true)
+            // For now we just notify the AI to answer using its training data.
+            // Real web search would be added in a future release via z-ai-web-dev-sdk.
+            sendQuestion("🌐 ওয়েবে খুঁজে বের করো: $query")
+            _state.value = _state.value.copy(isWebSearching = false)
         }
     }
 
@@ -96,8 +171,16 @@ class AiScholarViewModel(private val container: AppContainer) : ViewModel() {
         _state.value = AiScholarUiState(
             apiKeyConfigured = _state.value.apiKeyConfigured,
             provider = _state.value.provider,
-            model = _state.value.model
+            model = _state.value.model,
+            cacheCount = _state.value.cacheCount
         )
+    }
+
+    /** Clear all cached AI responses */
+    fun clearAICache() {
+        viewModelScope.launch {
+            container.settingsRepository.clearAICache()
+        }
     }
 
     fun dismissError() {

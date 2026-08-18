@@ -294,6 +294,8 @@ private fun DomainChip(label: String, isSelected: Boolean, color: Color, onClick
 private fun TopicCard(topic: ThematicTopic, context: android.content.Context, onClick: () -> Unit) {
     val bgBitmap = remember(topic.slug) { loadAssetImage(context, "img/premium-quran-bg.webp") }
     val accent = Color(topic.accentColor)
+    // Get domain color (more colorful variety)
+    val domainAccent = domainColor(topic.domain)
 
     Card(
         modifier = Modifier
@@ -317,19 +319,43 @@ private fun TopicCard(topic: ThematicTopic, context: android.content.Context, on
                 )
                 Box(modifier = Modifier.fillMaxSize().background(
                     Brush.horizontalGradient(
-                        colors = listOf(accent.copy(alpha = 0.85f), accent.copy(alpha = 0.55f))
+                        colors = listOf(
+                            accent.copy(alpha = 0.85f),
+                            domainAccent.copy(alpha = 0.65f)
+                        )
                     )
                 ))
             } else {
-                Box(modifier = Modifier.fillMaxSize().background(accent))
+                Box(modifier = Modifier.fillMaxSize().background(
+                    Brush.horizontalGradient(
+                        colors = listOf(accent, domainAccent)
+                    )
+                ))
             }
 
             Column(
                 modifier = Modifier.fillMaxSize().padding(20.dp),
                 verticalArrangement = Arrangement.SpaceBetween
             ) {
-                // Top: 3-language title
+                // Top: 3-language title + domain chip
                 Column {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(Color.White.copy(alpha = 0.2f))
+                                .padding(horizontal = 8.dp, vertical = 4.dp)
+                        ) {
+                            Text(topic.domain,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = Color.White, fontWeight = FontWeight.Medium)
+                        }
+                    }
+                    Spacer(Modifier.height(8.dp))
                     Text(topic.nameBn,
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Bold, color = Color.White)
@@ -350,7 +376,7 @@ private fun TopicCard(topic: ThematicTopic, context: android.content.Context, on
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Filled.MenuBook, contentDescription = null,
                             tint = Color.White, modifier = Modifier.size(16.dp))
-                        Text("  ${topic.allAyahs.size}টি আয়াত",
+                        Text("  ${topic.allAyahs.size} আয়াত",
                             style = MaterialTheme.typography.labelMedium,
                             color = Color.White)
                         Spacer(Modifier.width(12.dp))
@@ -374,4 +400,15 @@ private fun TopicCard(topic: ThematicTopic, context: android.content.Context, on
             }
         }
     }
+}
+
+/** Maps a domain name to a color — gives more variety in topic grid */
+private fun domainColor(domain: String): Color = when {
+    domain.contains("ঈমান") -> Color(0xFF1B5E20)
+    domain.contains("ইবাদত") -> Color(0xFF1565C0)
+    domain.contains("আচরণ") -> Color(0xFF8D6E63)
+    domain.contains("সমাজ") -> Color(0xFF7E57C2)
+    domain.contains("জ্ঞান") -> Color(0xFF3949AB)
+    domain.contains("আখিরাত") -> Color(0xFF2E7D32)
+    else -> Color(0xFF6D45C7)
 }

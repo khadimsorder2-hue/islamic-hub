@@ -98,6 +98,14 @@ class AppContainer(internal val context: Context) {
     val prayerScheduler: PrayerScheduler by lazy { PrayerScheduler(context, prayerRepository) }
     val aiService: AIService by lazy { AIService(context) }
 
+    /** AI response cache — shared across all AI screens (Tafsir, Hadith, Scholar) */
+    val aiCacheRepository: AICacheRepository by lazy {
+        AICacheRepository(context).also { cache ->
+            // Inject cache into AIService so all ask() calls auto-cache
+            aiService.cache = cache
+        }
+    }
+
     // New v1.2.0 repositories
     val bookmarkRepository: BookmarkRepository by lazy { BookmarkRepository(context) }
     val qadaRepository: QadaRepository by lazy { QadaRepository(context) }

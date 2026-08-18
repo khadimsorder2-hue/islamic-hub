@@ -42,6 +42,9 @@ enum class AutoPauseOption(val minutes: Int, val label: String, val labelBn: Str
  */
 class SettingsRepository(private val context: Context) {
 
+    /** AI cache (used for clearAICache action) */
+    private val aiCacheRepo by lazy { AICacheRepository(context) }
+
     // Quran font scale (1.0 = default, 0.85 = small, 1.3 = large, 1.6 = extra large)
     val quranFontScale: Flow<Float> = context.settingsStore.data.map { it[FONT_SCALE] ?: 1.0f }
 
@@ -189,6 +192,10 @@ class SettingsRepository(private val context: Context) {
         tafsirDir.deleteRecursively()
         // Clear audio cache (glide/coil)
         context.cacheDir.listFiles()?.forEach { it.deleteRecursively() }
+    }
+
+    suspend fun clearAICache() = withContext(Dispatchers.IO) {
+        aiCacheRepo.clearAll()
     }
 
     companion object {

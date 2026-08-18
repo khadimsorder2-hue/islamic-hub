@@ -54,13 +54,17 @@ class AIService(private val context: Context) {
         val answer: String,
         val sources: List<String> = emptyList(),
         val warning: String? = null,
-        val error: String? = null
+        val error: String? = null,
+        val fromCache: Boolean = false
     )
 
     private val _config = MutableStateFlow(Config())
     val config: StateFlow<Config> = _config.asStateFlow()
 
     private val latestRequestId = AtomicReference<String?>(null)
+
+    /** Optional cache repository — set from AppContainer for shared cache across all AI calls */
+    var cache: AICacheRepository? = null
 
     private val client: OkHttpClient by lazy {
         OkHttpClient.Builder()
@@ -77,10 +81,17 @@ class AIService(private val context: Context) {
 
     /**
      * Send a chat message to the LLM. Returns ChatResult with answer or error.
+     *
+     * Cache behavior (when [cache] is set):
+     *  - First, look up by (provider, model, prompt). If found → return instantly with fromCache=true.
+     *  - Otherwise call LLM, then store result in cache for future lookups.
+     *  - Pass [useCache]=false to force a fresh call (e.g., "Regenerate" button).
      */
     suspend fun ask(
         userMessage: String,
-        conversationHistory: List<ChatMessage> = emptyList()
+        conversationHistory: List<ChatMessage> = emptyList(),
+        useCache: Boolean = true,
+        cacheType: String = "general"
     ): ChatResult = withContext(Dispatchers.IO) {
         val cfg = _config.value
         if (cfg.apiKey.isBlank()) {
@@ -89,6 +100,20 @@ class AIService(private val context: Context) {
                 answer = "",
                 error = "কোনো API key কনফিগার করা নেই। Settings → AI Scholar এ গিয়ে আপনার API key যোগ করুন।"
             )
+        }
+
+        // 1. Check cache
+        if (useCache && cache != null && conversationHistory.isEmpty()) {
+            try {
+                val cached = cache!!.lookup(cfg.provider, cfg.model, userMessage)
+                if (cached != null) {
+                    return@withContext ChatResult(
+                        requestId = UUID.randomUUID().toString(),
+                        answer = cached.answer,
+                        fromCache = true
+                    )
+                }
+            } catch (_: Exception) { /* ignore cache errors */ }
         }
 
         val requestId = UUID.randomUUID().toString()
@@ -124,6 +149,13 @@ class AIService(private val context: Context) {
                     answer = "",
                     error = "stale"
                 )
+            }
+
+            // Store in cache
+            if (cache != null) {
+                try {
+                    cache!!.put(cfg.provider, cfg.model, userMessage, answer, cacheType)
+                } catch (_: Exception) { /* ignore cache errors */ }
             }
 
             ChatResult(

@@ -121,7 +121,7 @@ class TafsirViewModel(
 এই আয়াতের সম্পূর্ণ তাফসীর দিন। একজন গ্রামের খতিব যেভাবে সাধারণ মানুষকে শূন্য থেকে বোঝান, সেভাবে বোঝান। উদাহরণ দিয়ে প্রতিটি বিষয় সহজ করে ব্যাখ্যা করুন। নাজিলের কারণ অবশ্যই উল্লেখ করবেন।
 """.trimIndent()
 
-                val result = container.aiService.ask(prompt)
+                val result = container.aiService.ask(prompt, cacheType = "tafsir")
                 if (result.error == null) {
                     _state.value = _state.value.copy(
                         isAILoading = false,

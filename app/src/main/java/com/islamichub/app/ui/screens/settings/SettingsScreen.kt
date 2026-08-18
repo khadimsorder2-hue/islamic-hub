@@ -278,7 +278,14 @@ fun SettingsScreen(
                         listOf("gemini" to "Gemini", "openrouter" to "OpenRouter", "openai" to "OpenAI").forEach { (id, label) ->
                             FilterChip(
                                 selected = state.aiProvider == id,
-                                onClick = { vm.setAiProvider(id) },
+                                onClick = {
+                                    vm.setAiProvider(id)
+                                    // Auto-fill recommended free model for provider
+                                    com.islamichub.app.data.repo.AIModelPresets.recommended(id)?.let { preset ->
+                                        vm.setAiModel(preset.modelName)
+                                        vm.setAiBaseUrl(preset.baseUrl)
+                                    }
+                                },
                                 label = { Text(label) }
                             )
                         }
@@ -304,17 +311,115 @@ fun SettingsScreen(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp)
                     )
-                    Spacer(8.dp)
-                    // Model
+                    Spacer(12.dp)
+
+                    // Model preset chips (free models pre-filled)
+                    Text(
+                        text = "প্রসেট ফ্রি মডেল (ট্যাপ করে সিলেক্ট করুন)",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Spacer(4.dp)
+                    val presets = com.islamichub.app.data.repo.AIModelPresets.forProvider(state.aiProvider)
+                    presets.forEach { preset ->
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 4.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                                .clickable {
+                                    vm.setAiModel(preset.modelName)
+                                    vm.setAiBaseUrl(preset.baseUrl)
+                                }
+                                .border(
+                                    width = if (state.aiModel == preset.modelName) 2.dp else 0.dp,
+                                    color = if (state.aiModel == preset.modelName)
+                                        MaterialTheme.colorScheme.primary
+                                    else Color.Transparent,
+                                    shape = RoundedCornerShape(12.dp)
+                                ),
+                            colors = CardDefaults.cardColors(
+                                containerColor = if (state.aiModel == preset.modelName)
+                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.08f)
+                                else MaterialTheme.colorScheme.surfaceVariant
+                            )
+                        ) {
+                            Column(modifier = Modifier.padding(12.dp)) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Text(preset.displayName,
+                                                style = MaterialTheme.typography.titleSmall,
+                                                fontWeight = FontWeight.Bold)
+                                            if (preset.recommended) {
+                                                Spacer(Modifier.size(8.dp))
+                                                Box(
+                                                    modifier = Modifier
+                                                        .clip(RoundedCornerShape(6.dp))
+                                                        .background(MaterialTheme.colorScheme.primary)
+                                                        .padding(horizontal = 6.dp, vertical = 2.dp)
+                                                ) {
+                                                    Text("সুপারিশকৃত",
+                                                        style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp),
+                                                        color = Color.White,
+                                                        fontWeight = FontWeight.Bold)
+                                                }
+                                            }
+                                        }
+                                        Text(preset.modelName,
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace)
+                                    }
+                                    if (preset.isFree) {
+                                        Box(
+                                            modifier = Modifier
+                                                .clip(RoundedCornerShape(6.dp))
+                                                .background(Color(0xFF2E7D32).copy(alpha = 0.15f))
+                                                .padding(horizontal = 6.dp, vertical = 2.dp)
+                                        ) {
+                                            Text("ফ্রি",
+                                                style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp),
+                                                color = Color(0xFF2E7D32),
+                                                fontWeight = FontWeight.Bold)
+                                        }
+                                    }
+                                }
+                                Spacer(Modifier.size(4.dp))
+                                Text(preset.descriptionBn,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text("Context: ${preset.contextWindow}",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f))
+                            }
+                        }
+                    }
+                    Spacer(12.dp)
+
+                    // Custom model input (if user wants to use non-preset model)
+                    Text(
+                        text = "কাস্টম মডেল নাম (প্রসেট ব্যতীত)",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Spacer(4.dp)
                     OutlinedTextField(
                         value = state.aiModel,
                         onValueChange = vm::setAiModel,
                         label = { Text(stringResource(R.string.settings_ai_model)) },
+                        placeholder = { Text("যেমন: gemini-2.5-flash") },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp)
                     )
                     Spacer(8.dp)
+
+                    // Status
                     Text(
                         text = if (state.aiApiKey.isNotBlank())
                             "✓ " + stringResource(R.string.settings_ai_configured)
@@ -335,6 +440,31 @@ fun SettingsScreen(
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
+                    Spacer(12.dp)
+
+                    // AI Cache section
+                    Text(
+                        text = "AI ক্যাশ",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Spacer(4.dp)
+                    Text(
+                        text = "সব AI উত্তর স্বয়ংক্রিয়ভাবে ক্যাশে সংরক্ষিত হয়। পরবর্তী একই প্রশ্নে তাৎক্ষণিক উত্তর পাবেন।",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(8.dp)
+                    OutlinedButton(
+                        onClick = vm::clearAICache,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(Icons.Filled.Delete, contentDescription = null,
+                            tint = MaterialTheme.colorScheme.error)
+                        Text("  AI ক্যাশ মুছুন (${state.cacheCount})",
+                            color = MaterialTheme.colorScheme.error)
+                    }
                 }
             }
 
