@@ -75,7 +75,7 @@ fun FloatingAudioPlayer(
         visible = audioState.isPlaying || audioState.isLoading || audioState.currentSurah != null,
         enter = slideInVertically { it },
         exit = slideOutVertically { it },
-        modifier = modifier
+        modifier = modifier.fillMaxWidth()
     ) {
         Card(
             modifier = Modifier

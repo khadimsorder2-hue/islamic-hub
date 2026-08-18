@@ -124,7 +124,67 @@ fun TasbihScreen(container: AppContainer) {
                 }
             }
 
-            // Premium dhikr details card (shows pronunciation, meaning, why)
+            // Stats row
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                StatCard(
+                    label = stringResource(R.string.tasbih_round),
+                    value = state.round.toString(),
+                    modifier = Modifier.weight(1f)
+                )
+                StatCard(
+                    label = stringResource(R.string.tasbih_total),
+                    value = state.total.toString(),
+                    modifier = Modifier.weight(1f)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Big tap counter — CENTERED in middle of screen
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f),
+                contentAlignment = Alignment.Center
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(280.dp)
+                        .clip(CircleShape)
+                        .background(
+                            brush = Brush.radialGradient(
+                                colors = listOf(
+                                    MaterialTheme.colorScheme.primary,
+                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
+                                )
+                            )
+                        )
+                        .clickable { vm.onIncrement() },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Text(
+                            text = state.count.toString(),
+                            style = MaterialTheme.typography.displayLarge.copy(fontSize = 80.sp),
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onPrimary
+                        )
+                        Text(
+                            text = String.format(stringResource(R.string.tasbih_target), state.target),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.85f)
+                        )
+                    }
+                }
+            }
+
+            // Premium dhikr details card — AT THE BOTTOM (after counter)
             state.dhikrOptions.find { it.id == state.currentDhikrId }?.let { current ->
                 var showDetails by remember(current.id) { mutableStateOf(false) }
                 Card(
@@ -197,66 +257,7 @@ fun TasbihScreen(container: AppContainer) {
                 }
             }
 
-            // Stats row
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                StatCard(
-                    label = stringResource(R.string.tasbih_round),
-                    value = state.round.toString(),
-                    modifier = Modifier.weight(1f)
-                )
-                StatCard(
-                    label = stringResource(R.string.tasbih_total),
-                    value = state.total.toString(),
-                    modifier = Modifier.weight(1f)
-                )
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // Big tap counter
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f),
-                contentAlignment = Alignment.Center
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(280.dp)
-                        .clip(CircleShape)
-                        .background(
-                            brush = Brush.radialGradient(
-                                colors = listOf(
-                                    MaterialTheme.colorScheme.primary,
-                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
-                                )
-                            )
-                        )
-                        .clickable { vm.onIncrement() },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
-                    ) {
-                        Text(
-                            text = state.count.toString(),
-                            style = MaterialTheme.typography.displayLarge.copy(fontSize = 80.sp),
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onPrimary
-                        )
-                        Text(
-                            text = String.format(stringResource(R.string.tasbih_target), state.target),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.85f)
-                        )
-                    }
-                }
-            }
-
+            // Reset buttons — at the very bottom
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)

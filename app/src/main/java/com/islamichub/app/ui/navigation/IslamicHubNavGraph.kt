@@ -76,7 +76,7 @@ fun IslamicHubNavGraph(container: AppContainer) {
     Scaffold(
         bottomBar = {
             Column {
-                // Floating audio player
+                // Floating audio player — ALWAYS visible (above nav bar on all screens)
                 com.islamichub.app.ui.components.FloatingAudioPlayer(container = container)
                 if (showBottomBar) {
                     // Premium glassmorphism nav bar
