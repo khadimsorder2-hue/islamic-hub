@@ -46,6 +46,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -518,7 +519,7 @@ fun SettingsScreen(
                                             style = MaterialTheme.typography.titleLarge
                                         )
                                     }
-                                    Spacer(Modifier.size(12.dp))
+                                    Spacer(12.dp)
                                     Column {
                                         Text(
                                             text = if (state.firebaseEnabled) "সক্রিয়" else "নিষ্ক্রিয়",
@@ -609,7 +610,7 @@ fun SettingsScreen(
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
-                            Spacer(Modifier.size(4.dp))
+                            Spacer(4.dp)
                             Text(
                                 text = "১. Firebase Console এ প্রজেক্ট তৈরি করুন\n" +
                                        "২. google-services.json ডাউনলোড করুন\n" +

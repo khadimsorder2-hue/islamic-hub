@@ -61,6 +61,8 @@ class TrackerRepository(private val context: Context) {
 
     val totalAyahsRead: Flow<Int> = days.map { list -> list.sumOf { it.ayahsRead } }
 
+    val totalHadithsRead: Flow<Int> = days.map { list -> list.sumOf { it.hadithsRead } }
+
     suspend fun togglePrayer(prayer: String) = withContext(Dispatchers.IO) {
         context.trackerStore.edit { prefs ->
             val list = currentList(prefs).toMutableList()
