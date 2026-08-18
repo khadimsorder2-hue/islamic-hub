@@ -16,6 +16,7 @@ import com.islamichub.app.data.repo.TafsirSource
 data class SettingsUiState(
     val quranFontScale: Float = 1.0f,
     val backgroundMode: BackgroundMode = BackgroundMode.CREAM,
+    val themeMode: String = "auto",
     val selectedReciter: String = "ar.alafasy",
     val tafsirSource: TafsirSource = TafsirSource.BN_BENGALI,
     val autoPause: AutoPauseOption = AutoPauseOption.OFF,
@@ -55,6 +56,7 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
         viewModelScope.launch {
             val fontScale = container.settingsRepository.quranFontScale.first()
             val bgMode = container.settingsRepository.backgroundMode.first()
+            val themeMode = container.settingsRepository.themeMode.first()
             val reciter = container.settingsRepository.selectedReciter.first()
             val tafsirSource = container.settingsRepository.tafsirSource.first()
             val autoPause = container.settingsRepository.autoPauseMinutes.first()
@@ -73,6 +75,7 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
             _state.value = SettingsUiState(
                 quranFontScale = fontScale,
                 backgroundMode = bgMode,
+                themeMode = themeMode,
                 selectedReciter = reciter,
                 tafsirSource = tafsirSource,
                 autoPause = autoPause,
@@ -240,6 +243,13 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
     fun clearAICache() {
         viewModelScope.launch {
             container.settingsRepository.clearAICache()
+        }
+    }
+
+    fun setThemeMode(mode: String) {
+        viewModelScope.launch {
+            container.settingsRepository.setThemeMode(mode)
+            _state.value = _state.value.copy(themeMode = mode)
         }
     }
 }

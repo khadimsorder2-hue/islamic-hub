@@ -10,6 +10,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
+// Light theme — warm white background (Warm Ivory)
 private val LightColors = lightColorScheme(
     primary = IslamicViolet,
     onPrimary = Color.White,
@@ -20,14 +21,35 @@ private val LightColors = lightColorScheme(
     secondaryContainer = MutedGoldSoft,
     onSecondaryContainer = Color(0xFF4A3F0A),
     tertiary = IslamicVioletDark,
-    background = WarmIvoryBg,
+    background = WarmIvoryBg,            // 0xFFFCFAF7 — warm white
     onBackground = TextPrimaryLight,
-    surface = WhiteSurface,
+    surface = WhiteSurface,              // 0xFFFFFFFF
     onSurface = TextPrimaryLight,
     surfaceVariant = SurfaceAlt,
     onSurfaceVariant = TextSecondaryLight,
     outline = DividerLight,
     outlineVariant = DividerLight
+)
+
+// Warm light theme — warmer background (cream/warm white for reading comfort)
+private val WarmLightColors = lightColorScheme(
+    primary = IslamicViolet,
+    onPrimary = Color.White,
+    primaryContainer = IslamicVioletSoft,
+    onPrimaryContainer = IslamicVioletDark,
+    secondary = MutedGold,
+    onSecondary = Color.Black,
+    secondaryContainer = MutedGoldSoft,
+    onSecondaryContainer = Color(0xFF4A3F0A),
+    tertiary = IslamicVioletDark,
+    background = Color(0xFFFDF6E3),       // warm cream — Solarized light
+    onBackground = Color(0xFF3F3A35),
+    surface = Color(0xFFFFFBF0),          // warm white surface
+    onSurface = Color(0xFF3F3A35),
+    surfaceVariant = Color(0xFFF5EFD9),
+    onSurfaceVariant = Color(0xFF7A7264),
+    outline = Color(0xFFE0D8C0),
+    outlineVariant = Color(0xFFE0D8C0)
 )
 
 private val DarkColors = darkColorScheme(
@@ -58,12 +80,25 @@ private val IslamicHubShapes = Shapes(
     extraLarge = RoundedCornerShape(32.dp)
 )
 
+enum class ThemeMode(val label: String, val labelBn: String) {
+    AUTO("Auto (System)", "অটো (সিস্টেম)"),
+    LIGHT("Light", "লাইট"),
+    DARK("Dark", "ডার্ক"),
+    WARM_LIGHT("Warm Light", "ওয়ার্ম লাইট")
+}
+
 @Composable
 fun IslamicHubTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
+    themeMode: String = "auto",
     content: @Composable () -> Unit
 ) {
-    val colors = if (darkTheme) DarkColors else LightColors
+    val colors = when (themeMode.lowercase()) {
+        "light" -> LightColors
+        "dark" -> DarkColors
+        "warm_light" -> WarmLightColors
+        else -> if (darkTheme) DarkColors else LightColors  // auto
+    }
     MaterialTheme(
         colorScheme = colors,
         typography = IslamicHubTypography,

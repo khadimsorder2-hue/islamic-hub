@@ -109,6 +109,60 @@ fun SettingsScreen(
                 }
             }
 
+            // ─── Theme Mode ───────────────────────────────────────────
+            item {
+                SettingsSection(title = "থিম মোড") {
+                    Text("অ্যাপের রঙ নির্বাচন করুন",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Spacer(8.dp)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        ThemeModeChip(
+                            label = "অটো",
+                            selected = state.themeMode == "auto",
+                            color = Color(0xFF607D8B),
+                            modifier = Modifier.weight(1f),
+                            onClick = { vm.setThemeMode("auto") }
+                        )
+                        ThemeModeChip(
+                            label = "লাইট",
+                            selected = state.themeMode == "light",
+                            color = Color(0xFF2E7D32),
+                            modifier = Modifier.weight(1f),
+                            onClick = { vm.setThemeMode("light") }
+                        )
+                        ThemeModeChip(
+                            label = "ডার্ক",
+                            selected = state.themeMode == "dark",
+                            color = Color(0xFF1B5E20),
+                            modifier = Modifier.weight(1f),
+                            onClick = { vm.setThemeMode("dark") }
+                        )
+                        ThemeModeChip(
+                            label = "ওয়ার্ম",
+                            selected = state.themeMode == "warm_light",
+                            color = Color(0xFFEF6C00),
+                            modifier = Modifier.weight(1f),
+                            onClick = { vm.setThemeMode("warm_light") }
+                        )
+                    }
+                    Spacer(8.dp)
+                    Text(
+                        text = when (state.themeMode) {
+                            "light" -> "সাদা ব্যাকগ্রাউন্ড (স্ট্যান্ডার্ড লাইট মোড)"
+                            "dark" -> "ডার্ক মোড (রাতের জন্য আরামদায়ক)"
+                            "warm_light" -> "ওয়ার্ম হোয়াইট ব্যাকগ্রাউন্ড (চোখের জন্য নরম)"
+                            else -> "সিস্টেম সেটিং অনুসরণ করবে"
+                        },
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+
             // ─── Quran Appearance ─────────────────────────────────────
             item {
                 SettingsSection(title = stringResource(R.string.settings_quran_appearance)) {
@@ -751,6 +805,56 @@ private fun androidx.compose.foundation.layout.RowScope.FirebaseFeatureCard(
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+        }
+    }
+}
+
+@Composable
+private fun androidx.compose.foundation.layout.RowScope.ThemeModeChip(
+    label: String,
+    selected: Boolean,
+    color: Color,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    Card(
+        modifier = modifier
+            .clip(RoundedCornerShape(14.dp))
+            .clickable(onClick = onClick),
+        shape = RoundedCornerShape(14.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = if (selected) color.copy(alpha = 0.15f)
+                            else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = if (selected) 2.dp else 0.dp)
+    ) {
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp, horizontal = 4.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(28.dp)
+                    .clip(CircleShape)
+                    .background(if (selected) color else Color(0xFF9E9E9E)),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = when (label) {
+                        "অটো" -> "🌓"
+                        "লাইট" -> "☀️"
+                        "ডার্ক" -> "🌙"
+                        "ওয়ার্ম" -> "🕯️"
+                        else -> "🎨"
+                    },
+                    style = MaterialTheme.typography.labelMedium
+                )
+            }
+            Text(label,
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
+                color = if (selected) color else MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }

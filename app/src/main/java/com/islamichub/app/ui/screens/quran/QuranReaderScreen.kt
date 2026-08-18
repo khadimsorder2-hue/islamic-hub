@@ -63,8 +63,7 @@ import com.islamichub.app.R
 import com.islamichub.app.data.AppContainer
 import com.islamichub.app.data.model.Ayah
 import com.islamichub.app.ui.components.PremiumHeroCard
-import com.islamichub.app.ui.components.PremiumMiniAudioPlayer
-import com.islamichub.app.ui.screens.tafsir.TafsirBottomSheet
+import com.islamichub.app.ui.screens.tafsir.TafsirFullScreen
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -237,21 +236,9 @@ fun QuranReaderScreen(
                         }
                     }
 
-                    // Premium mini audio player
-                    if (state.isPlayingAudio || state.isLoadingAudio || state.currentPlayingAyah != null) {
-                        item {
-                            PremiumMiniAudioPlayer(
-                                isPlaying = state.isPlayingAudio,
-                                isLoading = state.isLoadingAudio,
-                                title = if (state.isPlayingBanglaAudio)
-                                    "বাংলা অনুবাদ: আয়াত ${state.currentPlayingAyah}"
-                                    else state.currentPlayingAyah?.let { "আয়াত $it / ${state.totalAyahsInSurah}" } ?: "সম্পূর্ণ সূরা",
-                                subtitle = if (state.isPlayingBanglaAudio) "বাংলা অডিও" else state.selectedReciterName,
-                                onPlayPause = { vm.toggleAudio() },
-                                onStop = { vm.stopAudio() }
-                            )
-                        }
-                    }
+                    // Note: Audio playback is controlled via the app-level
+                    // FloatingAudioPlayer (visible across all screens when playing).
+                    // Old in-list mini player removed per user request.
 
                     // Surah header card with premium background
                     item {
@@ -333,13 +320,13 @@ fun QuranReaderScreen(
         }
     }
 
-    // Tafsir bottom sheet
+    // Tafsir full screen popup (replaces old ModalBottomSheet)
     showTafsirFor?.let { ayah ->
-        TafsirBottomSheet(
+        com.islamichub.app.ui.screens.tafsir.TafsirFullScreen(
             container = container,
             surah = surahNumber,
             ayah = ayah,
-            onDismiss = { showTafsirFor = null }
+            onClose = { showTafsirFor = null }
         )
     }
 

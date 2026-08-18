@@ -35,10 +35,13 @@ class MainActivity : ComponentActivity() {
         DailyAyahWorker.schedule(this)
 
         setContent {
-            IslamicHubTheme {
-                Surface(modifier = Modifier.fillMaxSize()) {
-                    val container = (application as IslamicHubApp).container
+            val container = (application as IslamicHubApp).container
+            // Collect theme mode reactively
+            val themeMode by container.settingsRepository.themeMode
+                .collectAsState(initial = "auto")
 
+            IslamicHubTheme(themeMode = themeMode) {
+                Surface(modifier = Modifier.fillMaxSize()) {
                     // Check onboarding status
                     var showOnboarding by remember { mutableStateOf(false) }
                     var showAppLock by remember { mutableStateOf(false) }
@@ -50,8 +53,6 @@ class MainActivity : ComponentActivity() {
                             container.settingsRepository.onboardingDone.first()
                         }
                         showOnboarding = !onboardingDone
-                        // App lock — check if enabled (future: add setting)
-                        // For now, skip app lock
                         checked = true
                     }
 

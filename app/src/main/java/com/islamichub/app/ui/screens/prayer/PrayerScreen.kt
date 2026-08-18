@@ -110,52 +110,66 @@ fun PrayerScreen(container: AppContainer) {
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        // Premium greeting card (no image — gradient only)
+        // Premium hero with bg image (kept per user request)
         item {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(24.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.Transparent),
-                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+            val bgBitmap = remember { loadAssetImage(context, "img/prayer-premium-bg.webp") }
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(200.dp)
+                    .clip(RoundedCornerShape(28.dp))
             ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(
-                            brush = Brush.horizontalGradient(
-                                colors = listOf(
-                                    MaterialTheme.colorScheme.primary,
-                                    MaterialTheme.colorScheme.secondary
-                                )
+                if (bgBitmap != null) {
+                    Image(
+                        bitmap = bgBitmap.asImageBitmap(),
+                        contentDescription = null,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                    Box(
+                        modifier = Modifier.fillMaxSize().background(
+                            brush = Brush.verticalGradient(
+                                colors = listOf(Color.Black.copy(alpha = 0.3f), Color.Black.copy(alpha = 0.7f))
                             )
                         )
-                        .padding(20.dp)
+                    )
+                } else {
+                    Box(modifier = Modifier.fillMaxSize().background(
+                        Brush.horizontalGradient(
+                            colors = listOf(
+                                MaterialTheme.colorScheme.primary,
+                                MaterialTheme.colorScheme.secondary
+                            )
+                        )
+                    ))
+                }
+                Column(
+                    modifier = Modifier.fillMaxSize().padding(20.dp),
+                    verticalArrangement = Arrangement.Center
                 ) {
-                    Column {
+                    Text(
+                        text = stringResource(R.string.prayer_title),
+                        style = MaterialTheme.typography.headlineMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+                    Spacer(Modifier.height(4.dp))
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Icon(Icons.Filled.LocationOn, contentDescription = null,
+                            tint = Color.White.copy(alpha = 0.9f), modifier = Modifier.size(16.dp))
                         Text(
-                            text = stringResource(R.string.prayer_title),
-                            style = MaterialTheme.typography.headlineSmall,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White
+                            text = state.times?.locationName ?: locationFallback,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Color.White.copy(alpha = 0.95f)
                         )
-                        Spacer(Modifier.height(8.dp))
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(4.dp)
-                        ) {
-                            Icon(Icons.Filled.LocationOn, contentDescription = null,
-                                tint = Color.White.copy(alpha = 0.9f), modifier = Modifier.size(16.dp))
-                            Text(
-                                text = state.times?.locationName ?: locationFallback,
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = Color.White.copy(alpha = 0.95f)
-                            )
-                        }
-                        state.times?.hijriDate?.let {
-                            Text(it,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = Color.White.copy(alpha = 0.85f))
-                        }
+                    }
+                    state.times?.hijriDate?.let {
+                        Text(it,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color.White.copy(alpha = 0.85f))
                     }
                 }
             }
@@ -311,71 +325,82 @@ private fun PrayerRowPremium(
     name: String, time: String, isFard: Boolean,
     jamat: JamatTime?, context: android.content.Context
 ) {
-    val bgImage = when (name) {
-        "ফজর" -> "namaz-fajr-bg.webp"
-        "যোহর" -> "namaz-dhuhr-bg.webp"
-        "আসর" -> "namaz-asr-bg.webp"
-        "মাগরিব" -> "namaz-maghrib-bg.webp"
-        "এশা" -> "namaz-isha-bg.webp"
-        else -> "prayer-premium-bg.webp"
+    // Minimal compact design — no image, gradient only
+    val prayerColor = when (name) {
+        "ফজর" -> Color(0xFF7E8CE0)        // dawn — soft blue
+        "যোহর" -> Color(0xFFFF9800)       // noon — orange
+        "আসর" -> Color(0xFF8BC34A)        // afternoon — green
+        "মাগরিব" -> Color(0xFFAB47BC)     // sunset — purple
+        "এশা" -> Color(0xFF3F51B5)         // night — deep blue
+        else -> MaterialTheme.colorScheme.primary
     }
-    val bgBitmap = remember(name) { loadAssetImage(context, "img/$bgImage") }
+    val prayerEmoji = when (name) {
+        "ফজর" -> "🌅"
+        "যোহর" -> "☀️"
+        "আসর" -> "🌤️"
+        "মাগরিব" -> "🌆"
+        "এশা" -> "🌙"
+        else -> "🕌"
+    }
 
     Card(
-        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)),
-        shape = RoundedCornerShape(20.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.Transparent),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
-        Box(modifier = Modifier.fillMaxWidth()) {
-            // Background image
-            if (bgBitmap != null) {
-                Image(
-                    bitmap = bgBitmap.asImageBitmap(),
-                    contentDescription = null,
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Crop
-                )
-                Box(
-                    modifier = Modifier.fillMaxSize().background(
-                        brush = Brush.verticalGradient(
-                            colors = listOf(
-                                if (isFard) MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)
-                                else MaterialTheme.colorScheme.secondary.copy(alpha = 0.5f),
-                                Color.Black.copy(alpha = 0.7f)
-                            )
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(
+                    Brush.horizontalGradient(
+                        colors = listOf(
+                            prayerColor.copy(alpha = if (isFard) 0.15f else 0.08f),
+                            prayerColor.copy(alpha = 0.03f)
                         )
                     )
                 )
-            } else {
-                Box(modifier = Modifier.fillMaxSize().background(
-                    if (isFard) MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
-                    else MaterialTheme.colorScheme.surfaceVariant
-                ))
-            }
-
+        ) {
             Row(
-                modifier = Modifier.fillMaxWidth().padding(16.dp),
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Column {
-                    Text(name, style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold, color = Color.White)
-                    Text(time, style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.Bold, color = Color.White)
-                    if (jamat != null && jamat.enabled) {
-                        Text("🕌 জামাত: ${jamat.jamatTime} ${if (jamat.mosqueName.isNotBlank()) "• ${jamat.mosqueName}" else ""}",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = Color.White.copy(alpha = 0.9f))
+                // Left: emoji + name
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier
+                            .size(36.dp)
+                            .clip(CircleShape)
+                            .background(prayerColor.copy(alpha = 0.15f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(prayerEmoji, style = MaterialTheme.typography.titleMedium)
+                    }
+                    Spacer(Modifier.size(12.dp))
+                    Column {
+                        Text(
+                            text = name,
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        if (jamat != null && jamat.enabled) {
+                            Text(
+                                text = "🕌 জামাত: ${jamat.jamatTime}",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
                     }
                 }
-                if (isFard) {
-                    Box(
-                        modifier = Modifier.size(36.dp).clip(CircleShape)
-                            .background(Color.White.copy(alpha = 0.25f)),
-                        contentAlignment = Alignment.Center
-                    ) { Text("۞", color = Color.White) }
-                }
+                // Right: time
+                Text(
+                    text = time,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = prayerColor
+                )
             }
         }
     }
