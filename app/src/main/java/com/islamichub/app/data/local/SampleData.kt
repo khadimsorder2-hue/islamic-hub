@@ -511,10 +511,70 @@ object DuaData {
     )
 
     val dhikrOptions: List<DhikrOption> = listOf(
-        DhikrOption("subhanallah", "سُبْحَانَ اللَّهِ", "SubhanAllah", "Glory be to Allah", 33),
-        DhikrOption("alhamdulillah", "الْحَمْدُ لِلَّهِ", "Alhamdulillah", "All praise is for Allah", 33),
-        DhikrOption("allahu_akbar", "اللَّهُ أَكْبَرُ", "Allahu Akbar", "Allah is the Greatest", 34),
-        DhikrOption("la_ilaha", "لَا إِلَهَ إِلَّا اللَّهُ", "La ilaha illallah", "There is no god but Allah", 100),
-        DhikrOption("astaghfirullah", "أَسْتَغْفِرُ اللَّهَ", "Astaghfirullah", "I seek forgiveness from Allah", 100)
+        DhikrOption(
+            id = "subhanallah",
+            arabic = "سُبْحَانَ اللَّهِ",
+            transliteration = "SubhanAllah",
+            translation = "Glory be to Allah",
+            defaultTarget = 33,
+            banglaPronunciation = "সুবহানাল্লাহ",
+            banglaTranslation = "আল্লাহ পবিত্র",
+            banglaMeaning = "আল্লাহ সমস্ত ত্রুটি ও দোষ থেকে পবিত্র",
+            whyRecite = "আল্লাহর পবিত্রতা ঘোষণা করার জন্য এবং তাঁর সকল গুণাবলী থেকে তিনি মুক্ত এটা প্রকাশ করতে। এটি তাসবিহে ফাতিমা এর অংশ যা নবী সা. তাঁর মেয়ে ফাতিমাকে শিখিয়েছিলেন।",
+            reference = "সহীহ বুখারী ৩৭০৫, সহীহ মুসলিম ২৭২৭",
+            reward = "প্রতি উচ্চারণে ১০টি গুনাহ মাফ ও ১০টি নেকী লেখা হয়"
+        ),
+        DhikrOption(
+            id = "alhamdulillah",
+            arabic = "الْحَمْدُ لِلَّهِ",
+            transliteration = "Alhamdulillah",
+            translation = "All praise is for Allah",
+            defaultTarget = 33,
+            banglaPronunciation = "আলহামদুলিল্লাহ",
+            banglaTranslation = "সমস্ত প্রশংসা আল্লাহর জন্য",
+            banglaMeaning = "আল্লাহ তাআলার জন্য সমস্ত ধরনের প্রশংসা ও কৃতজ্ঞতা",
+            whyRecite = "আল্লাহর প্রতি কৃতজ্ঞতা প্রকাশ করতে এবং তাঁর অনুগ্রহের জন্য ধন্যবাদ জানাতে। হাদিসে এসেছে, যে ব্যক্তি এটি বলে তার জন্য জান্নাতে একটি গাছ লাগানো হয়।",
+            reference = "সুনান তিরমিযী ৩৪৬০",
+            reward = "প্রতি উচ্চারণে জান্নাতে একটি গাছ রোপণ"
+        ),
+        DhikrOption(
+            id = "allahu_akbar",
+            arabic = "اللَّهُ أَكْبَرُ",
+            transliteration = "Allahu Akbar",
+            translation = "Allah is the Greatest",
+            defaultTarget = 34,
+            banglaPronunciation = "আল্লাহু আকবার",
+            banglaTranslation = "আল্লাহ সবচেয়ে বড়",
+            banglaMeaning = "আল্লাহ সমস্ত কিছুর চেয়ে শ্রেষ্ঠ ও মহান",
+            whyRecite = "আল্লাহর শ্রেষ্ঠত্ব ঘোষণা করতে এবং পৃথিবীর সব কিছু তাঁর সামনে তুচ্ছ এটা স্মরণ করতে। তাসবিহে ফাতিমার তৃতীয় অংশ।",
+            reference = "সহীহ মুসলিম ২৭২৭",
+            reward = "আল্লাহর ভয়ে অন্য সব ভয় দূর হয়"
+        ),
+        DhikrOption(
+            id = "la_ilaha",
+            arabic = "لَا إِلَهَ إِلَّا اللَّهُ",
+            transliteration = "La ilaha illallah",
+            translation = "There is no god but Allah",
+            defaultTarget = 100,
+            banglaPronunciation = "লা ইলাহা ইল্লাল্লাহ",
+            banglaTranslation = "আল্লাহ ছাড়া কোনো উপাস্য নেই",
+            banglaMeaning = "তাওহিদের ঘোষণা — আল্লাহ ছাড়া কোনো সত্য উপাস্য নেই",
+            whyRecite = "এটি ইসলামের মূল স্তম্ভ এবং জান্নাতের চাবি। নবী সা. বলেছেন, যে ব্যক্তি শেষ নিঃশ্বাসে এটি বলে তার জন্য জান্নাত ওয়াজিব হয়ে যায়।",
+            reference = "সুনান আবু দাউদ ৩১১৬",
+            reward = "১০০টি দাসমুক্তির সমান নেকী"
+        ),
+        DhikrOption(
+            id = "astaghfirullah",
+            arabic = "أَسْتَغْفِرُ اللَّهَ",
+            transliteration = "Astaghfirullah",
+            translation = "I seek forgiveness from Allah",
+            defaultTarget = 100,
+            banglaPronunciation = "আস্তাগফিরুল্লাহ",
+            banglaTranslation = "আমি আল্লাহর কাছে ক্ষমা চাই",
+            banglaMeaning = "আল্লাহর কাছে ক্ষমা প্রার্থনা ও তওবা",
+            whyRecite = "গুনাহ থেকে তওবা করতে এবং আল্লাহর রহমত কামনা করতে। নবী সা. দিনে ৭০-১০০ বার ইস্তিগফার পড়তেন। এটি জীবিকা বৃদ্ধি ও দুঃখ দূর করার উপায়।",
+            reference = "সহীহ বুখারী ৬৩০৭",
+            reward = "প্রতিটি গুনাহর জন্য ক্ষমা ও জীবিকা বৃদ্ধি"
+        )
     )
 }

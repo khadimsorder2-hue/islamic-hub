@@ -60,8 +60,10 @@ class CalendarViewModel(private val container: AppContainer) : ViewModel() {
                 "Jumada al-Awwal", "Jumada al-Thani", "Rajab", "Sha'ban",
                 "Ramadan", "Shawwal", "Dhu al-Qi'dah", "Dhu al-Hijjah"
             )
-            val weekdaysBn = listOf("শনিবার", "রবিবার", "সোমবার", "মঙ্গলবার", "বুধবার", "বৃহস্পতিবার", "শুক্রবার")
-            val weekdaysEn = listOf("Sat", "Sun", "Mon", "Tue", "Wed", "Thu", "Fri")
+            // Java Calendar.DAY_OF_WEEK: 1=Sunday, 2=Monday, ..., 7=Saturday
+            // Bangla weekday order: [Sun, Mon, Tue, Wed, Thu, Fri, Sat]
+            val weekdaysBn = listOf("রবিবার", "সোমবার", "মঙ্গলবার", "বুধবার", "বৃহস্পতিবার", "শুক্রবার", "শনিবার")
+            val weekdaysEn = listOf("Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat")
 
             // Try to get hijri date from Aladhan API
             var hijriBaseDay = 1
@@ -97,7 +99,7 @@ class CalendarViewModel(private val container: AppContainer) : ViewModel() {
             }.get(Calendar.DAY_OF_WEEK)
 
             val daysList = mutableListOf<HijriDayItem>()
-            // Add empty days for alignment
+            // Add empty days for alignment (Calendar.SUNDAY=1, so subtract 1 to get 0-based index)
             for (i in 1 until firstDayOfWeek) {
                 daysList.add(HijriDayItem(0, "", "", "", "", "", "", false))
             }
@@ -114,20 +116,22 @@ class CalendarViewModel(private val container: AppContainer) : ViewModel() {
                     set(Calendar.MONTH, month)
                     set(Calendar.DAY_OF_MONTH, day)
                 }
+                // Calendar.DAY_OF_WEEK: 1=Sun, 2=Mon, ..., 7=Sat
+                // Our list: [Sun, Mon, Tue, Wed, Thu, Fri, Sat] (0-indexed)
                 val weekdayIdx = dayCal.get(Calendar.DAY_OF_WEEK) - 1
                 val isToday = isCurrentMonth && day == todayDay
 
-                // Islamic events
+                // Islamic events (Hijri-based)
                 var event: String? = null
-                if (hijriMonthIdx == 0 && hijriDay == 10) event = "আশুরা"
-                if (hijriMonthIdx == 2 && hijriDay == 12) event = "ঈদে মিলাদুন্নবী"
-                if (hijriMonthIdx == 6 && hijriDay == 27) event = "শবে মেরাজ"
-                if (hijriMonthIdx == 7 && hijriDay == 15) event = "শবে বরাত"
+                if (hijriMonthIdx == 0 && hijriDay == 10) event = "আশুরা (১০ মুহররম)"
+                if (hijriMonthIdx == 2 && hijriDay == 12) event = "ঈদে মিলাদুন্নবী (১২ রবিউল আউয়াল)"
+                if (hijriMonthIdx == 6 && hijriDay == 27) event = "শবে মেরাজ (২৭ রজব)"
+                if (hijriMonthIdx == 7 && hijriDay == 15) event = "শবে বরাত (১৫ শা'বান)"
                 if (hijriMonthIdx == 8 && hijriDay == 1) event = "রমজান শুরু"
-                if (hijriMonthIdx == 8 && hijriDay == 27) event = "শবে কদর"
+                if (hijriMonthIdx == 8 && hijriDay == 27) event = "শবে কদর (২৭ রমজান)"
                 if (hijriMonthIdx == 9 && hijriDay == 1) event = "ঈদুল ফিতর"
-                if (hijriMonthIdx == 11 && hijriDay == 9) event = "ঈদুল আযহা"
-                if (hijriMonthIdx == 11 && hijriDay == 10) event = "ঈদুল আযহা"
+                if (hijriMonthIdx == 11 && hijriDay == 9) event = "ঈদুল আযহা (৯ জিলহজ্জ)"
+                if (hijriMonthIdx == 11 && hijriDay == 10) event = "ঈদুল আযহা (১০ জিলহজ্জ)"
 
                 daysList.add(HijriDayItem(
                     gregorianDay = day,

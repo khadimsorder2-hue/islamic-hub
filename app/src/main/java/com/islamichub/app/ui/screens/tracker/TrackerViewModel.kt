@@ -31,12 +31,13 @@ class TrackerViewModel(private val container: AppContainer) : ViewModel() {
             val streak = container.trackerRepository.prayerStreak.first()
             val totalZikr = container.trackerRepository.totalZikr.first()
             val totalAyahs = container.trackerRepository.totalAyahsRead.first()
+            val totalHadiths = container.trackerRepository.totalHadithsRead.first()
             _state.value = TrackerUiState(
                 today = today,
                 streak = streak,
                 totalZikr = totalZikr,
                 totalAyahs = totalAyahs,
-                totalHadiths = today.hadithsRead,
+                totalHadiths = totalHadiths,
                 isLoading = false
             )
         }

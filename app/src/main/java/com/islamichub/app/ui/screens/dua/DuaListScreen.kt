@@ -7,8 +7,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -63,9 +65,38 @@ fun DuaListScreen(
         }
     ) { padding ->
         if (state.isLoading) {
-            Column(modifier = Modifier.padding(padding).fillMaxWidth().padding(32.dp),
-                horizontalAlignment = Alignment.CenterHorizontally) {
+            Column(modifier = Modifier.padding(padding).fillMaxSize().padding(32.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center) {
                 androidx.compose.material3.CircularProgressIndicator()
+                Spacer(Modifier.height(12.dp))
+                Text("দোয়া লোড হচ্ছে…",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            return@Scaffold
+        }
+
+        // Empty/error state
+        if (state.categories.isEmpty()) {
+            Column(modifier = Modifier.padding(padding).fillMaxSize().padding(32.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center) {
+                Box(
+                    modifier = Modifier.size(80.dp).clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.surfaceVariant),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("🤲", style = MaterialTheme.typography.headlineMedium)
+                }
+                Spacer(Modifier.height(16.dp))
+                Text("দোয়া লোড করা যায়নি",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold)
+                Text("পরে আবার চেষ্টা করুন বা অ্যাপ রিস্টার্ট করুন",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center)
             }
             return@Scaffold
         }

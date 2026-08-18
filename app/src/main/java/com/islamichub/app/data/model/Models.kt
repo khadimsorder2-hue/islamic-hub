@@ -75,7 +75,13 @@ data class DhikrOption(
     val arabic: String,
     val transliteration: String,
     val translation: String,
-    val defaultTarget: Int
+    val defaultTarget: Int,
+    val banglaPronunciation: String = "",
+    val banglaTranslation: String = "",
+    val banglaMeaning: String = "",
+    val whyRecite: String = "",
+    val reference: String = "",
+    val reward: String = ""
 )
 
 /** Hijri calendar day info. */

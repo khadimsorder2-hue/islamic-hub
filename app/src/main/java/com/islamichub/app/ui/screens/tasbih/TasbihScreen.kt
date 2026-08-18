@@ -14,10 +14,15 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ExpandLess
+import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Snackbar
@@ -29,7 +34,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -112,6 +119,79 @@ fun TasbihScreen(container: AppContainer) {
                             selected = opt.id == state.currentDhikrId,
                             onClick = { vm.onDhikrChange(opt.id) }
                         )
+                    }
+                }
+            }
+
+            // Premium dhikr details card (shows pronunciation, meaning, why)
+            state.dhikrOptions.find { it.id == state.currentDhikrId }?.let { current ->
+                var showDetails by remember(current.id) { mutableStateOf(false) }
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(20.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color.Transparent),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(
+                                Brush.verticalGradient(
+                                    colors = listOf(
+                                        MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
+                                        MaterialTheme.colorScheme.secondary.copy(alpha = 0.1f)
+                                    )
+                                )
+                            )
+                            .padding(16.dp)
+                    ) {
+                        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                            // Header: Arabic + Info icon
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = current.arabic,
+                                    style = MaterialTheme.typography.headlineSmall,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.weight(1f)
+                                )
+                                IconButton(onClick = { showDetails = !showDetails }) {
+                                    Icon(
+                                        imageVector = if (showDetails) Icons.Filled.ExpandLess
+                                                      else Icons.Filled.ExpandMore,
+                                        contentDescription = "বিস্তারিত",
+                                        tint = MaterialTheme.colorScheme.primary
+                                    )
+                                }
+                            }
+                            // Pronunciation + Bangla translation
+                            Text("উচ্চারণ: ${current.banglaPronunciation.ifBlank { current.transliteration }}",
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.onSurface)
+                            Text("অর্থ: ${current.banglaTranslation.ifBlank { current.translation }}",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            // Expandable details
+                            if (showDetails) {
+                                Spacer(Modifier.height(8.dp))
+                                if (current.banglaMeaning.isNotBlank()) {
+                                    DhikrDetailRow(label = "📖 অর্থ বিস্তারিত", value = current.banglaMeaning)
+                                }
+                                if (current.whyRecite.isNotBlank()) {
+                                    DhikrDetailRow(label = "🤲 কেন পড়বেন", value = current.whyRecite)
+                                }
+                                if (current.reward.isNotBlank()) {
+                                    DhikrDetailRow(label = "✨ ফজিলত", value = current.reward)
+                                }
+                                if (current.reference.isNotBlank()) {
+                                    DhikrDetailRow(label = "📚 সূত্র", value = current.reference)
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -248,5 +328,22 @@ private fun StatCard(label: String, value: String, modifier: Modifier = Modifier
                 color = MaterialTheme.colorScheme.primary
             )
         }
+    }
+}
+
+@Composable
+private fun DhikrDetailRow(label: String, value: String) {
+    Column(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.primary
+        )
+        Text(
+            text = value,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
     }
 }
