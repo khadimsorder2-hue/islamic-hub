@@ -68,7 +68,7 @@ class AiScholarViewModel(private val container: AppContainer) : ViewModel() {
 
     private fun observeCache() {
         viewModelScope.launch {
-            container.aiCacheRepository.count.collect { count ->
+            container.aiCacheRepository.count.collect { count: Int ->
                 _state.value = _state.value.copy(cacheCount = count)
             }
         }

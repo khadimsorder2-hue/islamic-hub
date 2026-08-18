@@ -15,6 +15,7 @@ import com.islamichub.app.data.local.NamesData
 import com.islamichub.app.data.local.QuranAssetSource
 import com.islamichub.app.data.local.QuranData
 import com.islamichub.app.data.remote.AladhanApi
+import com.islamichub.app.data.repo.AICacheRepository
 import com.islamichub.app.data.repo.AIService
 import com.islamichub.app.data.repo.AudioController
 import com.islamichub.app.data.repo.AudioDownloadService
@@ -105,7 +106,6 @@ class AppContainer(internal val context: Context) {
             aiService.cache = cache
         }
     }
-
     // New v1.2.0 repositories
     val bookmarkRepository: BookmarkRepository by lazy { BookmarkRepository(context) }
     val qadaRepository: QadaRepository by lazy { QadaRepository(context) }

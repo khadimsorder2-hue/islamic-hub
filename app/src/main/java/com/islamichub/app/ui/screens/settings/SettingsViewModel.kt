@@ -45,7 +45,7 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
 
     private fun observeAICache() {
         viewModelScope.launch {
-            container.aiCacheRepository.count.collect { count ->
+            container.aiCacheRepository.count.collect { count: Int ->
                 _state.value = _state.value.copy(cacheCount = count)
             }
         }

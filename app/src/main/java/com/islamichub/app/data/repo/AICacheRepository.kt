@@ -10,6 +10,7 @@ import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 
@@ -121,9 +122,8 @@ class AICacheRepository(private val context: Context) {
     }
 
     private suspend fun readList(): List<CachedAIResponse> {
-        return context.aiCacheStore.data.let { prefs ->
-            readList(prefs)
-        }
+        val prefs = context.aiCacheStore.data.first()
+        return readList(prefs)
     }
 
     /** Build a stable cache key — SHA-256 of provider|model|normalizedPrompt */

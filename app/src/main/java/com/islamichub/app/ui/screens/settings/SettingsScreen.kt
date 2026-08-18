@@ -1,6 +1,7 @@
 package com.islamichub.app.ui.screens.settings
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -17,6 +18,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Cached
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Card
@@ -48,6 +50,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.islamichub.app.R
 import com.islamichub.app.data.AppContainer
 import com.islamichub.app.data.repo.AudioController
@@ -356,7 +359,7 @@ fun SettingsScreen(
                                                 style = MaterialTheme.typography.titleSmall,
                                                 fontWeight = FontWeight.Bold)
                                             if (preset.recommended) {
-                                                Spacer(Modifier.size(8.dp))
+                                                Spacer(8.dp)
                                                 Box(
                                                     modifier = Modifier
                                                         .clip(RoundedCornerShape(6.dp))
@@ -389,7 +392,7 @@ fun SettingsScreen(
                                         }
                                     }
                                 }
-                                Spacer(Modifier.size(4.dp))
+                                Spacer(4.dp)
                                 Text(preset.descriptionBn,
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant)

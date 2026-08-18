@@ -29,10 +29,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Send
-import androidx.compose.material.icons.automirrored.filled.Refresh
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.Bolt
-import androidx.compose.material.icons.filled.Cache
+import androidx.compose.material.icons.filled.Cached
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.ContentCopy
@@ -166,7 +166,7 @@ fun AiScholarScreen(
                     // Cache button with badge
                     IconButton(onClick = { showClearCacheDialog = true }) {
                         Box {
-                            Icon(Icons.Filled.Cache, contentDescription = "AI Cache")
+                            Icon(Icons.Filled.Cached, contentDescription = "AI Cache")
                             if (state.cacheCount > 0) {
                                 Box(
                                     modifier = Modifier
@@ -653,7 +653,7 @@ private fun ChatMessageBubble(
                                     modifier = Modifier.size(28.dp)
                                 ) {
                                     Icon(
-                                        imageVector = Icons.AutoMirrored.Filled.Refresh,
+                                        imageVector = Icons.Filled.Refresh,
                                         contentDescription = "Regenerate",
                                         tint = MaterialTheme.colorScheme.primary,
                                         modifier = Modifier.size(16.dp)
@@ -754,6 +754,7 @@ private fun StructuredAIAnswer(answer: String) {
 }
 
 /** Color for each section emoji */
+@Composable
 private fun colorForSection(emoji: String): Color = when (emoji) {
     "📖" -> Color(0xFF1B5E20)        // Quran — green
     "📚" -> Color(0xFF1565C0)        // Hadith — blue
