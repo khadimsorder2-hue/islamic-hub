@@ -237,6 +237,7 @@ fun NamazExtrasScreen(
     // ─── Full screen surah detail popup ───
     selectedSurah?.let { surah ->
         NamazSurahFullScreen(
+            container = container,
             surah = surah,
             onClose = { selectedSurah = null }
         )
@@ -246,11 +247,11 @@ fun NamazExtrasScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun NamazSurahFullScreen(
+    container: AppContainer,
     surah: com.islamichub.app.data.local.NamazSurah,
     onClose: () -> Unit
 ) {
     val context = LocalContext.current
-    val exoPlayer = remember { androidx.media3.exoplayer.ExoPlayer.Builder(context).build() }
 
     Scaffold(
         topBar = {
@@ -404,15 +405,13 @@ private fun NamazSurahFullScreen(
                     .clip(RoundedCornerShape(16.dp))
                     .clickable {
                         surah.audioUrl?.let { audioUrl ->
-                            try {
-                                exoPlayer.stop()
-                                exoPlayer.clearMediaItems()
-                                val fileName = audioUrl.replace("namaz-audio/", "")
-                                val mediaItem = androidx.media3.common.MediaItem.fromUri("asset:///namaz_audio/$fileName")
-                                exoPlayer.setMediaItem(mediaItem)
-                                exoPlayer.prepare()
-                                exoPlayer.playWhenReady = true
-                            } catch (_: Exception) { }
+                            val fileName = audioUrl.replace("namaz-audio/", "")
+                            // Use shared AudioController → FloatingAudioPlayer shows automatically
+                            container.audioController.playAssetAudio(
+                                assetPath = "namaz_audio/$fileName",
+                                title = surah.nameBn,
+                                subtitle = "নামাজের সূরা"
+                            )
                         }
                     },
                 shape = RoundedCornerShape(16.dp),

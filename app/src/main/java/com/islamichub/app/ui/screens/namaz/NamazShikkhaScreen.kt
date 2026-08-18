@@ -55,8 +55,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.media3.common.MediaItem
-import androidx.media3.exoplayer.ExoPlayer
 import com.islamichub.app.data.AppContainer
 import com.islamichub.app.data.local.ExtendedNamazItem
 import com.islamichub.app.data.local.FullNamazCategory
@@ -77,7 +75,6 @@ fun NamazShikkhaScreen(
     val vm = remember { NamazShikkhaViewModel(container) }
     val state by vm.state.collectAsState()
     val context = LocalContext.current
-    val exoPlayer = remember { ExoPlayer.Builder(context).build() }
     val scope = rememberCoroutineScope()
     var showMistakes by remember { mutableStateOf(false) }
     var selectedPrayer by remember { mutableStateOf<FullNamazPrayer?>(null) }
@@ -339,15 +336,12 @@ fun NamazShikkhaScreen(
             ) {
                 steps.forEachIndexed { idx, step ->
                     NamazStepRow(step, state.selectedGender, idx + 1) { audioFile ->
-                        // Play audio via app-level audioController (floating player shows automatically)
-                        try {
-                            exoPlayer.stop()
-                            exoPlayer.clearMediaItems()
-                            val mediaItem = MediaItem.fromUri("asset:///namaz_audio/$audioFile")
-                            exoPlayer.setMediaItem(mediaItem)
-                            exoPlayer.prepare()
-                            exoPlayer.playWhenReady = true
-                        } catch (_: Exception) { }
+                        // Use shared AudioController → FloatingAudioPlayer shows automatically
+                        container.audioController.playAssetAudio(
+                            assetPath = "namaz_audio/$audioFile",
+                            title = "${prayer.nameBn} — ধাপ ${idx + 1}",
+                            subtitle = "নামাজ শিক্ষা"
+                        )
                     }
                 }
                 Spacer(Modifier.height(32.dp))

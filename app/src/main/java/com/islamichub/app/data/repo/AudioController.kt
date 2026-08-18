@@ -410,6 +410,51 @@ class AudioController(private val context: Context) {
         _state.value = _state.value.copy(banglaAudioEnabled = enabled)
     }
 
+    /**
+     * Play a local asset audio file (e.g. adhan, namaz step audio).
+     * This routes through the shared ExoPlayer so the FloatingAudioPlayer
+     * shows automatically on all screens.
+     *
+     * @param assetPath e.g. "namaz_audio/azan2.mp3" or "namaz_audio/step1_fajr.mp3"
+     * @param title Display title for the floating player
+     * @param subtitle Display subtitle (e.g. reciter name or "নামাজ শিক্ষা")
+     */
+    fun playAssetAudio(assetPath: String, title: String = "অডিও", subtitle: String = "") {
+        try {
+            player?.stop()
+            player?.clearMediaItems()
+            if (player == null) {
+                player = ExoPlayer.Builder(context)
+                    .setHandleAudioBecomingNoisy(true)
+                    .build()
+                player?.addListener(object : Player.Listener {
+                    override fun onPlaybackStateChanged(state: Int) { this@AudioController.onPlaybackStateChanged(state) }
+                    override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) { this@AudioController.onPlayWhenReadyChanged(playWhenReady) }
+                })
+            }
+            val mediaItem = MediaItem.fromUri("asset:///$assetPath")
+            player?.setMediaItem(mediaItem)
+            player?.prepare()
+            player?.playWhenReady = true
+            _state.value = _state.value.copy(
+                isPlaying = true,
+                isLoading = false,
+                currentSurah = null,
+                currentAyah = null,
+                reciter = subtitle.ifBlank { title },
+                error = null,
+                mode = PlaybackMode.SINGLE_AYAH,
+                isKhatamMode = false,
+                isPlayingBanglaAudio = false
+            )
+        } catch (_: Exception) {
+            _state.value = _state.value.copy(
+                isPlaying = false,
+                error = "অডিও চালানো যায়নি"
+            )
+        }
+    }
+
     private fun startAutoPauseTicker() {
         autoPauseTick = object : Runnable {
             override fun run() {

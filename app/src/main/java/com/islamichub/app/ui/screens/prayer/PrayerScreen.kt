@@ -65,8 +65,6 @@ import com.islamichub.app.ui.components.PremiumHeroCard
 import com.islamichub.app.ui.components.PremiumSectionHeader
 import com.islamichub.app.ui.components.loadAssetImage
 import androidx.compose.ui.graphics.asImageBitmap
-import androidx.media3.common.MediaItem
-import androidx.media3.exoplayer.ExoPlayer
 
 @Composable
 fun PrayerScreen(container: AppContainer) {
@@ -76,7 +74,6 @@ fun PrayerScreen(container: AppContainer) {
     val jamatTimes by remember { container.jamatTimeRepository.jamatTimes }.collectAsState(initial = emptyList())
     var showJamatDialog by remember { mutableStateOf(false) }
     var editingJamat by remember { mutableStateOf<JamatTime?>(null) }
-    val exoPlayer = remember { ExoPlayer.Builder(context).build() }
 
     val notifPermLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions()
@@ -180,14 +177,12 @@ fun PrayerScreen(container: AppContainer) {
             Card(
                 modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp))
                     .clickable {
-                        try {
-                            exoPlayer.stop()
-                            exoPlayer.clearMediaItems()
-                            val mediaItem = MediaItem.fromUri("asset:///namaz_audio/azan2.mp3")
-                            exoPlayer.setMediaItem(mediaItem)
-                            exoPlayer.prepare()
-                            exoPlayer.playWhenReady = true
-                        } catch (_: Exception) { }
+                        // Use shared AudioController so FloatingAudioPlayer shows
+                        container.audioController.playAssetAudio(
+                            assetPath = "namaz_audio/azan2.mp3",
+                            title = "অযান (আজান)",
+                            subtitle = "ট্যাপ করে অযান শুনুন"
+                        )
                     },
                 shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
