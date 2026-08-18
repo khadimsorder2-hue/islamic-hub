@@ -427,10 +427,7 @@ class AudioController(private val context: Context) {
                 player = ExoPlayer.Builder(context)
                     .setHandleAudioBecomingNoisy(true)
                     .build()
-                player?.addListener(object : Player.Listener {
-                    override fun onPlaybackStateChanged(state: Int) { this@AudioController.onPlaybackStateChanged(state) }
-                    override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) { this@AudioController.onPlayWhenReadyChanged(playWhenReady) }
-                })
+                player?.addListener(listener)
             }
             val mediaItem = MediaItem.fromUri("asset:///$assetPath")
             player?.setMediaItem(mediaItem)
