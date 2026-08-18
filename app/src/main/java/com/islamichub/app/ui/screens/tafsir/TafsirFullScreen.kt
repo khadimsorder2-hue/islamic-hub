@@ -43,6 +43,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.islamichub.app.data.AppContainer
+import com.islamichub.app.data.repo.TafsirSource
 
 /**
  * Full screen Tafsir popup — replaces the old ModalBottomSheet.
