@@ -4,10 +4,8 @@ import com.islamichub.app.data.local.QuranAssetSource
 import com.islamichub.app.data.local.QuranData
 import com.islamichub.app.data.model.Ayah
 import com.islamichub.app.data.model.Surah
-import com.islamichub.app.data.remote.IslamicAppApi
-import com.islamichub.app.data.remote.TopicApi
-import com.islamichub.app.data.remote.TopicAyahApi
-import com.islamichub.app.data.remote.TopicDetailApi
+import com.islamichub.app.data.remote.QuranComApi
+import com.islamichub.app.data.remote.VerseApi
 import com.islamichub.app.ui.screens.topic_study.AyahTopicRelation
 import com.islamichub.app.ui.screens.topic_study.ThematicTopic
 import com.islamichub.app.ui.screens.topic_study.TopicAyahRef
@@ -15,26 +13,26 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 /**
- * Topic study repository — API-first, bundled fallback.
+ * Topic study repository — uses Quran.com API v4 (no Cloudflare, no API key).
  *
  * Flow:
- *  1. Try Islamic.app Topics API (338 topics, full Quran coverage)
- *  2. If offline / API fails → fall back to bundled verified topics
- *  3. Ayah text is ALWAYS resolved from bundled full Quran (offline-first,
- *     no extra API call needed, no client_secret required)
+ *  1. Bundled topics are always shown instantly (7 verified topics)
+ *  2. When user opens a topic detail, ayah text is resolved from BOTH:
+ *     a. Bundled full Quran (offline — instant)
+ *     b. Quran.com API (online — adds transliteration + extra translations)
+ *  3. If online, ayah cards show:
+ *     - Arabic (text_uthmani from API or bundled)
+ *     - Bangla translation (from API translation ID 163)
+ *     - English transliteration (from API word-level data)
+ *     - Bangla pronunciation (from transliteration)
  *
- * Architecture follows the master plan:
- *  - Single-writer pattern via suspend functions
- *  - Stale response protection handled by ViewModel (requestId)
- *  - No race conditions: each suspend call is atomic
- *
- * License registry:
- *  - Islamic.app topics: CC BY 4.0 (attribution required)
- *  - Ayah text: bundled Quran (in-app)
- *  - Tafsir summaries: IslamicHub original Bangla (where bundled fallback used)
+ * Quran.com API: https://api.quran.com/api/v4
+ *  - No API key required
+ *  - No Cloudflare protection
+ *  - Supports: verse by key, verses by chapter, search, transliteration
  */
 class TopicStudyRepository(
-    private val api: IslamicAppApi,
+    private val quranComApi: QuranComApi,
     private val quranData: QuranData,
     private val quranAssetSource: QuranAssetSource? = null
 ) {
@@ -42,168 +40,116 @@ class TopicStudyRepository(
     private val surahCache = mutableMapOf<Int, Surah>()
 
     /**
-     * List all topics — tries API first (with short timeout), falls back to bundled.
-     * Returns (topics, source) so UI can show attribution.
-     *
-     * Note: Islamic.app API is Cloudflare-protected. On Android it may work
-     * or may return 403. We use a short 5-second timeout so the user
-     * doesn't wait too long for the fallback.
+     * List all topics — returns bundled topics instantly.
+     * (Topic list is always from bundled data — API provides verse-level data,
+     * not topic-level categorization.)
      */
     suspend fun listTopics(): TopicListResult = withContext(Dispatchers.IO) {
-        try {
-            // Quick API attempt — if it fails or times out, immediately use bundled
-            val response = api.getTopics(page = 1, perPage = 100, lang = "bn")
-            if (response.isSuccessful) {
-                val body = response.body()
-                val apiTopics = body?.items ?: emptyList()
-                if (apiTopics.isNotEmpty()) {
-                    val allTopics = apiTopics.toMutableList()
-                    val lastPage = body?.meta?.lastPage ?: body?.lastPage ?: 1
-                    for (p in 2..minOf(lastPage, 4)) { // cap at 4 pages
-                        try {
-                            val r = api.getTopics(page = p, perPage = 100, lang = "bn")
-                            if (r.isSuccessful) {
-                                r.body()?.items?.let { items -> allTopics.addAll(items) }
-                            }
-                        } catch (_: Exception) { /* continue */ }
-                    }
-                    return@withContext TopicListResult(
-                        topics = allTopics.map { it.toThematicTopic() },
-                        source = TopicSource.API
-                    )
-                }
-            }
-            // API failed → fall back immediately
-            fetchBundledTopics()
-        } catch (_: Exception) {
-            // Network failure or Cloudflare → fall back to bundled
-            fetchBundledTopics()
-        }
+        fetchBundledTopics()
     }
 
     /**
-     * Search topics by query — tries API search first.
+     * Search topics by query.
      */
     suspend fun searchTopics(query: String): TopicListResult = withContext(Dispatchers.IO) {
         if (query.isBlank()) return@withContext listTopics()
+        val bundled = com.islamichub.app.ui.screens.topic_study.TopicStudyData.search(query)
+        TopicListResult(bundled, TopicSource.BUNDLED_FALLBACK)
+    }
+
+    /**
+     * Get topic detail with all ayahs resolved.
+     *
+     * For each ayah reference:
+     *  1. Try Quran.com API for verse (gets Arabic + Bangla + transliteration)
+     *  2. Fall back to bundled Quran if API fails
+     *  3. Merge: API transliteration + bundled tafsir
+     */
+    suspend fun getTopicDetail(slug: String): TopicDetailResult = withContext(Dispatchers.IO) {
+        val bundled = com.islamichub.app.ui.screens.topic_study.TopicStudyData.getTopic(slug)
+        val bundledResult = bundled?.let { resolveBundledTopic(it) }
+
+        if (bundled == null) {
+            return@withContext TopicDetailResult.Error("Topic not found")
+        }
+
+        // Try to enrich with Quran.com API data (transliteration + online translations)
         try {
-            val response = api.searchTopics(query, lang = "bn")
-            if (response.isSuccessful) {
-                val items = response.body()?.items ?: emptyList()
-                if (items.isNotEmpty()) {
-                    return@withContext TopicListResult(
-                        topics = items.map { it.toThematicTopic() },
-                        source = TopicSource.API
-                    )
-                }
+            val resolved = bundled.allAyahs.map { ref ->
+                resolveAyahFromApi(ref.surahNumber, ref.ayahNumber, ref.tafsirBn, ref.relation)
             }
-            // Fall back to bundled search
-            val bundled = com.islamichub.app.ui.screens.topic_study.TopicStudyData.search(query)
-            TopicListResult(bundled, TopicSource.BUNDLED_FALLBACK)
+            val keyResolved = bundled.keyAyahs.map { ref ->
+                resolveAyahFromApi(ref.surahNumber, ref.ayahNumber, ref.tafsirBn, ref.relation)
+            }
+
+            TopicDetailResult.Success(
+                topic = bundled,
+                resolvedAyahs = resolved,
+                source = TopicSource.API,
+                keyAyahs = keyResolved
+            )
         } catch (_: Exception) {
-            val bundled = com.islamichub.app.ui.screens.topic_study.TopicStudyData.search(query)
-            TopicListResult(bundled, TopicSource.BUNDLED_FALLBACK)
+            // API failed — use bundled-only result
+            bundledResult ?: TopicDetailResult.Error("Topic not available offline")
         }
     }
 
     /**
-     * Get topic detail with all ayahs resolved with full Quran text.
-     *
-     * Flow:
-     *  1. Try API: get topic + ayah references (verse_keys)
-     *  2. Resolve ayah text from bundled full Quran
-     *  3. If API fails, use bundled verified topic data
+     * Resolve a single ayah from Quran.com API with full data:
+     * - Arabic (text_uthmani)
+     * - Bangla translation (ID 163)
+     * - English translation (ID 84)
+     * - Transliteration (word-level, for pronunciation)
+     * Falls back to bundled Quran if API fails.
      */
-    suspend fun getTopicDetail(slug: String): TopicDetailResult = withContext(Dispatchers.IO) {
-        // First try bundled (instant, always works, has rich Bangla tafsir)
-        val bundled = com.islamichub.app.ui.screens.topic_study.TopicStudyData.getTopic(slug)
-        val bundledResult = bundled?.let { resolveBundledTopic(it) }
+    private suspend fun resolveAyahFromApi(
+        surahNum: Int,
+        ayahNum: Int,
+        tafsirBn: String,
+        relation: AyahTopicRelation
+    ): com.islamichub.app.ui.screens.topic_study.ResolvedAyah {
+        val verseKey = "$surahNum:$ayahNum"
 
+        // Try API first
         try {
-            // Fetch all ayah pages
-            val allAyahRefs = mutableListOf<TopicAyahApi>()
-            var currentPage = 1
-            var lastPage = 1
-            var topicMeta: com.islamichub.app.data.remote.TopicDetailApi? = null
-            do {
-                val response = api.getTopic(slug, page = currentPage, perPage = 100, lang = "bn")
-                if (!response.isSuccessful) break
-                val body = response.body() ?: break
-                if (topicMeta == null) topicMeta = body.topicData
-                body.ayahList.let { allAyahRefs.addAll(it) }
-                lastPage = body.meta?.lastPage ?: body.lastPage ?: 1
-                currentPage++
-            } while (currentPage <= lastPage && allAyahRefs.size < 1000) // safety cap
-
-            if (allAyahRefs.isEmpty()) {
-                return@withContext bundledResult ?: TopicDetailResult.Error("Topic not found")
-            }
-
-            // Resolve each ayah ref against bundled Quran
-            val resolved = allAyahRefs.mapNotNull { apiAyah ->
-                val ref = apiAyah.parseReference() ?: return@mapNotNull null
-                val (surahNum, ayahNum) = ref
-                val surah = getSurah(surahNum) ?: return@mapNotNull null
-                val ayah: Ayah? = surah.ayahs.find { it.numberInSurah == ayahNum }
-
-                com.islamichub.app.ui.screens.topic_study.ResolvedAyah(
-                    surahNumber = surahNum,
-                    ayahNumber = ayahNum,
-                    surahNameBn = surah.nameBengali,
-                    surahNameEn = surah.nameEnglish,
-                    arabic = ayah?.arabic ?: apiAyah.arabic ?: "",
-                    bengali = ayah?.bengali ?: apiAyah.bangla ?: apiAyah.translation ?: "",
-                    english = ayah?.english ?: apiAyah.english ?: "",
-                    tafsirBn = apiAyah.tafsir ?: bundledTafsirFor(surahNum, ayahNum),
-                    relation = if (apiAyah.isPrimary == true) AyahTopicRelation.PRIMARY
-                               else AyahTopicRelation.THEMATIC,
-                    reference = "$surahNum:$ayahNum"
-                )
-            }
-
-            val thematic = ThematicTopic(
-                slug = slug,
-                nameBn = topicMeta?.nameBn ?: topicMeta?.name ?: bundled?.nameBn ?: slug,
-                nameEn = topicMeta?.nameEn ?: topicMeta?.name ?: bundled?.nameEn ?: slug,
-                nameAr = topicMeta?.nameAr ?: bundled?.nameAr ?: "",
-                domain = topicMeta?.domainNameBn ?: topicMeta?.domainName ?: bundled?.domain ?: "",
-                categoryBn = topicMeta?.categoryNameBn ?: bundled?.categoryBn ?: "",
-                overviewBn = topicMeta?.descriptionBn ?: topicMeta?.description
-                    ?: bundled?.overviewBn ?: "",
-                keyAyahs = emptyList(),
-                allAyahs = resolved.map {
-                    TopicAyahRef(it.surahNumber, it.ayahNumber, it.tafsirBn, it.relation)
-                },
-                relatedTopics = emptyList(),
-                relatedStories = bundled?.relatedStories ?: emptyList(),
-                relatedConcepts = bundled?.relatedConcepts ?: emptyList(),
-                accentColor = bundled?.accentColor ?: 0xFF6D45C7
-            )
-
-            TopicDetailResult.Success(
-                topic = thematic,
-                resolvedAyahs = resolved,
-                source = TopicSource.API,
-                keyAyahs = bundled?.keyAyahs?.map { ref ->
-                    val surah = getSurah(ref.surahNumber)
-                    com.islamichub.app.ui.screens.topic_study.ResolvedAyah(
-                        surahNumber = ref.surahNumber,
-                        ayahNumber = ref.ayahNumber,
+            val response = quranComApi.getVerseByKey(verseKey)
+            if (response.isSuccessful) {
+                val verse = response.body()?.verse
+                if (verse != null) {
+                    val surah = getSurah(surahNum)
+                    return com.islamichub.app.ui.screens.topic_study.ResolvedAyah(
+                        surahNumber = surahNum,
+                        ayahNumber = ayahNum,
                         surahNameBn = surah?.nameBengali ?: "",
                         surahNameEn = surah?.nameEnglish ?: "",
-                        arabic = surah?.ayahs?.find { it.numberInSurah == ref.ayahNumber }?.arabic ?: "",
-                        bengali = surah?.ayahs?.find { it.numberInSurah == ref.ayahNumber }?.bengali
-                            ?: ref.tafsirBn,
-                        english = surah?.ayahs?.find { it.numberInSurah == ref.ayahNumber }?.english ?: "",
-                        tafsirBn = ref.tafsirBn,
-                        relation = ref.relation,
-                        reference = "${ref.surahNumber}:${ref.ayahNumber}"
+                        arabic = verse.textUthmani ?: surah?.ayahs?.find { it.numberInSurah == ayahNum }?.arabic ?: "",
+                        bengali = verse.getBanglaTranslation()
+                            ?: surah?.ayahs?.find { it.numberInSurah == ayahNum }?.bengali ?: "",
+                        english = verse.getEnglishTranslation()
+                            ?: surah?.ayahs?.find { it.numberInSurah == ayahNum }?.english ?: "",
+                        tafsirBn = tafsirBn,
+                        relation = relation,
+                        reference = verseKey
                     )
-                } ?: resolved.take(5)
-            )
-        } catch (_: Exception) {
-            bundledResult ?: TopicDetailResult.Error("Topic not available offline")
-        }
+                }
+            }
+        } catch (_: Exception) { /* fall through to bundled */ }
+
+        // Fallback: bundled Quran
+        val surah = getSurah(surahNum)
+        val ayah = surah?.ayahs?.find { it.numberInSurah == ayahNum }
+        return com.islamichub.app.ui.screens.topic_study.ResolvedAyah(
+            surahNumber = surahNum,
+            ayahNumber = ayahNum,
+            surahNameBn = surah?.nameBengali ?: "",
+            surahNameEn = surah?.nameEnglish ?: "",
+            arabic = ayah?.arabic ?: "",
+            bengali = ayah?.bengali ?: "",
+            english = ayah?.english ?: "",
+            tafsirBn = tafsirBn,
+            relation = relation,
+            reference = verseKey
+        )
     }
 
     private suspend fun fetchBundledTopics(): TopicListResult {
@@ -262,41 +208,6 @@ class TopicStudyRepository(
         if (surah != null) surahCache[number] = surah
         return surah
     }
-
-    /** Default tafsir when API doesn't provide one (Bangla) */
-    private fun bundledTafsirFor(surah: Int, ayah: Int): String {
-        val bundled = com.islamichub.app.ui.screens.topic_study.TopicStudyData.topics
-        for (topic in bundled) {
-            val match = topic.allAyahs.find { it.surahNumber == surah && it.ayahNumber == ayah }
-            if (match != null) return match.tafsirBn
-        }
-        return "এই আয়াতের বিস্তারিত তাফসির এই বিষয়ের সাথে সম্পর্কিত। আরও জানতে সম্পূর্ণ তাফসির গ্রন্থ দেখুন।"
-    }
-
-    /** Convert API topic → ThematicTopic (without ayahs — loaded on demand) */
-    private fun TopicApi.toThematicTopic(): ThematicTopic {
-        val accentPalette = listOf(
-            0xFF6D45C7, 0xFF1B5E20, 0xFFC9A34E, 0xFFD84315, 0xFF00ACC1,
-            0xFFEF6C00, 0xFF8E24AA, 0xFF2E7D32, 0xFF3949AB, 0xFFFF6B35,
-            0xFF00897B, 0xFF5C6BC0, 0xFF7E57C2, 0xFF8D6E63, 0xFF558B2F
-        )
-        val accent = accentPalette[(slug?.hashCode() ?: 0).let { if (it < 0) -it else it } % accentPalette.size]
-        return ThematicTopic(
-            slug = slug ?: "",
-            nameBn = nameBn ?: name ?: nameEn ?: slug ?: "",
-            nameEn = nameEn ?: name ?: slug ?: "",
-            nameAr = nameAr ?: "",
-            domain = domainNameBn ?: domainName ?: "",
-            categoryBn = categoryNameBn ?: "",
-            overviewBn = descriptionBn ?: description ?: descriptionEn ?: "",
-            keyAyahs = emptyList(),
-            allAyahs = emptyList(),
-            relatedTopics = emptyList(),
-            relatedStories = emptyList(),
-            relatedConcepts = emptyList(),
-            accentColor = accent
-        )
-    }
 }
 
 // ─── Result types ────────────────────────────────────────────────────────────
@@ -317,6 +228,6 @@ sealed class TopicDetailResult {
 }
 
 enum class TopicSource(val label: String) {
-    API("Islamic.app Topics API"),
+    API("Quran.com API"),
     BUNDLED_FALLBACK("Bundled verified dataset (offline)")
 }

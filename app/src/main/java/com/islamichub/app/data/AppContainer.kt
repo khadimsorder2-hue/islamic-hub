@@ -93,6 +93,18 @@ class AppContainer(internal val context: Context) {
         islamicAppRetrofit.create(com.islamichub.app.data.remote.IslamicAppApi::class.java)
     }
 
+    // Quran.com API v4 — no Cloudflare, no API key required
+    private val quranComRetrofit: Retrofit by lazy {
+        Retrofit.Builder()
+            .baseUrl(com.islamichub.app.data.remote.QuranComApi.BASE_URL)
+            .client(okHttp)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+    }
+    val quranComApi: com.islamichub.app.data.remote.QuranComApi by lazy {
+        quranComRetrofit.create(com.islamichub.app.data.remote.QuranComApi::class.java)
+    }
+
     private val quranAssetSource: QuranAssetSource by lazy { QuranAssetSource(context) }
     private val hadithAssetSource: HadithAssetSource by lazy { HadithAssetSource(context) }
     private val contentAssetSource: ContentAssetSource by lazy { ContentAssetSource(context) }
@@ -146,9 +158,10 @@ class AppContainer(internal val context: Context) {
     }
 
     // v3.3.0 — API-driven topic study + Hadith topic study
+    // v4.2.0 — switched from Islamic.app API (Cloudflare-blocked) to Quran.com API
     val topicStudyRepository by lazy {
         com.islamichub.app.data.repo.TopicStudyRepository(
-            api = islamicAppApi,
+            quranComApi = quranComApi,
             quranData = QuranData,
             quranAssetSource = quranAssetSource
         )
