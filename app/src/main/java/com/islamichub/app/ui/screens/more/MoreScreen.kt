@@ -164,8 +164,7 @@ fun MoreScreen(
                         }
                         // No placeholder — items flow naturally without empty boxes
                         if (rowItems.size < 3) {
-                            // Use Spacer instead of visible Box to avoid layout artifacts
-                            androidx.compose.foundation.layout.Spacer(modifier = Modifier.weight(3 - rowItems.size.toFloat().toInt().coerceAtLeast(1)))
+                            androidx.compose.foundation.layout.Spacer(modifier = Modifier.weight((3 - rowItems.size).toFloat()))
                         }
                     }
                 }

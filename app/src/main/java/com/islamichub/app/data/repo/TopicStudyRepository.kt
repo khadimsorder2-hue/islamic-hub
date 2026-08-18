@@ -63,7 +63,7 @@ class TopicStudyRepository(
                         try {
                             val r = api.getTopics(page = p, perPage = 100, lang = "bn")
                             if (r.isSuccessful) {
-                                r.body()?.items?.let { mutable.addAll(it) }
+                                r.body()?.items?.let { items -> allTopics.addAll(items) }
                             }
                         } catch (_: Exception) { /* continue */ }
                     }
