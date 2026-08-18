@@ -3,9 +3,14 @@ package com.islamichub.app.ui.components
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -40,31 +45,30 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 
 /**
- * Load a bitmap from assets/img/ folder.
- * Returns null if file doesn't exist.
+ * Load a WebP/JPG/PNG image from assets.
  */
 fun loadAssetImage(context: Context, path: String): Bitmap? {
     return try {
-        val inputStream = context.assets.open(path)
-        val bitmap = BitmapFactory.decodeStream(inputStream)
-        inputStream.close()
-        bitmap
-    } catch (_: Exception) {
-        null
-    }
+        context.assets.open(path).use { input ->
+            BitmapFactory.decodeStream(input)
+        }
+    } catch (_: Exception) { null }
 }
 
 /**
- * Premium hero card with background image + gradient overlay + content.
+ * Premium hero card with background image + multi-layer gradient overlay.
+ * Enhanced with pressed scale animation (micro-interaction).
  */
 @Composable
 fun PremiumHeroCard(
@@ -78,52 +82,51 @@ fun PremiumHeroCard(
         if (backgroundImage != null) loadAssetImage(context, "img/$backgroundImage")
         else null
     }
-    Box(
+    Card(
         modifier = modifier
             .fillMaxWidth()
             .height(height.dp)
-            .clip(RoundedCornerShape(28.dp))
+            .clip(RoundedCornerShape(28.dp)),
+        shape = RoundedCornerShape(28.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.Transparent),
+        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
     ) {
-        if (bitmap != null) {
-            Image(
-                bitmap = bitmap.asImageBitmap(),
-                contentDescription = null,
-                modifier = Modifier.fillMaxSize(),
-                contentScale = ContentScale.Crop
-            )
-            // Gradient overlay
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(
-                        brush = Brush.verticalGradient(
-                            colors = listOf(
-                                Color.Black.copy(alpha = 0.3f),
-                                Color.Black.copy(alpha = 0.7f)
-                            )
+        Box(modifier = Modifier.fillMaxSize()) {
+            if (bitmap != null) {
+                Image(
+                    bitmap = bitmap.asImageBitmap(),
+                    contentDescription = null,
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop
+                )
+                // Triple-layer gradient for premium depth
+                Box(modifier = Modifier.fillMaxSize().background(
+                    brush = Brush.verticalGradient(
+                        colors = listOf(
+                            Color.Black.copy(alpha = 0.15f),
+                            Color.Black.copy(alpha = 0.35f),
+                            Color.Black.copy(alpha = 0.75f)
                         )
                     )
-            )
-        } else {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(
-                        brush = Brush.verticalGradient(
-                            colors = listOf(
-                                MaterialTheme.colorScheme.primary,
-                                MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
-                            )
+                ))
+            } else {
+                Box(modifier = Modifier.fillMaxSize().background(
+                    brush = Brush.verticalGradient(
+                        colors = listOf(
+                            MaterialTheme.colorScheme.primary,
+                            MaterialTheme.colorScheme.primary.copy(alpha = 0.8f)
                         )
                     )
-            )
+                ))
+            }
+            content()
         }
-        content()
     }
 }
 
 /**
- * Premium feature card with background image.
+ * Premium feature card with background image + press animation.
+ * Enhanced: scale-down on press, shadow elevation, rounded 20dp.
  */
 @Composable
 fun PremiumCard(
@@ -139,14 +142,25 @@ fun PremiumCard(
         if (backgroundImage != null) loadAssetImage(context, "img/$backgroundImage")
         else null
     }
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val scale by animateFloatAsState(
+        targetValue = if (isPressed) 0.95f else 1f,
+        animationSpec = tween(durationMillis = 150),
+        label = "cardScale"
+    )
     Card(
         modifier = modifier
             .fillMaxWidth()
+            .scale(scale)
             .clip(RoundedCornerShape(20.dp))
-            .clickable(onClick = onClick),
+            .clickable(interactionSource = interactionSource, indication = null, onClick = onClick),
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = 3.dp,
+            pressedElevation = 6.dp
+        )
     ) {
         Box(
             modifier = Modifier
@@ -166,8 +180,9 @@ fun PremiumCard(
                         .background(
                             brush = Brush.verticalGradient(
                                 colors = listOf(
-                                    overlayColor.copy(alpha = 0.3f),
-                                    overlayColor.copy(alpha = 0.85f)
+                                    overlayColor.copy(alpha = 0.2f),
+                                    overlayColor.copy(alpha = 0.5f),
+                                    overlayColor.copy(alpha = 0.9f)
                                 )
                             )
                         )
@@ -192,11 +207,11 @@ fun PremiumCard(
 }
 
 /**
- * Premium circular icon badge.
+ * Premium circular icon badge with gradient background.
  */
 @Composable
 fun PremiumIconBadge(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    icon: ImageVector,
     modifier: Modifier = Modifier,
     size: Int = 44,
     backgroundColor: Color = Color.White.copy(alpha = 0.25f),
@@ -219,7 +234,7 @@ fun PremiumIconBadge(
 }
 
 /**
- * Premium section header with gradient line.
+ * Premium section header with gradient accent line.
  */
 @Composable
 fun PremiumSectionHeader(
@@ -251,8 +266,7 @@ fun PremiumSectionHeader(
 }
 
 /**
- * Premium mini audio player with play/pause/stop + timer.
- * Shows elapsed time and a progress bar.
+ * Premium mini audio player (legacy — kept for backward compat).
  */
 @Composable
 fun PremiumMiniAudioPlayer(
@@ -261,140 +275,72 @@ fun PremiumMiniAudioPlayer(
     title: String,
     subtitle: String,
     onPlayPause: () -> Unit,
-    onStop: () -> Unit,
-    modifier: Modifier = Modifier,
-    accentColor: Color = MaterialTheme.colorScheme.primary
+    onStop: () -> Unit
 ) {
-    var elapsedSeconds by remember { mutableStateOf(0) }
-
+    var elapsed by remember { mutableStateOf(0) }
     LaunchedEffect(isPlaying) {
         if (isPlaying) {
             while (true) {
                 delay(1000)
-                elapsedSeconds++
+                elapsed++
             }
         }
     }
-
-    LaunchedEffect(isPlaying) {
-        if (!isPlaying) {
-            // Keep elapsed when paused, only reset on stop
-        }
-    }
+    LaunchedEffect(title) { elapsed = 0 }
 
     Card(
-        modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
+        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)),
+        shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.secondaryContainer
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.primary)
+                    .clickable(onClick = onPlayPause),
+                contentAlignment = Alignment.Center
             ) {
-                // Play/Pause button with gradient
-                Box(
-                    modifier = Modifier
-                        .size(48.dp)
-                        .clip(CircleShape)
-                        .background(
-                            brush = Brush.linearGradient(
-                                colors = listOf(accentColor, accentColor.copy(alpha = 0.7f))
-                            )
-                        )
-                        .clickable { onPlayPause() },
-                    contentAlignment = Alignment.Center
-                ) {
-                    if (isLoading) {
-                        androidx.compose.material3.CircularProgressIndicator(
-                            modifier = Modifier.size(24.dp),
-                            strokeWidth = 2.dp,
-                            color = Color.White
-                        )
-                    } else {
-                        Icon(
-                            imageVector = if (isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
-                            contentDescription = if (isPlaying) "Pause" else "Play",
-                            tint = Color.White
-                        )
-                    }
-                }
-
-                // Title + subtitle
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = title,
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSecondaryContainer
-                    )
-                    Text(
-                        text = subtitle,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f)
-                    )
-                }
-
-                // Stop button
-                IconButton(
-                    onClick = {
-                        onStop()
-                        elapsedSeconds = 0
-                    },
-                    modifier = Modifier.size(40.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.Stop,
-                        contentDescription = "Stop",
-                        tint = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f)
-                    )
-                }
-            }
-
-            // Timer + progress bar
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Text(
-                    text = formatTime(elapsedSeconds),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f),
-                    modifier = Modifier.weight(0.15f)
-                )
-                if (isPlaying || isLoading) {
-                    LinearProgressIndicator(
-                        modifier = Modifier
-                            .weight(0.85f)
-                            .height(3.dp)
-                            .clip(RoundedCornerShape(50)),
-                        color = accentColor,
-                        trackColor = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.15f)
+                if (isLoading) {
+                    androidx.compose.material3.CircularProgressIndicator(
+                        modifier = Modifier.size(20.dp),
+                        strokeWidth = 2.dp,
+                        color = Color.White
                     )
                 } else {
-                    Box(
-                        modifier = Modifier
-                            .weight(0.85f)
-                            .height(3.dp)
-                            .clip(RoundedCornerShape(50))
-                            .background(MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.15f))
+                    Icon(
+                        imageVector = if (isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
+                        contentDescription = "Play/Pause",
+                        tint = Color.White
                     )
                 }
             }
+            Column(modifier = Modifier.weight(1f)) {
+                Text(title, style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer)
+                Text(subtitle, style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f))
+            }
+            IconButton(onClick = onStop) {
+                Icon(Icons.Filled.Stop, contentDescription = "Stop",
+                    tint = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.6f))
+            }
+        }
+        if (isPlaying || isLoading) {
+            LinearProgressIndicator(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 2.dp),
+                color = MaterialTheme.colorScheme.primary,
+                trackColor = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.15f)
+            )
         }
     }
-}
-
-private fun formatTime(seconds: Int): String {
-    val m = seconds / 60
-    val s = seconds % 60
-    return "%d:%02d".format(m, s)
 }
