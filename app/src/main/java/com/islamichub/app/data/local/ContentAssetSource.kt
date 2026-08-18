@@ -191,13 +191,16 @@ data class NamazSurah(
     @SerializedName("id") val id: String,
     @SerializedName("name_bn") val nameBn: String,
     @SerializedName("ayat_count") val ayatCount: Int?,
-    @SerializedName("content") val content: NamazSurahContent?
+    @SerializedName("content") val content: NamazSurahContent?,
+    @SerializedName("audio_url") val audioUrl: String?,
+    @SerializedName("pronunciation_bn") val pronunciationBn: String?
 )
 
 data class NamazSurahContent(
     @SerializedName("arabic") val arabic: String?,
     @SerializedName("transliteration") val transliteration: String?,
-    @SerializedName("translation") val translation: String?
+    @SerializedName("translation") val translation: String?,
+    @SerializedName("bangla") val bangla: String?
 )
 
 data class ExtraPrayer(
@@ -240,8 +243,14 @@ data class KalimaData(
 data class Kalima(
     @SerializedName("id") val id: Int,
     @SerializedName("name") val name: String?,
+    @SerializedName("nameEn") val nameEn: String?,
     @SerializedName("name_bn") val nameBn: String?,
     @SerializedName("arabic") val arabic: String?,
     @SerializedName("transliteration") val transliteration: String?,
-    @SerializedName("translation") val translation: String?
+    @SerializedName("banglaPronunciation") val banglaPronunciation: String?,
+    @SerializedName("bangla") val bangla: String?,
+    @SerializedName("translation") val translation: String?,
+    @SerializedName("meaning") val meaning: String?,
+    @SerializedName("explanation") val explanation: String?,
+    @SerializedName("audioFile") val audioFile: String?
 )

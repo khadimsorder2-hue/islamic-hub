@@ -22,6 +22,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Bolt
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
@@ -295,30 +296,62 @@ fun NamazShikkhaScreen(
         }
     }
 
-    // ─── Prayer detail dialog ───
+    // ─── Prayer detail FULL SCREEN popup (replaces AlertDialog) ───
     selectedPrayer?.let { prayer ->
         val steps = vm.getStepsForPrayer(prayer)
-        AlertDialog(
-            onDismissRequest = { selectedPrayer = null },
-            title = { Text(prayer.nameBn) },
-            text = {
-                Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
-                    steps.forEachIndexed { idx, step ->
-                        NamazStepRow(step, state.selectedGender, idx + 1) { audioFile ->
-                            try {
-                                exoPlayer.stop()
-                                exoPlayer.clearMediaItems()
-                                val mediaItem = MediaItem.fromUri("asset:///namaz_audio/$audioFile")
-                                exoPlayer.setMediaItem(mediaItem)
-                                exoPlayer.prepare()
-                                exoPlayer.playWhenReady = true
-                            } catch (_: Exception) { }
+        androidx.compose.material3.Scaffold(
+            topBar = {
+                androidx.compose.material3.TopAppBar(
+                    title = {
+                        Column {
+                            Text(
+                                text = prayer.nameBn,
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                text = "${steps.size}টি ধাপ • অডিও সহ",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    },
+                    navigationIcon = {
+                        IconButton(onClick = { selectedPrayer = null }) {
+                            Icon(
+                                imageVector = Icons.Filled.Close,
+                                contentDescription = "বন্ধ করুন",
+                                tint = MaterialTheme.colorScheme.onSurface
+                            )
                         }
                     }
+                )
+            }
+        ) { innerPadding ->
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+                    .verticalScroll(rememberScrollState())
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                steps.forEachIndexed { idx, step ->
+                    NamazStepRow(step, state.selectedGender, idx + 1) { audioFile ->
+                        // Play audio via app-level audioController (floating player shows automatically)
+                        try {
+                            exoPlayer.stop()
+                            exoPlayer.clearMediaItems()
+                            val mediaItem = MediaItem.fromUri("asset:///namaz_audio/$audioFile")
+                            exoPlayer.setMediaItem(mediaItem)
+                            exoPlayer.prepare()
+                            exoPlayer.playWhenReady = true
+                        } catch (_: Exception) { }
+                    }
                 }
-            },
-            confirmButton = { TextButton(onClick = { selectedPrayer = null }) { Text("বন্ধ করুন") } }
-        )
+                Spacer(Modifier.height(32.dp))
+            }
+        }
     }
 
     // ─── Extended namaz detail dialog ───
