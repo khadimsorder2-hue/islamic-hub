@@ -74,6 +74,14 @@ fun KhatamScreen(
     val khatamStart = stringResource(R.string.khatam_start)
     val khatamShare = stringResource(R.string.khatam_share)
 
+    // Pre-compute para data + colors (these can be at @Composable scope)
+    val surahsByPara = remember { ParaSurahMap.surahsByPara() }
+    val paraColors = listOf(
+        Color(0xFF6D45C7), Color(0xFF1B5E20), Color(0xFFC9A34E),
+        Color(0xFF1565C0), Color(0xFFD84315), Color(0xFF00897B),
+        Color(0xFF8D6E63), Color(0xFFEF6C00)
+    )
+
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
@@ -298,13 +306,6 @@ fun KhatamScreen(
                 }
 
                 // Group surahs by para (1-30)
-                val surahsByPara = remember { ParaSurahMap.surahsByPara() }
-                val paraColors = listOf(
-                    Color(0xFF6D45C7), Color(0xFF1B5E20), Color(0xFFC9A34E),
-                    Color(0xFF1565C0), Color(0xFFD84315), Color(0xFF00897B),
-                    Color(0xFF8D6E63), Color(0xFFEF6C00)
-                )
-
                 surahsByPara.forEach { (paraNum, surahsInPara) ->
                     // Para header card
                     item {
