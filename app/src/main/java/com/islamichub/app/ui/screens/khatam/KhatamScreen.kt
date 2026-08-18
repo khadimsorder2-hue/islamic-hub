@@ -299,21 +299,18 @@ fun KhatamScreen(
 
                 // Group surahs by para (1-30)
                 val surahsByPara = remember { ParaSurahMap.surahsByPara() }
+                val paraColors = listOf(
+                    Color(0xFF6D45C7), Color(0xFF1B5E20), Color(0xFFC9A34E),
+                    Color(0xFF1565C0), Color(0xFFD84315), Color(0xFF00897B),
+                    Color(0xFF8D6E63), Color(0xFFEF6C00)
+                )
 
                 surahsByPara.forEach { (paraNum, surahsInPara) ->
                     // Para header card
                     item {
                         val paraCompletedSurahs = surahsInPara.count { khatam?.completedSurahs?.contains(it) == true }
                         val paraProgress = if (surahsInPara.isNotEmpty()) paraCompletedSurahs.toFloat() / surahsInPara.size else 0f
-                        val paraColor = Color(0xFF6D45C7).let { c ->
-                            // Cycle through 8 colors per para
-                            val colors = listOf(
-                                Color(0xFF6D45C7), Color(0xFF1B5E20), Color(0xFFC9A34E),
-                                Color(0xFF1565C0), Color(0xFFD84315), Color(0xFF00897B),
-                                Color(0xFF8D6E63), Color(0xFFEF6C00)
-                            )
-                            colors[(paraNum - 1) % colors.size]
-                        }
+                        val paraColor = paraColors[(paraNum - 1) % paraColors.size]
                         Card(
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(20.dp),
@@ -391,14 +388,7 @@ fun KhatamScreen(
                                     KhatamSurahGridCard(
                                         surahNumber = surahNum,
                                         isCompleted = isCompleted,
-                                        paraColor = Color(0xFF6D45C7).let {
-                                            val colors = listOf(
-                                                Color(0xFF6D45C7), Color(0xFF1B5E20), Color(0xFFC9A34E),
-                                                Color(0xFF1565C0), Color(0xFFD84315), Color(0xFF00897B),
-                                                Color(0xFF8D6E63), Color(0xFFEF6C00)
-                                            )
-                                            colors[(paraNum - 1) % colors.size]
-                                        },
+                                        paraColor = paraColors[(paraNum - 1) % paraColors.size],
                                         modifier = Modifier.weight(1f),
                                         onClick = { onSurahClick(surahNum) }
                                     )
