@@ -18,6 +18,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.BookmarkBorder
 import androidx.compose.material.icons.filled.GraphicEq
@@ -485,6 +486,15 @@ private fun AyahCard(
                                    else MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
+                    // ─── AI button (3rd) — opens Tafsir bottom sheet directly ───
+                    IconButton(onClick = onShowTafsir, modifier = Modifier.size(36.dp)) {
+                        Icon(
+                            imageVector = Icons.Filled.Bolt,
+                            contentDescription = "AI তাফসীর",
+                            tint = MaterialTheme.colorScheme.secondary
+                        )
+                    }
+                    // ─── More menu (4th) ───
                     Box {
                         IconButton(onClick = { showMenu = true }, modifier = Modifier.size(36.dp)) {
                             Icon(

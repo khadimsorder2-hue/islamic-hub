@@ -157,4 +157,11 @@ data class HadithJson(
     @SerializedName("bangla") val bangla: String = "",
     @SerializedName("grades") val grades: List<Map<String, String>>? = null,
     @SerializedName("reference") val reference: Map<String, Any>? = null
-)
+) {
+    /**
+     * Defensive: ensure display strings are never null.
+     * Some source hadiths have missing fields — show fallback text instead of crashing.
+     */
+    fun arabicOrFallback(): String = if (arabic.isBlank()) "—" else arabic
+    fun banglaOrFallback(): String = if (bangla.isBlank()) "(এই হাদিসের বাংলা অনুবাদ সংগ্রহে নেই)" else bangla
+}

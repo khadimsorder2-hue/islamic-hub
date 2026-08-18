@@ -12,7 +12,8 @@ import com.islamichub.app.data.local.HadithJson
 
 data class HadithListUiState(
     val collections: List<HadithCollectionMeta> = emptyList(),
-    val isLoading: Boolean = true
+    val isLoading: Boolean = true,
+    val error: String? = null
 )
 
 class HadithListViewModel(private val container: AppContainer) : ViewModel() {
@@ -23,8 +24,15 @@ class HadithListViewModel(private val container: AppContainer) : ViewModel() {
 
     private fun load() {
         viewModelScope.launch {
-            val list = container.hadithRepository.listCollections()
-            _state.value = HadithListUiState(collections = list, isLoading = false)
+            try {
+                val list = container.hadithRepository.listCollections()
+                _state.value = HadithListUiState(collections = list, isLoading = false)
+            } catch (e: Exception) {
+                _state.value = HadithListUiState(
+                    isLoading = false,
+                    error = e.message ?: "সংগ্রহ লোড করতে ব্যর্থ"
+                )
+            }
         }
     }
 }
@@ -32,7 +40,8 @@ class HadithListViewModel(private val container: AppContainer) : ViewModel() {
 data class HadithCollectionUiState(
     val hadiths: List<HadithJson> = emptyList(),
     val isLoading: Boolean = true,
-    val collectionName: String = ""
+    val collectionName: String = "",
+    val error: String? = null
 )
 
 class HadithCollectionViewModel(
@@ -46,12 +55,19 @@ class HadithCollectionViewModel(
 
     private fun load() {
         viewModelScope.launch {
-            val coll = container.hadithRepository.getCollection(collectionId)
-            _state.value = HadithCollectionUiState(
-                hadiths = coll.hadiths,
-                isLoading = false,
-                collectionName = coll.collectionName
-            )
+            try {
+                val coll = container.hadithRepository.getCollection(collectionId)
+                _state.value = HadithCollectionUiState(
+                    hadiths = coll.hadiths,
+                    isLoading = false,
+                    collectionName = coll.collectionNameBn.ifBlank { coll.collectionName }
+                )
+            } catch (e: Exception) {
+                _state.value = HadithCollectionUiState(
+                    isLoading = false,
+                    error = e.message ?: "হাদিস লোড করতে ব্যর্থ"
+                )
+            }
         }
     }
 }
@@ -75,8 +91,12 @@ class HadithSearchViewModel(private val container: AppContainer) : ViewModel() {
         }
         _state.value = _state.value.copy(isSearching = true, hasSearched = true)
         viewModelScope.launch {
-            val results = container.hadithRepository.searchAll(q)
-            _state.value = _state.value.copy(results = results, isSearching = false)
+            try {
+                val results = container.hadithRepository.searchAll(q)
+                _state.value = _state.value.copy(results = results, isSearching = false)
+            } catch (e: Exception) {
+                _state.value = _state.value.copy(isSearching = false)
+            }
         }
     }
 }
