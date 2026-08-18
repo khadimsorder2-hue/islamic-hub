@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -51,7 +50,6 @@ import com.islamichub.app.data.AppContainer
 import com.islamichub.app.data.local.HadithTopic
 import com.islamichub.app.data.local.TopicHadith
 import com.islamichub.app.ui.components.PremiumHeroCard
-import com.islamichub.app.ui.components.PremiumSectionHeader
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -119,11 +117,70 @@ fun HadithTopicsScreen(
                     "akhlaq" -> "আখলাক"
                     else -> "অন্যান্য"
                 }
-                item {
-                    PremiumSectionHeader(title = "📚 $catName (${topics.sumOf { it.hadiths?.size ?: 0 }})")
+                val catColor = when (category) {
+                    "ibadah" -> Color(0xFFC9A34E)
+                    "muamalat" -> Color(0xFF1565C0)
+                    "akhlaq" -> Color(0xFF8D6E63)
+                    else -> Color(0xFF6D45C7)
                 }
-                items(topics, key = { it.id }) { topic ->
-                    HadithTopicCard(topic) { selectedTopic = topic }
+                item {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(20.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color.Transparent),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(
+                                    Brush.horizontalGradient(
+                                        colors = listOf(catColor, catColor.copy(alpha = 0.7f))
+                                    )
+                                )
+                                .padding(16.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text("📚 $catName",
+                                    style = MaterialTheme.typography.titleSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.White)
+                                Box(
+                                    modifier = Modifier
+                                        .clip(CircleShape)
+                                        .background(Color.White.copy(alpha = 0.25f))
+                                        .padding(horizontal = 10.dp, vertical = 4.dp)
+                                ) {
+                                    Text("${topics.sumOf { it.hadiths?.size ?: 0 }} হাদিস",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = Color.White, fontWeight = FontWeight.Bold)
+                                }
+                            }
+                        }
+                    }
+                }
+                // 2-column grid of topic cards
+                val chunked = topics.chunked(2)
+                chunked.forEach { rowTopics ->
+                    item {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            rowTopics.forEach { topic ->
+                                Box(modifier = Modifier.weight(1f)) {
+                                    HadithTopicCard(topic, accent = catColor) { selectedTopic = topic }
+                                }
+                            }
+                            if (rowTopics.size == 1) {
+                                Box(modifier = Modifier.weight(1f)) {}
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -185,35 +242,72 @@ fun HadithTopicsScreen(
 }
 
 @Composable
-private fun HadithTopicCard(topic: HadithTopic, onClick: () -> Unit) {
+private fun HadithTopicCard(topic: HadithTopic, accent: Color = Color(0xFF6D45C7), onClick: () -> Unit) {
     Card(
-        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).clickable(onClick = onClick),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)).clickable(onClick = onClick),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.Transparent),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(accent.copy(alpha = 0.15f), accent.copy(alpha = 0.05f))
+                    )
+                )
         ) {
-            Box(
-                modifier = Modifier.size(48.dp).clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)),
-                contentAlignment = Alignment.Center
+            Column(
+                modifier = Modifier.fillMaxWidth().padding(14.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Text(topic.arabicName?.take(1) ?: "📖",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
-            }
-            Column(modifier = Modifier.weight(1f)) {
-                Text(topic.name ?: "", style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
-                Text(topic.description ?: "", style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Text("${topic.hadiths?.size ?: 0} টি হাদিস",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.primary)
+                // Top: icon + hadith count badge
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Box(
+                        modifier = Modifier.size(40.dp).clip(CircleShape).background(accent),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(topic.arabicName?.take(1) ?: "📖",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold, color = Color.White)
+                    }
+                    Box(
+                        modifier = Modifier
+                            .clip(CircleShape)
+                            .background(accent.copy(alpha = 0.15f))
+                            .padding(horizontal = 10.dp, vertical = 4.dp)
+                    ) {
+                        Text("${topic.hadiths?.size ?: 0}",
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold, color = accent)
+                    }
+                }
+                // Topic name
+                Text(topic.name ?: "",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 2)
+                // Description
+                if (!topic.description.isNullOrBlank()) {
+                    Text(topic.description ?: "",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 2)
+                }
+                // Arabic name (footer)
+                if (!topic.arabicName.isNullOrBlank()) {
+                    Text(topic.arabicName ?: "",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = accent,
+                        textAlign = TextAlign.End,
+                        modifier = Modifier.fillMaxWidth())
+                }
             }
         }
     }

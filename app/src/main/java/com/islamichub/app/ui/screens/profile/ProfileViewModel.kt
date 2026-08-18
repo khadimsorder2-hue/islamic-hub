@@ -18,7 +18,10 @@ data class ProfileUiState(
     val khatamPercent: Float = 0f,
     val khatamSurahs: Int = 0,
     val prayerStreak: Int = 0,
-    val isLoading: Boolean = true
+    val totalFasts: Int = 0,
+    val qadaPending: Int = 0,
+    val isLoading: Boolean = true,
+    val backupMessage: String? = null
 )
 
 class ProfileViewModel(private val container: AppContainer) : ViewModel() {
@@ -29,24 +32,42 @@ class ProfileViewModel(private val container: AppContainer) : ViewModel() {
 
     private fun load() {
         viewModelScope.launch {
-            val name = container.settingsRepository.userName.first()
-            val totalZikr = container.trackerRepository.totalZikr.first()
-            val totalAyahs = container.trackerRepository.totalAyahsRead.first()
-            val bookmarkCount = container.bookmarkRepository.bookmarks.first().size
-            val khatamPercent = container.khatamRepository.progressPercent.first()
-            val khatamSurahs = container.khatamRepository.completedSurahCount.first()
-            val streak = container.trackerRepository.prayerStreak.first()
+            try {
+                val name = container.settingsRepository.userName.first()
+                val totalZikr = container.trackerRepository.totalZikr.first()
+                val totalAyahs = container.trackerRepository.totalAyahsRead.first()
+                val totalHadiths = container.trackerRepository.totalHadithsRead.first()
+                val bookmarkCount = container.bookmarkRepository.bookmarks.first().size
+                val khatamPercent = container.khatamRepository.progressPercent.first()
+                val khatamSurahs = container.khatamRepository.completedSurahCount.first()
+                val streak = container.trackerRepository.prayerStreak.first()
 
-            _state.value = ProfileUiState(
-                userName = name,
-                totalZikr = totalZikr,
-                totalAyahs = totalAyahs,
-                bookmarkCount = bookmarkCount,
-                khatamPercent = khatamPercent * 100f,
-                khatamSurahs = khatamSurahs,
-                prayerStreak = streak,
-                isLoading = false
-            )
+                // Fasting stats — fallback to 0 if repository fails
+                val fastingStats = try {
+                    container.fastingRepository.stats.first()
+                } catch (_: Exception) { null }
+
+                // Qada pending
+                val qada = try {
+                    container.qadaRepository.summary.first()
+                } catch (_: Exception) { null }
+
+                _state.value = ProfileUiState(
+                    userName = name,
+                    totalZikr = totalZikr,
+                    totalAyahs = totalAyahs,
+                    totalHadiths = totalHadiths,
+                    bookmarkCount = bookmarkCount,
+                    khatamPercent = khatamPercent * 100f,
+                    khatamSurahs = khatamSurahs,
+                    prayerStreak = streak,
+                    totalFasts = fastingStats?.totalFasts ?: 0,
+                    qadaPending = qada?.total ?: 0,
+                    isLoading = false
+                )
+            } catch (e: Exception) {
+                _state.value = _state.value.copy(isLoading = false)
+            }
         }
     }
 
@@ -54,5 +75,43 @@ class ProfileViewModel(private val container: AppContainer) : ViewModel() {
         viewModelScope.launch { container.settingsRepository.setUserName(name) }
         _state.value = _state.value.copy(userName = name)
     }
-}
 
+    fun backup() {
+        viewModelScope.launch {
+            try {
+                val result = container.backupRestoreService.export()
+                _state.value = _state.value.copy(
+                    backupMessage = result.fold(
+                        onSuccess = { "✓ ব্যাকআপ সফল: $it" },
+                        onFailure = { "ব্যাকআপ ব্যর্থ: ${it.message}" }
+                    )
+                )
+            } catch (e: Exception) {
+                _state.value = _state.value.copy(backupMessage = "ব্যাকআপ ব্যর্থ: ${e.message}")
+            }
+        }
+    }
+
+    fun restore() {
+        viewModelScope.launch {
+            try {
+                val backups = container.backupRestoreService.listBackups()
+                if (backups.isEmpty()) {
+                    _state.value = _state.value.copy(backupMessage = "কোনো ব্যাকআপ পাওয়া যায়নি")
+                    return@launch
+                }
+                val latest = backups.first()
+                val result = container.backupRestoreService.import(latest.absolutePath)
+                _state.value = _state.value.copy(
+                    backupMessage = result.fold(
+                        onSuccess = { "✓ পুনরুদ্ধার সফল" },
+                        onFailure = { "পুনরুদ্ধার ব্যর্থ: ${it.message}" }
+                    )
+                )
+                load()
+            } catch (e: Exception) {
+                _state.value = _state.value.copy(backupMessage = "পুনরুদ্ধার ব্যর্থ: ${e.message}")
+            }
+        }
+    }
+}
