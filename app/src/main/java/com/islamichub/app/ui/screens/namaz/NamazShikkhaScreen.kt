@@ -200,7 +200,7 @@ fun NamazShikkhaScreen(
                 item {
                     PremiumSectionHeader(title = "৫ ওয়াক্ত নামাজ")
                 }
-                items(dailyCategories.size) { idx ->
+                items(dailyCategories.size, key = { idx -> dailyCategories[idx].id ?: idx }) { idx ->
                     val category = dailyCategories[idx]
                     NamazCategoryCard(category, context) { prayer ->
                         selectedPrayer = prayer

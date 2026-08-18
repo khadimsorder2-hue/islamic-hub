@@ -157,7 +157,7 @@ private fun CategoryListScreen(
                 modifier = Modifier.padding(vertical = 4.dp))
         }
 
-        items(QuizData.categories) { category ->
+        items(QuizData.categories, key = { it.id }) { category ->
             CategoryCard(category, onClick = { vm.selectCategory(category) })
         }
     }

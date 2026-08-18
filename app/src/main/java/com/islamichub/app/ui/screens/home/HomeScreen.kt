@@ -234,7 +234,7 @@ fun HomeScreen(
             LazyRow(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                items(chips) { chip ->
+                items(chips, key = { it.route }) { chip ->
                     QuickChip(chip) { onNavigate(chip.route) }
                 }
             }
