@@ -8,23 +8,25 @@ package com.islamichub.app.data.repo
  * custom model name in Settings.
  *
  * Last updated: 2026-08-18
+ * Note: Gemini API v2 models use "gemini-2.x" naming. The API endpoint
+ * is generativelanguage.googleapis.com/v1beta for all models.
  */
 data class AIModelPreset(
-    val id: String,            // unique id
-    val provider: String,      // "gemini" | "openrouter" | "openai" | "custom"
-    val modelName: String,     // exact API model name
+    val id: String,
+    val provider: String,
+    val modelName: String,
     val displayName: String,
     val displayNameBn: String,
     val descriptionBn: String,
     val baseUrl: String,
     val isFree: Boolean = true,
-    val contextWindow: String = "—",     // "1M tokens", "32K", etc.
+    val contextWindow: String = "—",
     val recommended: Boolean = false
 )
 
 object AIModelPresets {
 
-    /** Google Gemini — free tier (generativelanguage.googleapis.com) */
+    /** Google Gemini — free tier (generativelanguage.googleapis.com/v1beta) */
     val GEMINI_MODELS: List<AIModelPreset> = listOf(
         AIModelPreset(
             id = "gemini-2.5-flash",
@@ -43,7 +45,7 @@ object AIModelPresets {
             modelName = "gemini-2.5-flash-lite",
             displayName = "Gemini 2.5 Flash Lite",
             displayNameBn = "জেমিনাই ২.৫ ফ্ল্যাশ লাইট",
-            descriptionBn = "সবচেয়ে সাশ্রয়ী — সাধারণ প্রশ্নের জন্য যথেষ্ট।",
+            descriptionBn = "সবচেয়ে সাশ্রয়ী — সাধারণ প্রশ্নের জন্য যথেষ্ট। ফ্রি টিয়ারে ৩০ RPM।",
             baseUrl = "https://generativelanguage.googleapis.com/v1beta",
             contextWindow = "1M tokens"
         ),
@@ -63,10 +65,30 @@ object AIModelPresets {
             modelName = "gemini-2.5-pro",
             displayName = "Gemini 2.5 Pro",
             displayNameBn = "জেমিনাই ২.৫ প্রো",
-            descriptionBn = "সবচেয়ে শক্তিশালী — কঠিন প্রশ্নের জন্য। ফ্রি টিয়ারে সীমিত।",
+            descriptionBn = "সবচেয়ে শক্তিশালী — কঠিন প্রশ্নের জন্য। ফ্রি টিয়ারে সীমিত (৫ RPM)।",
             baseUrl = "https://generativelanguage.googleapis.com/v1beta",
             contextWindow = "2M tokens",
             isFree = false
+        ),
+        AIModelPreset(
+            id = "gemini-2.0-flash",
+            provider = "gemini",
+            modelName = "gemini-2.0-flash",
+            displayName = "Gemini 2.0 Flash",
+            displayNameBn = "জেমিনাই ২.০ ফ্ল্যাশ",
+            descriptionBn = "পূর্ববর্তী স্থিতিশীল ভার্সন — নির্ভরযোগ্য।",
+            baseUrl = "https://generativelanguage.googleapis.com/v1beta",
+            contextWindow = "1M tokens"
+        ),
+        AIModelPreset(
+            id = "gemini-2.0-flash-lite",
+            provider = "gemini",
+            modelName = "gemini-2.0-flash-lite",
+            displayName = "Gemini 2.0 Flash Lite",
+            displayNameBn = "জেমিনাই ২.০ ফ্ল্যাশ লাইট",
+            descriptionBn = "পূর্ববর্তী লাইট ভার্সন — খুব দ্রুত।",
+            baseUrl = "https://generativelanguage.googleapis.com/v1beta",
+            contextWindow = "1M tokens"
         ),
         AIModelPreset(
             id = "gemini-1.5-flash",

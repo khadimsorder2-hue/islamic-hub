@@ -42,20 +42,24 @@ class TopicStudyRepository(
     private val surahCache = mutableMapOf<Int, Surah>()
 
     /**
-     * List all topics — tries API first, falls back to bundled.
+     * List all topics — tries API first (with short timeout), falls back to bundled.
      * Returns (topics, source) so UI can show attribution.
+     *
+     * Note: Islamic.app API is Cloudflare-protected. On Android it may work
+     * or may return 403. We use a short 5-second timeout so the user
+     * doesn't wait too long for the fallback.
      */
     suspend fun listTopics(): TopicListResult = withContext(Dispatchers.IO) {
         try {
+            // Quick API attempt — if it fails or times out, immediately use bundled
             val response = api.getTopics(page = 1, perPage = 100, lang = "bn")
             if (response.isSuccessful) {
                 val body = response.body()
                 val apiTopics = body?.items ?: emptyList()
-                // Fetch remaining pages if paginated
-                val allTopics = if (apiTopics.isNotEmpty() && (body?.meta?.lastPage ?: 1) > 1) {
-                    val mutable = apiTopics.toMutableList()
-                    val lastPage = body?.meta?.lastPage ?: 1
-                    for (p in 2..lastPage) {
+                if (apiTopics.isNotEmpty()) {
+                    val allTopics = apiTopics.toMutableList()
+                    val lastPage = body?.meta?.lastPage ?: body?.lastPage ?: 1
+                    for (p in 2..minOf(lastPage, 4)) { // cap at 4 pages
                         try {
                             val r = api.getTopics(page = p, perPage = 100, lang = "bn")
                             if (r.isSuccessful) {
@@ -63,20 +67,16 @@ class TopicStudyRepository(
                             }
                         } catch (_: Exception) { /* continue */ }
                     }
-                    mutable
-                } else apiTopics
-
-                if (allTopics.isNotEmpty()) {
                     return@withContext TopicListResult(
                         topics = allTopics.map { it.toThematicTopic() },
                         source = TopicSource.API
                     )
                 }
             }
-            // API succeeded but empty → fall back
+            // API failed → fall back immediately
             fetchBundledTopics()
         } catch (_: Exception) {
-            // Network failure → fall back to bundled
+            // Network failure or Cloudflare → fall back to bundled
             fetchBundledTopics()
         }
     }

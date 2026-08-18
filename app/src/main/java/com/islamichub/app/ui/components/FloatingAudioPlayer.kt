@@ -54,12 +54,15 @@ fun FloatingAudioPlayer(
 ) {
     val audioState by container.audioController.state.collectAsState()
     var elapsedSeconds by remember { mutableStateOf(0) }
+    var positionMs by remember { mutableStateOf(0L) }
 
     LaunchedEffect(audioState.isPlaying) {
         if (audioState.isPlaying) {
             while (true) {
                 delay(1000)
                 elapsedSeconds++
+                // Update position from ExoPlayer
+                positionMs = container.audioController.getCurrentPosition()
             }
         }
     }
@@ -137,12 +140,17 @@ fun FloatingAudioPlayer(
                             else "সূরা ${audioState.currentSurah}",
                         style = MaterialTheme.typography.labelMedium,
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSecondaryContainer
+                        color = MaterialTheme.colorScheme.onSecondaryContainer,
+                        maxLines = 1
                     )
+                    // Show position / total duration
+                    val posStr = formatTime((positionMs / 1000).toInt())
+                    val durStr = if (audioState.durationMs > 0) formatTime((audioState.durationMs / 1000).toInt()) else "--:--"
                     Text(
-                        text = "${audioState.reciter} • ${formatTime(elapsedSeconds)}",
+                        text = "${audioState.reciter} • $posStr / $durStr",
                         style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f)
+                        color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f),
+                        maxLines = 1
                     )
                 }
 

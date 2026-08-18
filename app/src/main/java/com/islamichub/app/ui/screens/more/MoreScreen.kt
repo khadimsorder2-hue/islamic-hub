@@ -162,9 +162,10 @@ fun MoreScreen(
                                 onClick = { onNavigate(item.route) }
                             )
                         }
-                        // Pad with empty boxes if row has fewer than 3 items
-                        repeat(3 - rowItems.size) {
-                            Box(modifier = Modifier.weight(1f)) {}
+                        // No placeholder — items flow naturally without empty boxes
+                        if (rowItems.size < 3) {
+                            // Use Spacer instead of visible Box to avoid layout artifacts
+                            androidx.compose.foundation.layout.Spacer(modifier = Modifier.weight(3 - rowItems.size.toFloat().toInt().coerceAtLeast(1)))
                         }
                     }
                 }

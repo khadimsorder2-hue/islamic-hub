@@ -61,6 +61,17 @@ class AppContainer(internal val context: Context) {
             .build()
     }
 
+    // Short-timeout client for Islamic.app API (Cloudflare may block — fail fast)
+    private val islamicAppOkHttp: OkHttpClient by lazy {
+        OkHttpClient.Builder()
+            .connectTimeout(5, TimeUnit.SECONDS)
+            .readTimeout(8, TimeUnit.SECONDS)
+            .addInterceptor(HttpLoggingInterceptor().apply {
+                level = HttpLoggingInterceptor.Level.BASIC
+            })
+            .build()
+    }
+
     private val retrofit: Retrofit by lazy {
         Retrofit.Builder()
             .baseUrl(AladhanApi.BASE_URL)
@@ -72,7 +83,7 @@ class AppContainer(internal val context: Context) {
     private val islamicAppRetrofit: Retrofit by lazy {
         Retrofit.Builder()
             .baseUrl(com.islamichub.app.data.remote.IslamicAppApi.BASE_URL)
-            .client(okHttp)
+            .client(islamicAppOkHttp)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
     }

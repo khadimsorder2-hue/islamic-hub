@@ -166,17 +166,26 @@ fun StoriesScreen(
     selectedProphet?.let { prophet ->
         AlertDialog(
             onDismissRequest = { selectedProphet = null },
-            title = { Text(prophet.name ?: "", style = MaterialTheme.typography.titleLarge) },
+            title = { Text(prophet.name ?: "নবী", style = MaterialTheme.typography.titleLarge) },
             text = {
                 Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
-                    Text(prophet.title ?: "", style = MaterialTheme.typography.titleSmall,
-                        color = MaterialTheme.colorScheme.primary)
-                    Text(prophet.summary ?: "", style = MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier.padding(top = 8.dp))
-                    Text(prophet.details ?: "", style = MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier.padding(top = 12.dp))
-                    prophet.ref?.let { Text("সূত্র: $it", style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.secondary, modifier = Modifier.padding(top = 8.dp)) }
+                    prophet.title?.takeIf { it.isNotBlank() }?.let {
+                        Text(it, style = MaterialTheme.typography.titleSmall,
+                            color = MaterialTheme.colorScheme.primary)
+                    }
+                    prophet.summary?.takeIf { it.isNotBlank() }?.let {
+                        Text(it, style = MaterialTheme.typography.bodyMedium,
+                            modifier = Modifier.padding(top = 8.dp))
+                    }
+                    prophet.details?.takeIf { it.isNotBlank() }?.let {
+                        Text(it, style = MaterialTheme.typography.bodyMedium,
+                            modifier = Modifier.padding(top = 12.dp))
+                    }
+                    prophet.ref?.takeIf { it.isNotBlank() }?.let {
+                        Text("সূত্র: $it", style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.secondary,
+                            modifier = Modifier.padding(top = 8.dp))
+                    }
                 }
             },
             confirmButton = { TextButton(onClick = { selectedProphet = null }) { Text("বন্ধ করুন") } }
@@ -187,15 +196,21 @@ fun StoriesScreen(
     selectedKhalifa?.let { khalifa ->
         AlertDialog(
             onDismissRequest = { selectedKhalifa = null },
-            title = { Text(khalifa.name ?: "", style = MaterialTheme.typography.titleLarge) },
+            title = { Text(khalifa.name ?: "খলিফা", style = MaterialTheme.typography.titleLarge) },
             text = {
                 Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
-                    Text(khalifa.title ?: "", style = MaterialTheme.typography.titleSmall,
-                        color = MaterialTheme.colorScheme.primary)
-                    Text(khalifa.summary ?: "", style = MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier.padding(top = 8.dp))
-                    Text(khalifa.details ?: "", style = MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier.padding(top = 12.dp))
+                    khalifa.title?.takeIf { it.isNotBlank() }?.let {
+                        Text(it, style = MaterialTheme.typography.titleSmall,
+                            color = MaterialTheme.colorScheme.primary)
+                    }
+                    khalifa.summary?.takeIf { it.isNotBlank() }?.let {
+                        Text(it, style = MaterialTheme.typography.bodyMedium,
+                            modifier = Modifier.padding(top = 8.dp))
+                    }
+                    khalifa.details?.takeIf { it.isNotBlank() }?.let {
+                        Text(it, style = MaterialTheme.typography.bodyMedium,
+                            modifier = Modifier.padding(top = 12.dp))
+                    }
                 }
             },
             confirmButton = { TextButton(onClick = { selectedKhalifa = null }) { Text("বন্ধ করুন") } }
@@ -206,16 +221,16 @@ fun StoriesScreen(
     selectedChapter?.let { (sectionTitle, chapter) ->
         AlertDialog(
             onDismissRequest = { selectedChapter = null },
-            title = { Text(chapter.title ?: "", style = MaterialTheme.typography.titleLarge) },
+            title = { Text(chapter.title ?: "অধ্যায়", style = MaterialTheme.typography.titleLarge) },
             text = {
                 Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
-                    Text(chapter.content ?: "", style = MaterialTheme.typography.bodyMedium)
-                    chapter.highlight?.let {
-                        if (it.isNotBlank()) {
-                            Text(it, style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.secondary,
-                                modifier = Modifier.padding(top = 12.dp))
-                        }
+                    chapter.content?.takeIf { it.isNotBlank() }?.let {
+                        Text(it, style = MaterialTheme.typography.bodyMedium)
+                    }
+                    chapter.highlight?.takeIf { it.isNotBlank() }?.let {
+                        Text(it, style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.secondary,
+                            modifier = Modifier.padding(top = 12.dp))
                     }
                 }
             },

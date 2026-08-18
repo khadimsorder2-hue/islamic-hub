@@ -355,6 +355,14 @@ class AudioController(private val context: Context) {
         player?.seekTo(positionMs)
     }
 
+    fun getCurrentPosition(): Long {
+        return player?.currentPosition ?: 0L
+    }
+
+    fun getDuration(): Long {
+        return player?.duration ?: 0L
+    }
+
     fun release() {
         cancelAutoPause()
         player?.release()
