@@ -81,6 +81,34 @@ jobs:
           sha256sum islamichub-release.apk > checksums.txt
           cat checksums.txt
 
+      - name: Extract release notes from CHANGELOG.md
+        id: notes
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          TAG="${{ github.ref_name }}"
+          echo "Extracting release notes for tag: $TAG"
+          # Extract the section between "## [vX.Y.Z]" and the next "## [" heading.
+          # The heading line itself is dropped (we want only the body).
+          # Also drop any trailing "---" horizontal rule lines and blank lines.
+          # If the tag is not found in CHANGELOG.md, fall back to a generic message.
+          NOTES=$(sed -n "/^## \\[${TAG}\\] /,/^## \\[/p" CHANGELOG.md \
+                  | sed '1d' \
+                  | sed '/^## \[/,$d' \
+                  | sed -e :a -e '/^\n*$/{$d;N;ba}' \
+                  | awk '{ lines[NR]=$0 } END {
+                      # Walk back from end, dropping trailing "---" and blank lines
+                      last=NR
+                      while (last>0 && (lines[last]=="---" || lines[last]=="")) last--
+                      for (i=1; i<=last; i++) print lines[i]
+                    }')
+          if [ -z "$NOTES" ]; then
+            NOTES="Release ${TAG}. See https://github.com/${{ github.repository }}/commits for details."
+          fi
+          # Write to a file to preserve newlines and special characters.
+          printf '%s\n' "$NOTES" > /tmp/release_notes.md
+          echo "Saved release notes:"
+          cat /tmp/release_notes.md
+
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
@@ -96,54 +124,9 @@ jobs:
         with:
           tag_name: ${{ github.ref_name }}
           name: Islamic Hub ${{ github.ref_name }}
-          body: |
-            # Islamic Hub ${{ github.ref_name }}
-
-            Bangla-first native Android (Kotlin + Jetpack Compose) reference build.
-            Signed with custom release keystore (committed to repo for open-source reference).
-
-            ## Install
-            - Download `islamichub-release.apk` below
-            - Tap to install (allow "Install from unknown sources" if prompted)
-
-            ## What's new (v1.2.0)
-            - ✅ **Hadith collections**: 24,424 hadiths across Bukhari, Muslim, Tirmidhi, Abu Dawud (Arabic + Bangla)
-            - ✅ **Hadith search** (cross-collection, Bangla + Arabic)
-            - ✅ **Qada tracker** — add missed prayers, mark completed, persistent
-            - ✅ **Daily tracker** — prayer checkbox with streak, zikr/ayahs/hadiths read stats
-            - ✅ **Profile screen** — user name, stats, khatam progress, share progress
-            - ✅ **Quran bookmarks** — bookmark any ayah, list view
-            - ✅ **Quran Khatam tracker** — progress through 114 surahs, share khatam
-            - ✅ **Settings screen** — font size, background mode, Arabic/Bangla/English toggles
-            - ✅ **Qari selector** — 12 reciters with rounded profile avatars
-            - ✅ **Tafsir** — online + offline cache, 4 sources (Bangla Mukhtasar, Taisirul, English Jalalayn, Ibn Kathir)
-            - ✅ **Audio auto-pause timer** (5/15/30/60 min)
-            - ✅ **Bangla meaning audio toggle**
-            - ✅ **Word-by-word audio toggle**
-            - ✅ **Khatam player** — continuous surah-by-surah playback
-            - ✅ **Share features** — share ayah, share hadith, share khatam progress
-            - ✅ **Last Read** — quick resume from last ayah
-            - ✅ **Cache clear** — Settings option
-            - ✅ **More screen** — central hub for all features
-            - ✅ **Race-condition-free** architecture (single-writer repositories, idempotent operations)
-
-            ## Features (cumulative)
-            - **Al-Quran**: 114 surahs, 6236 ayahs, full Arabic + Bengali + English (AlQuran.cloud)
-            - **Hadith**: 24,424 hadiths across 4 collections (Bukhari, Muslim, Tirmidhi, Abu Dawud)
-            - **Prayer Times**: Aladhan API + FusedLocation with notification alarms
-            - **Qibla**: rotation-vector compass pointing to Kaaba
-            - **Tasbih**: tap counter with 5 dhikr presets
-            - **99 Names of Allah** (Asma ul Husna)
-            - **8 Daily Duas** (Arabic + Bengali + English)
-            - **Hijri Calendar**
-            - **Audio tilawat**: 12 reciters with khatam player, auto-pause, Bangla meaning audio
-            - **Tafsir**: 4 sources, online + offline cache
-            - **Trackers**: Qada, daily prayer, zikr, khatam
-            - **Profile & Bookmarks**
-            - **Settings**: font, background, reciter, tafsir source, cache clear
-            - **Material 3 + dark/light theme + Bangla/English UI**
+          body_path: /tmp/release_notes.md
+          draft: false
+          prerelease: false
           files: |
             app/build/outputs/apk/release/islamichub-release.apk
             app/build/outputs/apk/release/checksums.txt
-          draft: false
-          prerelease: false

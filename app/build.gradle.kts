@@ -24,8 +24,8 @@ android {
         applicationId = "com.islamichub.app"
         minSdk = 24
         targetSdk = 34
-        versionCode = 40
-        versionName = "5.3.0"
+        versionCode = 41
+        versionName = "5.4.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
