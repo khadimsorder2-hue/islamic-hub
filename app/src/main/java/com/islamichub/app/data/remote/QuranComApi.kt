@@ -26,12 +26,13 @@ import retrofit2.http.Query
  */
 interface QuranComApi {
 
-    /** Get a single verse by key (e.g. "2:255" = Surah 2, Ayah 255) */
+    /** Get a single verse by key with translations + tafsirs + transliteration */
     @GET("verses/by_key/{verse_key}")
     suspend fun getVerseByKey(
         @Path("verse_key") verseKey: String,
         @Query("fields") fields: String = "text_uthmani",
-        @Query("translations") translations: String = "163,84",
+        @Query("translations") translations: String = "163,213,84",
+        @Query("tafsirs") tafsirs: String = "164,166",
         @Query("words") words: Boolean = true,
         @Query("word_fields") wordFields: String = "text_uthmani,transliteration"
     ): retrofit2.Response<VerseByKeyEvent>
@@ -41,7 +42,7 @@ interface QuranComApi {
     suspend fun getVersesByChapter(
         @Path("chapter_number") chapterNumber: Int,
         @Query("fields") fields: String = "text_uthmani",
-        @Query("translations") translations: String = "163,84",
+        @Query("translations") translations: String = "163,213,84",
         @Query("per_page") perPage: Int = 300,
         @Query("words") words: Boolean = false
     ): retrofit2.Response<VersesByChapterEvent>
@@ -74,13 +75,27 @@ interface QuranComApi {
     companion object {
         const val BASE_URL = "https://api.quran.com/api/v4/"
 
-        // Translation IDs
-        const val TRANSLATION_BN_MUJIB = 163      // Sheikh Mujibur Rahman (Bengali)
-        const val TRANSLATION_EN_USMANI = 84      // T. Usmani (English)
-        const val TRANSLATION_BN_ZAKARIA = 213    // Dr. Abu Bakr Muhammad Zakaria (Bengali)
+        // Bangla translations
+        const val TRANSLATION_BN_MUJIB = 163      // Sheikh Mujibur Rahman (Darussalaam)
+        const val TRANSLATION_BN_TAISIRUL = 161   // Taisirul Quran (Tawheed Publication)
+        const val TRANSLATION_BN_RAWAI = 162      // Rawai Al-bayan (Bayaan Foundation)
+        const val TRANSLATION_BN_ZAKARIA = 213    // Dr. Abu Bakr Muhammad Zakaria
 
-        // Default translation params
-        const val DEFAULT_TRANSLATIONS = "163,84"
+        // English translation
+        const val TRANSLATION_EN_USMANI = 84      // T. Usmani
+
+        // Bangla tafsirs
+        const val TAFSIR_BN_IBN_KATHIR = 164     // Tafseer Ibn Kathir (Bangla)
+        const val TAFSIR_BN_AHSANUL = 165        // Tafsir Ahsanul Bayaan
+        const val TAFSIR_BN_ZAKARIA = 166         // Tafsir Abu Bakr Zakaria
+        const val TAFSIR_BN_FATHUL_MAJID = 381   // Tafsir Fathul Majid
+
+        // English tafsirs
+        const val TAFSIR_EN_IBN_KATHIR = 169     // Ibn Kathir (Abridged, English)
+
+        // Default params — all Bangla translations + Bangla tafsirs
+        const val DEFAULT_TRANSLATIONS = "163,161,213,84"
+        const val DEFAULT_TAFSIRS = "164,166"
     }
 }
 
@@ -126,6 +141,7 @@ data class VerseApi(
     @SerializedName("juz_number") val juzNumber: Int?,
     @SerializedName("page_number") val pageNumber: Int?,
     @SerializedName("translations") val translations: List<TranslationApi>?,
+    @SerializedName("tafsirs") val tafsirs: List<TafsirApi>?,
     @SerializedName("words") val words: List<WordApi>?
 ) {
     /** Parse verse_key "2:255" → Pair(2, 255) */
@@ -141,14 +157,72 @@ data class VerseApi(
         return null
     }
 
-    /** Get Bangla translation text */
-    fun getBanglaTranslation(): String? {
+    /** Get Bangla translation — Sheikh Mujibur Rahman (Darussalaam) */
+    fun getBanglaTranslationMujib(): String? {
         return translations?.find { it.id == QuranComApi.TRANSLATION_BN_MUJIB }?.text
     }
+
+    /** Get Bangla translation — Taisirul Quran (Tawheed Publication) */
+    fun getBanglaTranslationTaisirul(): String? {
+        return translations?.find { it.id == QuranComApi.TRANSLATION_BN_TAISIRUL }?.text
+    }
+
+    /** Get Bangla translation — Dr. Abu Bakr Muhammad Zakaria */
+    fun getBanglaTranslationZakaria(): String? {
+        return translations?.find { it.id == QuranComApi.TRANSLATION_BN_ZAKARIA }?.text
+    }
+
+    /** Get Bangla translation — Rawai Al-bayan */
+    fun getBanglaTranslationRawai(): String? {
+        return translations?.find { it.id == QuranComApi.TRANSLATION_BN_RAWAI }?.text
+    }
+
+    /** Get default Bangla translation (Mujibur Rahman) */
+    fun getBanglaTranslation(): String? = getBanglaTranslationMujib()
 
     /** Get English translation text */
     fun getEnglishTranslation(): String? {
         return translations?.find { it.id == QuranComApi.TRANSLATION_EN_USMANI }?.text
+    }
+
+    /** Get all available Bangla translations as list of (name, text) pairs */
+    fun getAllBanglaTranslations(): List<Pair<String, String>> {
+        val result = mutableListOf<Pair<String, String>>()
+        getBanglaTranslationMujib()?.let { result.add("মুহিউদ্দীন খান" to it) }
+        getBanglaTranslationTaisirul()?.let { result.add("তাইসিরুল কুরআন" to it) }
+        getBanglaTranslationZakaria()?.let { result.add("ড. আবু বকর মুহাম্মদ যাকারিয়া" to it) }
+        getBanglaTranslationRawai()?.let { result.add("রাওয়ায়ে বায়ান" to it) }
+        return result
+    }
+
+    /** Get Bangla tafsir — Ibn Kathir */
+    fun getTafsirIbnKathirBn(): String? {
+        return tafsirs?.find { it.id == QuranComApi.TAFSIR_BN_IBN_KATHIR }?.text
+    }
+
+    /** Get Bangla tafsir — Abu Bakr Zakaria */
+    fun getTafsirZakariaBn(): String? {
+        return tafsirs?.find { it.id == QuranComApi.TAFSIR_BN_ZAKARIA }?.text
+    }
+
+    /** Get Bangla tafsir — Ahsanul Bayaan */
+    fun getTafsirAhsanulBn(): String? {
+        return tafsirs?.find { it.id == QuranComApi.TAFSIR_BN_AHSANUL }?.text
+    }
+
+    /** Get Bangla tafsir — Fathul Majid */
+    fun getTafsirFathulMajidBn(): String? {
+        return tafsirs?.find { it.id == QuranComApi.TAFSIR_BN_FATHUL_MAJID }?.text
+    }
+
+    /** Get all available Bangla tafsirs as list of (name, text) pairs */
+    fun getAllBanglaTafsirs(): List<Pair<String, String>> {
+        val result = mutableListOf<Pair<String, String>>()
+        getTafsirIbnKathirBn()?.let { result.add("তাফসীর ইবনে কাসীর" to it) }
+        getTafsirZakariaBn()?.let { result.add("তাফসীর আবু বকর যাকারিয়া" to it) }
+        getTafsirAhsanulBn()?.let { result.add("তাফসীর আহসানুল বায়ান" to it) }
+        getTafsirFathulMajidBn()?.let { result.add("তাফসীর ফাতহুল মজীদ" to it) }
+        return result
     }
 
     /** Build Bangla transliteration from word-level data */
@@ -162,8 +236,6 @@ data class VerseApi(
     /** Build Bangla pronunciation from transliteration (simplified) */
     fun getBanglaPronunciation(): String? {
         val translit = getTransliteration() ?: return null
-        // Simple mapping: transliteration is in English, we return it as-is
-        // (Bangla pronunciation would require a proper transliteration library)
         return translit
     }
 }
@@ -211,4 +283,11 @@ data class ChapterApi(
 
 data class TranslatedNameApi(
     @SerializedName("name") val name: String?
+)
+
+data class TafsirApi(
+    @SerializedName("id") val id: Int?,
+    @SerializedName("text") val text: String?,
+    @SerializedName("language_name") val languageName: String?,
+    @SerializedName("resource_name") val resourceName: String?
 )
