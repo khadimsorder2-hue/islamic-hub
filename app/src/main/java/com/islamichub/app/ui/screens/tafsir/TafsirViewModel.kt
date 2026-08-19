@@ -11,6 +11,16 @@ import com.islamichub.app.data.AppContainer
 import com.islamichub.app.data.repo.AIService
 import com.islamichub.app.data.repo.TafsirSource
 
+data class BanglaTranslationOption(
+    val name: String,
+    val text: String
+)
+
+data class BanglaTafsirOption(
+    val name: String,
+    val text: String
+)
+
 data class TafsirUiState(
     val isLoading: Boolean = true,
     val tafsirText: String? = null,
@@ -24,7 +34,15 @@ data class TafsirUiState(
     val englishText: String = "",
     val surahName: String = "",
     val ayahNumber: Int = 0,
-    val surahNumber: Int = 0
+    val surahNumber: Int = 0,
+    // Quran.com API online data
+    val onlineBanglaTranslations: List<BanglaTranslationOption> = emptyList(),
+    val onlineBanglaTafsirs: List<BanglaTafsirOption> = emptyList(),
+    val transliteration: String? = null,
+    val isOnlineDataLoaded: Boolean = false,
+    // Currently selected translation index
+    val selectedTranslationIndex: Int = 0,
+    val selectedTafsirIndex: Int = 0
 )
 
 class TafsirViewModel(
@@ -38,6 +56,7 @@ class TafsirViewModel(
     init {
         loadAyahInfo()
         loadTafsir()
+        loadOnlineVerseData()
         loadAIExplanation()
     }
 
@@ -59,6 +78,45 @@ class TafsirViewModel(
                     }
                 }
             } catch (_: Exception) { }
+        }
+    }
+
+    /**
+     * Load verse data from Quran.com API — includes:
+     * - Multiple Bangla translations (Mujibur Rahman, Taisirul, Zakaria)
+     * - Multiple Bangla tafsirs (Ibn Kathir, Abu Bakr Zakaria)
+     * - Transliteration for pronunciation
+     */
+    private fun loadOnlineVerseData() {
+        viewModelScope.launch {
+            try {
+                val verseKey = "$surah:$ayah"
+                val response = container.quranComApi.getVerseByKey(verseKey)
+                if (response.isSuccessful) {
+                    val verse = response.body()?.verse
+                    if (verse != null) {
+                        // Get all Bangla translations
+                        val translations = verse.getAllBanglaTranslations().map { (name, text) ->
+                            BanglaTranslationOption(name, text)
+                        }
+                        // Get all Bangla tafsirs
+                        val tafsirs = verse.getAllBanglaTafsirs().map { (name, text) ->
+                            BanglaTafsirOption(name, text)
+                        }
+                        // Get transliteration
+                        val translit = verse.getTransliteration()
+
+                        _state.value = _state.value.copy(
+                            onlineBanglaTranslations = translations,
+                            onlineBanglaTafsirs = tafsirs,
+                            transliteration = translit,
+                            isOnlineDataLoaded = true
+                        )
+                    }
+                }
+            } catch (_: Exception) {
+                // Offline — bundled data still works
+            }
         }
     }
 
@@ -91,14 +149,6 @@ class TafsirViewModel(
         }
     }
 
-    /**
-     * AI explanation — like a village khotib explaining the ayah from zero.
-     * Uses AYAH_TAFSIR_PROMPT which instructs AI to:
-     * - Explain in simple village language
-     * - Include revelation reason (asbab al-nuzul)
-     * - Give real-life examples
-     * - Include Bangla pronunciation
-     */
     private fun loadAIExplanation() {
         viewModelScope.launch {
             val apiKey = container.settingsRepository.aiApiKey.first()
@@ -141,5 +191,13 @@ class TafsirViewModel(
             container.settingsRepository.setTafsirSource(source)
             loadTafsir()
         }
+    }
+
+    fun selectTranslation(index: Int) {
+        _state.value = _state.value.copy(selectedTranslationIndex = index)
+    }
+
+    fun selectTafsir(index: Int) {
+        _state.value = _state.value.copy(selectedTafsirIndex = index)
     }
 }

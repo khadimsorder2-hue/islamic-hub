@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -150,13 +151,126 @@ fun TafsirFullScreen(
                 }
             }
 
-            // ─── Tafsir Source Selector ───
-            Text(
-                text = "তাফসীর উৎস",
+            // ─── Transliteration (from Quran.com API) ───
+            state.transliteration?.let { translit ->
+                if (translit.isNotBlank()) {
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        color = MaterialTheme.colorScheme.surfaceVariant
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Text("🔊 উচ্চারণ (Transliteration)",
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.primary)
+                            Text(translit,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurface)
+                        }
+                    }
+                }
+            }
+
+            // ─── Online Bangla Translations (from Quran.com API) ───
+            if (state.onlineBanglaTranslations.isNotEmpty()) {
+                Text("📖 বাংলা অনুবাদ",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface)
+                // Translation selector chips
+                androidx.compose.foundation.lazy.LazyRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items(state.onlineBanglaTranslations.size) { idx ->
+                        val trans = state.onlineBanglaTranslations[idx]
+                        FilterChip(
+                            selected = state.selectedTranslationIndex == idx,
+                            onClick = { vm.selectTranslation(idx) },
+                            label = { Text(trans.name, style = MaterialTheme.typography.labelSmall) }
+                        )
+                    }
+                }
+                // Selected translation text
+                if (state.selectedTranslationIndex < state.onlineBanglaTranslations.size) {
+                    val selected = state.onlineBanglaTranslations[state.selectedTranslationIndex]
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        color = MaterialTheme.colorScheme.secondaryContainer
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Text(selected.name,
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.8f))
+                            // Strip HTML tags for display
+                            Text(selected.text.replace(Regex("<[^>]*>"), ""),
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onSecondaryContainer)
+                        }
+                    }
+                }
+            }
+
+            // ─── Online Bangla Tafsirs (from Quran.com API) ───
+            if (state.onlineBanglaTafsirs.isNotEmpty()) {
+                Text("📚 বাংলা তাফসীর (Quran.com)",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface)
+                // Tafsir selector chips
+                androidx.compose.foundation.lazy.LazyRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items(state.onlineBanglaTafsirs.size) { idx ->
+                        val tafsir = state.onlineBanglaTafsirs[idx]
+                        FilterChip(
+                            selected = state.selectedTafsirIndex == idx,
+                            onClick = { vm.selectTafsir(idx) },
+                            label = { Text(tafsir.name, style = MaterialTheme.typography.labelSmall) }
+                        )
+                    }
+                }
+                // Selected tafsir text
+                if (state.selectedTafsirIndex < state.onlineBanglaTafsirs.size) {
+                    val selected = state.onlineBanglaTafsirs[state.selectedTafsirIndex]
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(20.dp),
+                        color = MaterialTheme.colorScheme.tertiaryContainer
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(20.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Box(
+                                    modifier = Modifier.size(28.dp).clip(CircleShape)
+                                        .background(MaterialTheme.colorScheme.tertiary),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text("📖", style = MaterialTheme.typography.labelSmall)
+                                }
+                                Text("  ${selected.name}",
+                                    style = MaterialTheme.typography.labelMedium,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = MaterialTheme.colorScheme.onTertiaryContainer)
+                            }
+                            // Strip HTML tags for display
+                            Text(selected.text.replace(Regex("<[^>]*>"), ""),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onTertiaryContainer)
+                        }
+                    }
+                }
+            }
+
+            // ─── Tafsir Source Selector (bundled offline) ───
+            Text("তাফসীর উৎস (অফলাইন)",
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
-            )
+                color = MaterialTheme.colorScheme.onSurface)
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -170,14 +284,8 @@ fun TafsirFullScreen(
                 }
             }
 
-            // ─── Translation Tafsir ───
+            // ─── Offline Translation Tafsir ───
             if (state.tafsirText != null) {
-                Text(
-                    text = "📖 অনুবাদ তাফসীর",
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp),
@@ -185,17 +293,13 @@ fun TafsirFullScreen(
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         if (state.isCached) {
-                            Text(
-                                text = "✓ অফলাইনে সংরক্ষিত",
+                            Text("✓ অফলাইনে সংরক্ষিত",
                                 style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.primary
-                            )
+                                color = MaterialTheme.colorScheme.primary)
                         }
-                        Text(
-                            text = state.tafsirText!!,
+                        Text(state.tafsirText!!,
                             style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
+                            color = MaterialTheme.colorScheme.onSurface)
                     }
                 }
             }
