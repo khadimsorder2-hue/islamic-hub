@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -35,6 +36,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -64,6 +66,9 @@ import com.islamichub.app.data.AppContainer
 import com.islamichub.app.data.model.Ayah
 import com.islamichub.app.ui.components.PremiumHeroCard
 import com.islamichub.app.ui.screens.tafsir.TafsirFullScreen
+import com.islamichub.app.ui.theme.AppSpacing
+import com.islamichub.app.ui.theme.AppRadius
+import com.islamichub.app.ui.theme.AppIconSizes
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -240,6 +245,88 @@ fun QuranReaderScreen(
                     // FloatingAudioPlayer (visible across all screens when playing).
                     // Old in-list mini player removed per user request.
 
+                    // ─── Multi Bangla Translation Selector (v5.1+) ───
+                    if (state.availableTranslations.isNotEmpty()) {
+                        item {
+                            Surface(
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(AppRadius.md.value),
+                                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f)
+                            ) {
+                                Column(modifier = Modifier.padding(AppSpacing.lg)) {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(
+                                            text = "📖 বাংলা অনুবাদ",
+                                            style = MaterialTheme.typography.labelMedium,
+                                            fontWeight = FontWeight.Bold,
+                                            color = MaterialTheme.colorScheme.primary
+                                        )
+                                        if (state.isLoadingOnlineTranslations) {
+                                            CircularProgressIndicator(
+                                                modifier = Modifier.size(AppIconSizes.small),
+                                                strokeWidth = 2.dp
+                                            )
+                                        }
+                                    }
+                                    if (!state.isLoadingOnlineTranslations) {
+                                        LazyRow(
+                                            horizontalArrangement = Arrangement.spacedBy(AppSpacing.sm)
+                                        ) {
+                                            // "অফলাইন" chip first
+                                            item {
+                                                FilterChip(
+                                                    selected = state.selectedTranslationIndex == -1,
+                                                    onClick = { vm.selectTranslation(-1) },
+                                                    label = { Text("অফলাইন", style = MaterialTheme.typography.labelSmall) }
+                                                )
+                                            }
+                                            items(state.availableTranslations.size) { idx ->
+                                                FilterChip(
+                                                    selected = state.selectedTranslationIndex == idx,
+                                                    onClick = { vm.selectTranslation(idx) },
+                                                    label = {
+                                                        Text(
+                                                            state.availableTranslations[idx],
+                                                            style = MaterialTheme.typography.labelSmall
+                                                        )
+                                                    }
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    } else if (state.isLoadingOnlineTranslations) {
+                        item {
+                            Surface(
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(AppRadius.md.value),
+                                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                            ) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth().padding(AppSpacing.md),
+                                    horizontalArrangement = Arrangement.Center,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(AppIconSizes.small),
+                                        strokeWidth = 2.dp
+                                    )
+                                    Text(
+                                        text = " বাংলা অনুবাদ লোড হচ্ছে…",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+                        }
+                    }
+
                     // Surah header card with premium background
                     item {
                         PremiumHeroCard(
@@ -288,12 +375,16 @@ fun QuranReaderScreen(
                     }
 
                     items(surah.ayahs, key = { it.numberInSurah }) { ayah ->
+                        val overrideBangla = if (state.selectedTranslationIndex >= 0 && state.onlineTranslationsLoaded)
+                            vm.getBanglaTextForAyah(ayah.numberInSurah, ayah.bengali)
+                        else ayah.bengali
                         AyahCard(
                             ayah = ayah,
                             fontScale = state.quranFontScale,
                             showArabic = state.showArabic,
                             showBangla = state.showBangla,
                             showEnglish = state.showEnglish,
+                            overrideBangla = overrideBangla,
                             isPlayingAyah = state.currentPlayingAyah == ayah.numberInSurah,
                             isBookmarked = ayah.numberInSurah in state.bookmarkedAyahs,
                             onPlayAyah = { vm.playAyah(ayah.numberInSurah) },
@@ -301,12 +392,14 @@ fun QuranReaderScreen(
                             onShowTafsir = { showTafsirFor = ayah.numberInSurah },
                             onShowWordByWord = { showWordByWordFor = ayah.numberInSurah },
                             onShareAyah = {
+                                val shareText = if (state.selectedTranslationIndex >= 0 && state.onlineTranslationsLoaded)
+                                    overrideBangla else ayah.bengali
                                 val shareIntent = Intent(Intent.ACTION_SEND).apply {
                                     type = "text/plain"
                                     putExtra(Intent.EXTRA_TEXT,
                                         "${surah.nameEnglish} (${surah.englishMeaning}) — আয়াত ${ayah.numberInSurah}:\n\n" +
                                         "${ayah.arabic}\n\n" +
-                                        "বাংলা: ${ayah.bengali}\n\n" +
+                                        "বাংলা: $shareText\n\n" +
                                         "English: ${ayah.english}\n\n" +
                                         "— Islamic Hub থেকে শেয়ার করা হয়েছে"
                                     )
@@ -418,6 +511,7 @@ private fun AyahCard(
     showArabic: Boolean,
     showBangla: Boolean,
     showEnglish: Boolean,
+    overrideBangla: String = "",
     isPlayingAyah: Boolean,
     isBookmarked: Boolean,
     onPlayAyah: () -> Unit,
@@ -532,7 +626,7 @@ private fun AyahCard(
             }
             if (showBangla) {
                 Text(
-                    text = ayah.bengali,
+                    text = overrideBangla.ifBlank { ayah.bengali },
                     style = MaterialTheme.typography.bodyMedium.copy(
                         fontSize = MaterialTheme.typography.bodyMedium.fontSize * fontScale
                     ),

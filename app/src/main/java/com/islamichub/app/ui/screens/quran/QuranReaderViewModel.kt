@@ -30,7 +30,13 @@ data class QuranReaderUiState(
     val banglaAudioEnabled: Boolean = false,
     val isPlayingBanglaAudio: Boolean = false,
     val playbackSpeed: Float = 1.0f,
-    val isRepeatMode: Boolean = false
+    val isRepeatMode: Boolean = false,
+    // v5.1+ — Multi Bangla Translation from Quran.com API
+    val availableTranslations: List<String> = emptyList(),
+    val selectedTranslationIndex: Int = 0,
+    val onlineTranslationsMap: Map<Int, List<String>> = emptyMap(), // ayahNumber → [text1, text2, ...]
+    val isLoadingOnlineTranslations: Boolean = false,
+    val onlineTranslationsLoaded: Boolean = false
 )
 
 class QuranReaderViewModel(
@@ -45,6 +51,7 @@ class QuranReaderViewModel(
         observeAudio()
         observeSettings()
         observeBookmarks()
+        loadOnlineTranslations()
     }
 
     private fun load() {
@@ -200,6 +207,69 @@ class QuranReaderViewModel(
                 )
             )
         }
+    }
+
+    /**
+     * Fetch all Bangla translations for this surah from Quran.com API.
+     * Stores results in onlineTranslationsMap: ayahNumber → [mujib, taisirul, zakaria, rawai]
+     */
+    private fun loadOnlineTranslations() {
+        viewModelScope.launch {
+            _state.value = _state.value.copy(isLoadingOnlineTranslations = true)
+            try {
+                val response = container.quranComApi.getVersesByChapter(
+                    chapterNumber = surahNumber,
+                    translations = "163,161,213,162",
+                    perPage = 300
+                )
+                if (response.isSuccessful) {
+                    val verses = response.body()?.verses ?: emptyList()
+                    val transMap = mutableMapOf<Int, List<String>>()
+                    val names = mutableListOf<String>()
+                    for (verse in verses) {
+                        val ayahNum = verse.verseNumber ?: continue
+                        val texts = mutableListOf<String>()
+                        verse.getBanglaTranslationMujib()?.let { texts.add(it) }
+                        verse.getBanglaTranslationTaisirul()?.let { texts.add(it) }
+                        verse.getBanglaTranslationZakaria()?.let { texts.add(it) }
+                        verse.getBanglaTranslationRawai()?.let { texts.add(it) }
+                        if (texts.isNotEmpty()) transMap[ayahNum] = texts
+                    }
+                    // Build translation names from first verse that has all
+                    val first = verses.firstOrNull()
+                    if (first != null) {
+                        first.getBanglaTranslationMujib()?.let { names.add("মুহিউদ্দীন খান") }
+                        first.getBanglaTranslationTaisirul()?.let { names.add("তাইসিরুল কুরআন") }
+                        first.getBanglaTranslationZakaria()?.let { names.add("ড. যাকারিয়া") }
+                        first.getBanglaTranslationRawai()?.let { names.add("রাওয়ায়ে বায়ান") }
+                    }
+                    _state.value = _state.value.copy(
+                        availableTranslations = names,
+                        onlineTranslationsMap = transMap,
+                        isLoadingOnlineTranslations = false,
+                        onlineTranslationsLoaded = true
+                    )
+                } else {
+                    _state.value = _state.value.copy(isLoadingOnlineTranslations = false)
+                }
+            } catch (_: Exception) {
+                _state.value = _state.value.copy(isLoadingOnlineTranslations = false)
+            }
+        }
+    }
+
+    fun selectTranslation(index: Int) {
+        _state.value = _state.value.copy(selectedTranslationIndex = index)
+    }
+
+    /** Get the Bangla text for an ayah considering selected translation */
+    fun getBanglaTextForAyah(ayahNumber: Int, fallback: String): String {
+        val state = _state.value
+        if (!state.onlineTranslationsLoaded) return fallback
+        val translations = state.onlineTranslationsMap[ayahNumber]
+        if (translations == null || translations.isEmpty()) return fallback
+        val idx = state.selectedTranslationIndex.coerceIn(0, translations.size - 1)
+        return translations[idx].replace(Regex("<[^>]*>"), "")
     }
 
     override fun onCleared() {

@@ -82,6 +82,11 @@ import com.islamichub.app.ui.components.PremiumIconBadge
 import com.islamichub.app.ui.components.PremiumSectionHeader
 import com.islamichub.app.ui.components.loadAssetImage
 import com.islamichub.app.ui.navigation.Screen
+import com.islamichub.app.ui.theme.AppColors
+import com.islamichub.app.ui.theme.AppSpacing
+import com.islamichub.app.ui.theme.AppRadius
+import com.islamichub.app.ui.theme.AppElevation
+import com.islamichub.app.ui.theme.AppFontSizes
 
 @Composable
 fun HomeScreen(
@@ -94,8 +99,8 @@ fun HomeScreen(
     var searchQuery by rememberSaveable { mutableStateOf("") }
 
     LazyColumn(
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        contentPadding = PaddingValues(AppSpacing.screenPadding),
+        verticalArrangement = Arrangement.spacedBy(AppSpacing.sectionGap)
     ) {
         // ─── Premium Hero (splash-like) ───
         item {
@@ -104,7 +109,7 @@ fun HomeScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(280.dp)
-                    .clip(RoundedCornerShape(32.dp))
+                    .clip(RoundedCornerShape(AppRadius.xxl))
             ) {
                 if (heroBitmap != null) {
                     Image(
@@ -221,15 +226,15 @@ fun HomeScreen(
         // ─── Quick-jump chips (horizontal scroll) ───
         item {
             val chips = listOf(
-                ChipItem("কুরআন", Icons.Filled.AutoStories, Screen.Quran.route, Color(0xFF6D45C7)),
-                ChipItem("নামাজ", Icons.Filled.MenuBook, Screen.NamazShikkha.route, Color(0xFFC9A34E)),
-                ChipItem("নামাজের সময়", Icons.Filled.CalendarMonth, Screen.Prayer.route, Color(0xFF7E8CE0)),
-                ChipItem("কিবলা", Icons.Filled.CompassCalibration, Screen.Qibla.route, Color(0xFF2E7D32)),
-                ChipItem("তসবিহ", Icons.Filled.Spa, Screen.Tasbih.route, Color(0xFFB36283)),
-                ChipItem("জাকাত", Icons.Filled.Calculate, Screen.Zakat.route, Color(0xFF00ACC1)),
-                ChipItem("কুইজ", Icons.Filled.EmojiEvents, Screen.Quiz.route, Color(0xFFFF6B35)),
+                ChipItem("কুরআন", Icons.Filled.AutoStories, Screen.Quran.route, AppColors.brandPrimary),
+                ChipItem("নামাজ", Icons.Filled.MenuBook, Screen.NamazShikkha.route, AppColors.brandSecondary),
+                ChipItem("নামাজের সময়", Icons.Filled.CalendarMonth, Screen.Prayer.route, AppColors.fajrAccent),
+                ChipItem("কিবলা", Icons.Filled.CompassCalibration, Screen.Qibla.route, AppColors.success),
+                ChipItem("তসবিহ", Icons.Filled.Spa, Screen.Tasbih.route, AppColors.maghribAccent),
+                ChipItem("জাকাত", Icons.Filled.Calculate, Screen.Zakat.route, AppColors.info),
+                ChipItem("কুইজ", Icons.Filled.EmojiEvents, Screen.Quiz.route, AppColors.warning),
                 ChipItem("রোজা", Icons.Filled.WbSunny, Screen.Fasting.route, Color(0xFFD84315)),
-                ChipItem("AI স্কলার", Icons.Filled.Psychology, Screen.AiScholar.route, Color(0xFF8E24AA))
+                ChipItem("AI স্কলার", Icons.Filled.Psychology, Screen.AiScholar.route, AppColors.brandPrimary)
             )
             LazyRow(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
