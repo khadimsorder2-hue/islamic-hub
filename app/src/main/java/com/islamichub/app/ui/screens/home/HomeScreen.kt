@@ -76,10 +76,12 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.islamichub.app.data.AppContainer
+import com.islamichub.app.BuildConfig
 import com.islamichub.app.ui.components.PremiumCard
 import com.islamichub.app.ui.components.PremiumHeroCard
 import com.islamichub.app.ui.components.PremiumIconBadge
 import com.islamichub.app.ui.components.PremiumSectionHeader
+import com.islamichub.app.ui.components.WhatsNewDialog
 import com.islamichub.app.ui.components.loadAssetImage
 import com.islamichub.app.ui.navigation.Screen
 import com.islamichub.app.ui.theme.AppColors
@@ -98,11 +100,16 @@ fun HomeScreen(
     val context = LocalContext.current
     var searchQuery by rememberSaveable { mutableStateOf("") }
 
-    LazyColumn(
-        contentPadding = PaddingValues(AppSpacing.screenPadding),
-        verticalArrangement = Arrangement.spacedBy(AppSpacing.sectionGap)
-    ) {
-        // ─── Premium Hero (splash-like) ───
+    // Always show "What's New" dialog when app version changes.
+    // This guarantees the user SEES that an upgrade happened.
+    WhatsNewDialog(container)
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        LazyColumn(
+            contentPadding = PaddingValues(AppSpacing.screenPadding),
+            verticalArrangement = Arrangement.spacedBy(AppSpacing.sectionGap)
+        ) {
+            // ─── Premium Hero (splash-like) ───
         item {
             val heroBitmap = remember { loadAssetImage(context, "img/hero-premium-masjid.webp") }
             Box(
@@ -473,7 +480,28 @@ fun HomeScreen(
                 }
             }
         }
-    }
+    } // end LazyColumn
+
+        // Always-visible version badge (top-right corner of HomeScreen).
+        // This guarantees the user can verify which version is actually running.
+        Card(
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(8.dp),
+            colors = androidx.compose.material3.CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.primary
+            ),
+            shape = RoundedCornerShape(12.dp)
+        ) {
+            Text(
+                "v${BuildConfig.VERSION_NAME}",
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onPrimary,
+                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+            )
+        }
+    } // end Box
 }
 
 @Composable

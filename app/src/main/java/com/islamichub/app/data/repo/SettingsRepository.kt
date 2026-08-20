@@ -198,6 +198,19 @@ class SettingsRepository(private val context: Context) {
         aiCacheRepo.clearAll()
     }
 
+    /**
+     * Tracks the versionName for which the "What's New" dialog was last shown.
+     * When the app version changes, the dialog should re-appear to inform the
+     * user about the new features added in the upgrade.
+     */
+    val lastWhatsNewShownVersion: Flow<String> = context.settingsStore.data.map {
+        it[LAST_WHATS_NEW_VERSION] ?: ""
+    }
+
+    suspend fun setLastWhatsNewShownVersion(version: String) = withContext(Dispatchers.IO) {
+        context.settingsStore.edit { it[LAST_WHATS_NEW_VERSION] = version }
+    }
+
     companion object {
         private val FONT_SCALE = floatPreferencesKey("quran_font_scale")
         private val BACKGROUND_MODE = stringPreferencesKey("background_mode")
@@ -217,5 +230,6 @@ class SettingsRepository(private val context: Context) {
         private val AI_MODEL = stringPreferencesKey("ai_model")
         private val AI_PROVIDER = stringPreferencesKey("ai_provider")
         private val FIREBASE_ENABLED = booleanPreferencesKey("firebase_enabled")
+        private val LAST_WHATS_NEW_VERSION = stringPreferencesKey("last_whats_new_version")
     }
 }

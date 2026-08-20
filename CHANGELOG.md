@@ -8,6 +8,54 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [v5.5.0] — 2026-08-20
+
+### Added — upgrades are now ALWAYS visible
+- **"What's New" dialog on first launch of each version** — a Material 3
+  `AlertDialog` automatically appears on `HomeScreen` when the app version
+  changes. Lists the new features in that version with icons and short
+  Bangla descriptions. Persists "last shown version" in DataStore so it
+  only shows once per upgrade.
+- **Always-visible version badge** — `HomeScreen` now displays a small
+  `v5.5.0` card in the top-right corner so the user can verify which
+  version is actually running at any time.
+- **Tafsir multi-translation section is now always rendered** — previously
+  the "📖 বাংলা অনুবাদ (Quran.com)" section was hidden behind
+  `if (state.onlineBanglaTranslations.isNotEmpty())`, meaning if the API
+  was slow, failed, or the device was offline, the user saw NOTHING
+  different from v4.3. Now the section shows three possible states:
+  1. `Loading…` placeholder while the API call is in flight.
+  2. `Error` placeholder with the error message if the API failed.
+  3. The actual chip selector + translation text when data is loaded.
+  Same change applied to the "📚 বাংলা তাফসীর (Quran.com)" section.
+
+### Changed
+- `TafsirUiState` gained two new fields: `isOnlineDataLoading: Boolean`
+  (defaults to `true`) and `onlineDataError: String?`.
+- `TafsirViewModel.loadOnlineVerseData()` now sets loading/error state
+  explicitly instead of silently swallowing exceptions.
+- `SettingsRepository` gained `lastWhatsNewShownVersion: Flow<String>`
+  and `setLastWhatsNewShownVersion(version)`.
+- `app/build.gradle.kts`: `versionCode` 41 → 42, `versionName` "5.4.0" → "5.5.0".
+
+### Root cause of the original complaint
+The user reported "5.1 e exact 4.3 ei pacci, kono upgrade 4.3 r por add
+hoy nai" (in 5.1 I get exactly 4.3, no upgrade added after 4.3). The
+diagnosis showed:
+- v5.0: only 3 LazyList `key=` params changed — no visible UI difference. ✅ confirmed.
+- v5.1: added data layer (QuranComApi helpers) but no UI called them — no visible UI difference. ✅ confirmed.
+- v5.2: Tafsir multi-translation UI was added BUT hidden behind a state
+  check that required a successful API call. If the user tested offline
+  or the API was slow, the section was invisible. ✅ confirmed.
+- v5.3: QuranReader multi-translation was added (works), but Tafsir
+  section still had the same hide-on-empty bug.
+
+v5.5.0 fixes this by making the upgrade visible unconditionally — the
+"What's New" dialog appears on every version bump, the version badge is
+always on screen, and the Tafsir sections always show their state.
+
+---
+
 ## [v5.4.0] — 2026-08-20
 
 ### Fixed

@@ -173,35 +173,79 @@ fun TafsirFullScreen(
             }
 
             // ─── Online Bangla Translations (from Quran.com API) ───
-            if (state.onlineBanglaTranslations.isNotEmpty()) {
-                Text("📖 বাংলা অনুবাদ",
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface)
-                // Translation selector chips
-                androidx.compose.foundation.lazy.LazyRow(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    items(state.onlineBanglaTranslations.size) { idx ->
-                        val trans = state.onlineBanglaTranslations[idx]
-                        FilterChip(
-                            selected = state.selectedTranslationIndex == idx,
-                            onClick = { vm.selectTranslation(idx) },
-                            label = { Text(trans.name, style = MaterialTheme.typography.labelSmall) }
-                        )
-                    }
-                }
-                // Selected translation text
-                if (state.selectedTranslationIndex < state.onlineBanglaTranslations.size) {
-                    val selected = state.onlineBanglaTranslations[state.selectedTranslationIndex]
+            // ALWAYS visible so user can SEE that the v5.2+ upgrade is real.
+            // Shows "Loading…" or error placeholder when API hasn't returned yet.
+            Text("📖 বাংলা অনুবাদ (Quran.com)",
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface)
+            when {
+                state.isOnlineDataLoading -> {
                     Surface(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(16.dp),
-                        color = MaterialTheme.colorScheme.secondaryContainer
+                        color = MaterialTheme.colorScheme.surfaceVariant
+                    ) {
+                        Text(
+                            "অনলাইন অনুবাদ লোড হচ্ছে…",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(16.dp)
+                        )
+                    }
+                }
+                state.onlineDataError != null -> {
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        color = MaterialTheme.colorScheme.errorContainer
                     ) {
                         Column(modifier = Modifier.padding(16.dp)) {
-                            Text(selected.name,
+                            Text(
+                                "অনলাইন অনুবাদ লোড করা যায়নি",
                                 style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.onErrorContainer
+                            )
+                            Text(
+                                "কারণ: ${state.onlineDataError}",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.8f)
+                            )
+                            Text(
+                                "নিচে অফলাইন অনুবাদ দেখুন।",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.6f),
+                                modifier = Modifier.padding(top = 4.dp)
+                            )
+                        }
+                    }
+                }
+                state.onlineBanglaTranslations.isNotEmpty() -> {
+                    // Translation selector chips
+                    androidx.compose.foundation.lazy.LazyRow(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        items(state.onlineBanglaTranslations.size) { idx ->
+                            val trans = state.onlineBanglaTranslations[idx]
+                            FilterChip(
+                                selected = state.selectedTranslationIndex == idx,
+                                onClick = { vm.selectTranslation(idx) },
+                                label = { Text(trans.name, style = MaterialTheme.typography.labelSmall) }
+                            )
+                        }
+                    }
+                    // Selected translation text
+                    if (state.selectedTranslationIndex < state.onlineBanglaTranslations.size) {
+                        val selected = state.onlineBanglaTranslations[state.selectedTranslationIndex]
+                        Surface(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(16.dp),
+                            color = MaterialTheme.colorScheme.secondaryContainer
+                        ) {
+                            Column(modifier = Modifier.padding(16.dp)) {
+                                Text(selected.name,
+                                    style = MaterialTheme.typography.labelMedium,
                                 fontWeight = FontWeight.SemiBold,
                                 color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.8f))
                             // Strip HTML tags for display
@@ -211,14 +255,35 @@ fun TafsirFullScreen(
                         }
                     }
                 }
-            }
+                } // end when branch
+            } // end when
 
             // ─── Online Bangla Tafsirs (from Quran.com API) ───
-            if (state.onlineBanglaTafsirs.isNotEmpty()) {
-                Text("📚 বাংলা তাফসীর (Quran.com)",
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface)
+            // Always visible — same pattern as translations above.
+            Text("📚 বাংলা তাফসীর (Quran.com)",
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface)
+            when {
+                state.isOnlineDataLoading -> {
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        color = MaterialTheme.colorScheme.surfaceVariant
+                    ) {
+                        Text(
+                            "অনলাইন তাফসীর লোড হচ্ছে…",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(16.dp)
+                        )
+                    }
+                }
+                state.onlineDataError != null -> {
+                    // Error placeholder already shown in translations section above.
+                    // Don't duplicate the error message here.
+                }
+                state.onlineBanglaTafsirs.isNotEmpty() -> {
                 // Tafsir selector chips
                 androidx.compose.foundation.lazy.LazyRow(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -264,7 +329,8 @@ fun TafsirFullScreen(
                         }
                     }
                 }
-            }
+                } // end tafsir when branch
+            } // end tafsir when
 
             // ─── Tafsir Source Selector (bundled offline) ───
             Text("তাফসীর উৎস (অফলাইন)",

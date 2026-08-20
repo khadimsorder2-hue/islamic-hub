@@ -40,6 +40,8 @@ data class TafsirUiState(
     val onlineBanglaTafsirs: List<BanglaTafsirOption> = emptyList(),
     val transliteration: String? = null,
     val isOnlineDataLoaded: Boolean = false,
+    val isOnlineDataLoading: Boolean = true,
+    val onlineDataError: String? = null,
     // Currently selected translation index
     val selectedTranslationIndex: Int = 0,
     val selectedTafsirIndex: Int = 0
@@ -86,9 +88,17 @@ class TafsirViewModel(
      * - Multiple Bangla translations (Mujibur Rahman, Taisirul, Zakaria)
      * - Multiple Bangla tafsirs (Ibn Kathir, Abu Bakr Zakaria)
      * - Transliteration for pronunciation
+     *
+     * The loading/error state is tracked so the UI can show a "Loading…"
+     * or "Couldn't load online data" placeholder instead of hiding the
+     * section entirely.
      */
     private fun loadOnlineVerseData() {
         viewModelScope.launch {
+            _state.value = _state.value.copy(
+                isOnlineDataLoading = true,
+                onlineDataError = null
+            )
             try {
                 val verseKey = "$surah:$ayah"
                 val response = container.quranComApi.getVerseByKey(verseKey)
@@ -110,12 +120,28 @@ class TafsirViewModel(
                             onlineBanglaTranslations = translations,
                             onlineBanglaTafsirs = tafsirs,
                             transliteration = translit,
-                            isOnlineDataLoaded = true
+                            isOnlineDataLoaded = true,
+                            isOnlineDataLoading = false,
+                            onlineDataError = null
+                        )
+                    } else {
+                        _state.value = _state.value.copy(
+                            isOnlineDataLoading = false,
+                            onlineDataError = "Empty response from API"
                         )
                     }
+                } else {
+                    _state.value = _state.value.copy(
+                        isOnlineDataLoading = false,
+                        onlineDataError = "API error: HTTP ${response.code()}"
+                    )
                 }
-            } catch (_: Exception) {
+            } catch (e: Exception) {
                 // Offline — bundled data still works
+                _state.value = _state.value.copy(
+                    isOnlineDataLoading = false,
+                    onlineDataError = e.message ?: "Network error"
+                )
             }
         }
     }
