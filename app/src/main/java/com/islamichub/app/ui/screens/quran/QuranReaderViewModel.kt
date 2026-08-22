@@ -289,8 +289,8 @@ n                    val cached = verses.map { v ->
                         TranslationCacheService.CachedVerse(
                             surah = surahNumber,
                             ayah = v.verseNumber ?: return@map null,
-                            translations = v.getAllBanglaTranslations().toMap(),
-                            tafsirs = v.getAllBanglaTafsirs().toMap(),
+                            translations = v.getAllBanglaTranslations().associate { (name, text) -> name to text },
+                            tafsirs = v.getAllBanglaTafsirs().associate { (name, text) -> name to text },
                             transliteration = v.getTransliteration()
                         )
                     }.filterNotNull()
