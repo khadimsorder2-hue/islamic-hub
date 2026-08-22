@@ -215,6 +215,11 @@ data class VerseApi(
         return tafsirs?.find { it.id == QuranComApi.TAFSIR_BN_FATHUL_MAJID }?.text
     }
 
+    /** Get English tafsir — Ibn Kathir (Abridged) */
+    fun getEnglishTafsirIbnKathir(): String? {
+        return tafsirs?.find { it.id == QuranComApi.TAFSIR_EN_IBN_KATHIR }?.text
+    }
+
     /** Get all available Bangla tafsirs as list of (name, text) pairs */
     fun getAllBanglaTafsirs(): List<Pair<String, String>> {
         val result = mutableListOf<Pair<String, String>>()

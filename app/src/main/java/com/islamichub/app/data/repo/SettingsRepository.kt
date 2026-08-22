@@ -198,6 +198,16 @@ class SettingsRepository(private val context: Context) {
         aiCacheRepo.clearAll()
     }
 
+    // Ayah Notes
+    private fun noteKey(surah: Int, ayah: Int) = stringPreferencesKey("note_${surah}_$ayah")
+    suspend fun getAyahNote(surah: Int, ayah: Int): String {
+        val key = noteKey(surah, ayah)
+        return context.settingsStore.data.map { it[key] ?: "" }.first()
+    }
+    suspend fun setAyahNote(surah: Int, ayah: Int, text: String) = withContext(Dispatchers.IO) {
+        context.settingsStore.edit { it[noteKey(surah, ayah)] = text }
+    }
+
     companion object {
         private val FONT_SCALE = floatPreferencesKey("quran_font_scale")
         private val BACKGROUND_MODE = stringPreferencesKey("background_mode")

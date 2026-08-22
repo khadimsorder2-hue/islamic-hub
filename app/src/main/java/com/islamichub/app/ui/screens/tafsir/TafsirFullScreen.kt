@@ -4,7 +4,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -12,45 +11,54 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.islamichub.app.data.AppContainer
-import com.islamichub.app.data.repo.TafsirSource
+import androidx.compose.ui.text.input.TextFieldValue
+import android.widget.Toast
+import android.content.Intent
 
-/**
- * Full screen Tafsir popup — replaces the old ModalBottomSheet.
- * Opens when user taps the AI Bolt button on an ayah.
- * Has a close (X) button in the top bar.
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TafsirFullScreen(
@@ -62,6 +70,9 @@ fun TafsirFullScreen(
     val vm = remember { TafsirViewModel(container, surah, ayah) }
     val state by vm.state.collectAsState()
     val context = LocalContext.current
+    val clipboardManager = LocalClipboardManager.current
+    var showNoteEditor by remember { mutableStateOf(false) }
+    val stripHtml = { s: String -> s.replace(Regex("<[^>]*>"), "").trim() }
 
     Scaffold(
         topBar = {
@@ -69,332 +80,277 @@ fun TafsirFullScreen(
                 title = {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Box(
-                            modifier = Modifier
-                                .size(32.dp)
-                                .clip(CircleShape)
-                                .background(
-                                    Brush.linearGradient(
-                                        colors = listOf(
-                                            MaterialTheme.colorScheme.primary,
-                                            MaterialTheme.colorScheme.secondary
-                                        )
-                                    )
-                                ),
+                            modifier = Modifier.size(32.dp).clip(CircleShape).background(
+                                Brush.linearGradient(listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.secondary))
+                            ),
                             contentAlignment = Alignment.Center
                         ) {
-                            Icon(
-                                imageVector = Icons.Filled.Bolt,
-                                contentDescription = null,
-                                tint = Color.White,
-                                modifier = Modifier.size(20.dp)
-                            )
+                            Icon(Icons.Filled.Bolt, null, tint = Color.White, modifier = Modifier.size(20.dp))
                         }
                         Spacer(Modifier.size(8.dp))
                         Column {
-                            Text(
-                                text = "তাফসীর",
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold
-                            )
-                            Text(
-                                text = "${state.surahName} • আয়াত ${state.ayahNumber}",
+                            Text("তাফসীর", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                            Text("${state.surahName} • আয়াত ${state.ayahNumber}",
                                 style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
+                                color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
                 },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface),
                 actions = {
+                    // Copy button
+                    IconButton(onClick = {
+                        val text = "${state.arabicText}\n\nবাংলা: ${state.banglaText}\n\nEnglish: ${state.englishText}"
+                        clipboardManager.setText(AnnotatedString(text))
+                        Toast.makeText(context, "কপি হয়েছে", Toast.LENGTH_SHORT).show()
+                    }) { Icon(Icons.Filled.ContentCopy, contentDescription = "কপি") }
+                    // Share button
+                    IconButton(onClick = {
+                        val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                            type = "text/plain"
+                            putExtra(Intent.EXTRA_TEXT,
+                                "${state.surahName} (আয়াত ${state.ayahNumber}):\n\n${state.arabicText}\n\nবাংলা: ${state.banglaText}\n\nEnglish: ${state.englishText}\n\n— Islamic Hub")
+                        }
+                        context.startActivity(Intent.createChooser(shareIntent, "শেয়ার"))
+                    }) { Icon(Icons.Filled.Share, contentDescription = "শেয়ার") }
                     IconButton(onClick = onClose) {
-                        Icon(
-                            imageVector = Icons.Filled.Close,
-                            contentDescription = "বন্ধ করুন",
-                            tint = MaterialTheme.colorScheme.onSurface
-                        )
+                        Icon(Icons.Filled.Close, contentDescription = "বন্ধ করুন")
                     }
                 }
             )
+        },
+        floatingActionButton = {
+            if (!showNoteEditor) {
+                FloatingActionButton(onClick = { showNoteEditor = true }) {
+                    Icon(Icons.Filled.Save, contentDescription = "নোট")
+                }
+            }
         }
     ) { padding ->
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .verticalScroll(rememberScrollState())
-                .padding(16.dp),
+            modifier = Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState()).padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             // ─── Ayah Preview ───
             if (state.arabicText.isNotBlank()) {
                 Surface(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(20.dp),
+                    modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(20.dp),
                     color = MaterialTheme.colorScheme.primaryContainer
                 ) {
-                    Column(
-                        modifier = Modifier.padding(20.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Text(
-                            text = state.arabicText,
-                            style = MaterialTheme.typography.displaySmall,
+                    Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text(state.arabicText, style = MaterialTheme.typography.displaySmall,
                             color = MaterialTheme.colorScheme.onPrimaryContainer,
-                            modifier = Modifier.fillMaxWidth(),
-                            textAlign = TextAlign.End
-                        )
-                        Text(
-                            text = state.banglaText,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.85f)
-                        )
+                            modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.End)
+                        if (state.banglaText.isNotBlank()) {
+                            Text("বাংলা: ${state.banglaText}", style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.85f))
+                        }
+                        if (state.englishText.isNotBlank()) {
+                            Text("English: ${state.englishText}", style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f))
+                        }
                     }
                 }
             }
 
-            // ─── Transliteration (from Quran.com API) ───
+            // ─── Transliteration ───
             state.transliteration?.let { translit ->
                 if (translit.isNotBlank()) {
                     Surface(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(16.dp),
+                        modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp),
                         color = MaterialTheme.colorScheme.surfaceVariant
                     ) {
                         Column(modifier = Modifier.padding(16.dp)) {
-                            Text("🔊 উচ্চারণ (Transliteration)",
-                                style = MaterialTheme.typography.labelMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.primary)
-                            Text(translit,
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurface)
+                            Text("🔊 উচ্চারণ (Transliteration)", style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                            Text(translit, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface)
                         }
                     }
                 }
             }
 
-            // ─── Online Bangla Translations (from Quran.com API) ───
-            if (state.onlineBanglaTranslations.isNotEmpty()) {
-                Text("📖 বাংলা অনুবাদ",
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface)
-                // Translation selector chips
-                androidx.compose.foundation.lazy.LazyRow(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    items(state.onlineBanglaTranslations.size) { idx ->
-                        val trans = state.onlineBanglaTranslations[idx]
+            // ─── All Translations (Bangla + English) ───
+            if (state.allTranslations.isNotEmpty()) {
+                Text("📖 অনুবাদ (${state.allTranslations.count { it.language == "bn" }} বাংলা + ${state.allTranslations.count { it.language == "en" }} ইংরেজি)",
+                    style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    items(state.allTranslations.size) { idx ->
+                        val t = state.allTranslations[idx]
                         FilterChip(
                             selected = state.selectedTranslationIndex == idx,
                             onClick = { vm.selectTranslation(idx) },
-                            label = { Text(trans.name, style = MaterialTheme.typography.labelSmall) }
+                            label = { Text(t.name, style = MaterialTheme.typography.labelSmall) }
                         )
                     }
                 }
-                // Selected translation text
-                if (state.selectedTranslationIndex < state.onlineBanglaTranslations.size) {
-                    val selected = state.onlineBanglaTranslations[state.selectedTranslationIndex]
+                if (state.selectedTranslationIndex < state.allTranslations.size) {
+                    val sel = state.allTranslations[state.selectedTranslationIndex]
+                    val bgColor = if (sel.language == "en") MaterialTheme.colorScheme.tertiaryContainer else MaterialTheme.colorScheme.secondaryContainer
+                    val txtColor = if (sel.language == "en") MaterialTheme.colorScheme.onTertiaryContainer else MaterialTheme.colorScheme.onSecondaryContainer
                     Surface(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(16.dp),
-                        color = MaterialTheme.colorScheme.secondaryContainer
+                        modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp), color = bgColor
                     ) {
                         Column(modifier = Modifier.padding(16.dp)) {
-                            Text(selected.name,
-                                style = MaterialTheme.typography.labelMedium,
-                                fontWeight = FontWeight.SemiBold,
-                                color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.8f))
-                            // Strip HTML tags for display
-                            Text(selected.text.replace(Regex("<[^>]*>"), ""),
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = MaterialTheme.colorScheme.onSecondaryContainer)
+                            Text(sel.name, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold,
+                                color = txtColor.copy(alpha = 0.8f))
+                            Text(stripHtml(sel.text), style = MaterialTheme.typography.bodyLarge, color = txtColor)
                         }
                     }
                 }
             }
 
-            // ─── Online Bangla Tafsirs (from Quran.com API) ───
-            if (state.onlineBanglaTafsirs.isNotEmpty()) {
-                Text("📚 বাংলা তাফসীর (Quran.com)",
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface)
-                // Tafsir selector chips
-                androidx.compose.foundation.lazy.LazyRow(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    items(state.onlineBanglaTafsirs.size) { idx ->
-                        val tafsir = state.onlineBanglaTafsirs[idx]
+            // ─── All Tafsirs (Bangla + English) ───
+            if (state.allTafsirs.isNotEmpty()) {
+                Text("📚 তাফসীর (${state.allTafsirs.count { it.language == "bn" }} বাংলা + ${state.allTafsirs.count { it.language == "en" }} ইংরেজি)",
+                    style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    items(state.allTafsirs.size) { idx ->
+                        val t = state.allTafsirs[idx]
+                        val isEn = t.language == "en"
                         FilterChip(
                             selected = state.selectedTafsirIndex == idx,
                             onClick = { vm.selectTafsir(idx) },
-                            label = { Text(tafsir.name, style = MaterialTheme.typography.labelSmall) }
+                            label = { Text(t.name, style = MaterialTheme.typography.labelSmall) },
+                            colors = if (isEn) androidx.compose.material3.FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = MaterialTheme.colorScheme.tertiary,
+                                selectedLabelColor = Color.White
+                            ) else androidx.compose.material3.FilterChipDefaults.filterChipColors()
                         )
                     }
                 }
-                // Selected tafsir text
-                if (state.selectedTafsirIndex < state.onlineBanglaTafsirs.size) {
-                    val selected = state.onlineBanglaTafsirs[state.selectedTafsirIndex]
-                    Surface(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(20.dp),
-                        color = MaterialTheme.colorScheme.tertiaryContainer
-                    ) {
-                        Column(
-                            modifier = Modifier.padding(20.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                if (state.selectedTafsirIndex < state.allTafsirs.size) {
+                    val sel = state.allTafsirs[state.selectedTafsirIndex]
+                    if (sel.text.isNotBlank()) {
+                        val bgColor = if (sel.language == "en") MaterialTheme.colorScheme.tertiaryContainer else MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.15f)
+                        val txtColor = if (sel.language == "en") MaterialTheme.colorScheme.onTertiaryContainer else MaterialTheme.colorScheme.onSurface
+                        Surface(
+                            modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(20.dp), color = bgColor
                         ) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Box(
-                                    modifier = Modifier.size(28.dp).clip(CircleShape)
-                                        .background(MaterialTheme.colorScheme.tertiary),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Text("📖", style = MaterialTheme.typography.labelSmall)
+                            Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Box(modifier = Modifier.size(28.dp).clip(CircleShape)
+                                            .background(if (sel.language == "en") MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.primary),
+                                        contentAlignment = Alignment.Center) {
+                                        Text(if (sel.language == "en") "En" else "বাং", style = MaterialTheme.typography.labelSmall, color = Color.White)
+                                    }
+                                    Text("  ${sel.name}", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, color = txtColor)
                                 }
-                                Text("  ${selected.name}",
-                                    style = MaterialTheme.typography.labelMedium,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = MaterialTheme.colorScheme.onTertiaryContainer)
+                                Text(stripHtml(sel.text), style = MaterialTheme.typography.bodyMedium, color = txtColor)
                             }
-                            // Strip HTML tags for display
-                            Text(selected.text.replace(Regex("<[^>]*>"), ""),
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onTertiaryContainer)
+                        }
+                    } else if (sel.language == "en") {
+                        Surface(
+                            modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp),
+                            color = MaterialTheme.colorScheme.surfaceVariant
+                        ) {
+                            Text("English tafsir লোড হচ্ছে…", style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(16.dp))
                         }
                     }
                 }
             }
 
-            // ─── Tafsir Source Selector (bundled offline) ───
-            Text("তাফসীর উৎস (অফলাইন)",
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface)
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                TafsirSource.values().forEach { src ->
-                    FilterChip(
-                        selected = state.source == src,
-                        onClick = { vm.changeSource(src) },
-                        label = { Text(src.displayNameBn, style = MaterialTheme.typography.labelSmall) }
-                    )
-                }
-            }
-
-            // ─── Offline Translation Tafsir ───
+            // ─── Offline Tafsir ───
             if (state.tafsirText != null) {
+                Text("তাফসীর উৎস (অফলাইন)", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
                 Surface(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp),
+                    modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp),
                     color = MaterialTheme.colorScheme.surfaceVariant
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         if (state.isCached) {
-                            Text("✓ অফলাইনে সংরক্ষিত",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.primary)
+                            Text("✓ অফলাইনে সংরক্ষিত", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
                         }
-                        Text(state.tafsirText!!,
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurface)
+                        Text(state.tafsirText!!, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
                     }
                 }
             }
 
-            // ─── AI Explanation (Village Khotib Style) ───
-            Text(
-                text = "🤲 AI তাফসীর (খতিবের ভাষায়)",
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-
+            // ─── AI Explanation ───
+            Text("🤲 AI তাফসীর (খতিবের ভাষায়)", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
             if (state.isAILoading) {
                 Surface(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp),
+                    modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp),
                     color = MaterialTheme.colorScheme.surfaceVariant
                 ) {
-                    Column(
-                        modifier = Modifier.padding(32.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
+                    Column(modifier = Modifier.padding(32.dp), horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         CircularProgressIndicator()
-                        Text(
-                            text = "AI তাফসীর তৈরি করছে…",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Text(
-                            text = "গ্রামের খতিবের ভাষায় ব্যাখ্যা করা হচ্ছে",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.primary
-                        )
+                        Text("AI তাফসীর তৈরি করছে…", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
             }
-
             state.aiExplanation?.let { explanation ->
                 Surface(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(20.dp),
+                    modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(20.dp),
                     color = MaterialTheme.colorScheme.secondaryContainer
                 ) {
-                    Column(
-                        modifier = Modifier.padding(20.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(6.dp)
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(28.dp)
-                                    .clip(CircleShape)
-                                    .background(MaterialTheme.colorScheme.primary),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text(
-                                    text = "🤲",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = Color.White
-                                )
-                            }
-                            Text(
-                                text = "AI স্কলার",
-                                style = MaterialTheme.typography.labelMedium,
-                                fontWeight = FontWeight.SemiBold,
-                                color = MaterialTheme.colorScheme.onSecondaryContainer
-                            )
+                    Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(modifier = Modifier.size(28.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primary),
+                                contentAlignment = Alignment.Center) { Text("🤲", style = MaterialTheme.typography.labelSmall, color = Color.White) }
+                            Text("  AI স্কলার", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.onSecondaryContainer)
                         }
-                        Text(
-                            text = explanation,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSecondaryContainer
-                        )
+                        Text(explanation, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSecondaryContainer)
                     }
                 }
             }
-
-            // ─── No AI configured message ───
             if (state.aiExplanation == null && !state.isAILoading) {
                 Surface(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp),
+                    modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp),
                     color = MaterialTheme.colorScheme.surfaceVariant
                 ) {
-                    Text(
-                        text = "AI তাফসীর ব্যবহার করতে Settings এ গিয়ে API key যোগ করুন",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.padding(16.dp)
-                    )
+                    Text("AI তাফসীর ব্যবহার করতে Settings এ API key যোগ করুন",
+                        style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center, modifier = Modifier.padding(16.dp))
+                }
+            }
+
+            // ─── Notes Section ───
+            if (showNoteEditor) {
+                Text("📝 নোট", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                Surface(
+                    modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp),
+                    color = MaterialTheme.colorScheme.surfaceVariant
+                ) {
+                    Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        OutlinedTextField(
+                            value = state.noteText,
+                            onValueChange = vm::updateNote,
+                            placeholder = { Text("এই আয়াত সম্পর্কে নোট লিখুন…") },
+                            modifier = Modifier.fillMaxWidth().height(120.dp),
+                            maxLines = 8, shape = RoundedCornerShape(12.dp)
+                        )
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                            if (state.isNoteSaved) {
+                                Text("✓ সংরক্ষিত", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
+                                Spacer(Modifier.width(8.dp))
+                            }
+                            Surface(
+                                shape = RoundedCornerShape(8.dp), color = MaterialTheme.colorScheme.primary
+                            ) {
+                                Text(
+                                    if (state.isNoteSaving) "সংরক্ষণ হচ্ছে…" else "সংরক্ষণ করুন",
+                                    modifier = Modifier.clickable(enabled = !state.isNoteSaving) { vm.saveNote() }
+                                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                                    style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, color = Color.White
+                                )
+                            }
+                        }
+                    }
+                }
+            } else if (state.noteText.isNotBlank()) {
+                Surface(
+                    modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp),
+                    color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f)
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text("📝 আপনার নোট", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onSecondaryContainer)
+                        Text(state.noteText, style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSecondaryContainer)
+                    }
                 }
             }
 
