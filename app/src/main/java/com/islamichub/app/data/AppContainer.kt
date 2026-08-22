@@ -18,6 +18,7 @@ import com.islamichub.app.data.remote.AladhanApi
 import com.islamichub.app.data.repo.AICacheRepository
 import com.islamichub.app.data.repo.AIService
 import com.islamichub.app.data.repo.AudioController
+import com.islamichub.app.data.repo.TranslationCacheService
 import com.islamichub.app.data.repo.AudioDownloadService
 import com.islamichub.app.data.repo.BackupRestoreService
 import com.islamichub.app.data.repo.BookmarkRepository
@@ -141,6 +142,7 @@ class AppContainer(internal val context: Context) {
 
     // v1.9.0 new services
     val audioDownloadService: AudioDownloadService by lazy { AudioDownloadService(context) }
+    val translationCache: TranslationCacheService by lazy { TranslationCacheService(context) }
     val backupRestoreService: BackupRestoreService by lazy {
         BackupRestoreService(
             context = context,

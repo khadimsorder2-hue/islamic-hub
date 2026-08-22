@@ -327,6 +327,34 @@ fun QuranReaderScreen(
                         }
                     }
 
+                    // ─── Offline Download Button ───
+                    if (state.surah != null) {
+                        item {
+                            val isCached = container.translationCache.isSurahCached(surahNumber, state.surah!!.ayahCount)
+                            Surface(
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(AppRadius.md),
+                                color = if (isCached) AppColors.success.copy(alpha = 0.15f) else MaterialTheme.colorScheme.secondaryContainer
+                            ) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable { vm.downloadForOffline() }
+                                        .padding(AppSpacing.md),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.Center
+                                ) {
+                                    Text(
+                                        if (isCached) "✓ অফলাইনে সংরক্ষিত" else "📥 অফলাইনে ডাউনলোড করুন",
+                                        style = MaterialTheme.typography.labelMedium,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = if (isCached) AppColors.success else MaterialTheme.colorScheme.onSecondaryContainer
+                                    )
+                                }
+                            }
+                        }
+                    }
+
                     // Surah header card with premium background
                     item {
                         PremiumHeroCard(

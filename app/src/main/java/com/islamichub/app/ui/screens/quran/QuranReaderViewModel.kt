@@ -11,6 +11,7 @@ import com.islamichub.app.data.model.Surah
 import com.islamichub.app.data.repo.AudioController
 import com.islamichub.app.data.repo.Bookmark
 import com.islamichub.app.data.repo.LastRead
+import com.islamichub.app.data.repo.TranslationCacheService
 
 data class QuranReaderUiState(
     val surah: Surah? = null,
@@ -270,6 +271,33 @@ class QuranReaderViewModel(
         if (translations == null || translations.isEmpty()) return fallback
         val idx = state.selectedTranslationIndex.coerceIn(0, translations.size - 1)
         return translations[idx].replace(Regex("<[^>]*>"), "")
+    }
+
+    /** Download surah translations for offline use */
+    fun downloadForOffline() {
+        viewModelScope.launch {
+            val surah = _state.value.surah ?: return@launch
+            try {
+                val response = container.quranComApi.getVersesByChapter(
+                    chapterNumber = surahNumber,
+                    translations = "163,161,213,162,84",
+                    perPage = 300
+                )
+                if (response.isSuccessful) {
+                    val verses = response.body()?.verses ?: return@launch
+n                    val cached = verses.map { v ->
+                        TranslationCacheService.CachedVerse(
+                            surah = surahNumber,
+                            ayah = v.verseNumber ?: return@map null,
+                            translations = v.getAllBanglaTranslations().toMap(),
+                            tafsirs = v.getAllBanglaTafsirs().toMap(),
+                            transliteration = v.getTransliteration()
+                        )
+                    }.filterNotNull()
+                    container.translationCache.cacheSurah(surahNumber, cached)
+                }
+            } catch (_: Exception) {}
+        }
     }
 
     override fun onCleared() {
