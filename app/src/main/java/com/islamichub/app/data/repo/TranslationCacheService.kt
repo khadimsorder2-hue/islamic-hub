@@ -15,8 +15,8 @@ class TranslationCacheService(private val context: Context) {
     data class CachedVerse(
         val surah: Int,
         val ayah: Int,
-        val translations: Map<String, String>, // translator name → text
-        val tafsirs: Map<String, String>,       // tafsir name → text
+        val translations: Map<String, String>,
+        val tafsirs: Map<String, String>,
         val transliteration: String?,
         val fetchedAt: Long = System.currentTimeMillis()
     )
@@ -24,9 +24,7 @@ class TranslationCacheService(private val context: Context) {
     fun getCachedVerse(surah: Int, ayah: Int): CachedVerse? {
         val file = File(cacheDir, "${surah}_$ayah.json")
         if (!file.exists()) return null
-        return try {
-            gson.fromJson(file.readText(), CachedVerse::class.java)
-        } catch (_: Exception) { null }
+        return try { gson.fromJson(file.readText(), CachedVerse::class.java) } catch (_: Exception) { null }
     }
 
     suspend fun cacheVerse(verse: CachedVerse) = withContext(Dispatchers.IO) {
@@ -35,8 +33,7 @@ class TranslationCacheService(private val context: Context) {
     }
 
     suspend fun cacheSurah(surah: Int, verses: List<CachedVerse>) = withContext(Dispatchers.IO) {
-        val dir = File(cacheDir, "surah_$surah")
-        dir.mkdirs()
+        val dir = File(cacheDir, "surah_$surah")"); dir.mkdirs()
         verses.forEach { v ->
             val file = File(dir, "${v.ayah}.json")
             file.writeText(gson.toJson(v))
@@ -49,12 +46,6 @@ class TranslationCacheService(private val context: Context) {
         return (1..ayahCount).count { File(dir, "$it.json").exists() }
     }
 
-    fun getCacheSize(): Long {
-        return cacheDir.walkTopDown().filter { it.isFile }.sumOf { it.length() }
-    }
-
-    fun clearCache() {
-        cacheDir.deleteRecursively()
-        cacheDir.mkdirs()
-    }
+    fun getCacheSize(): Long = cacheDir.walkTopDown().filter { it.isFile }.sumOf { it.length() }
+    fun clearCache() { cacheDir.deleteRecursively(); cacheDir.mkdirs() }
 }
