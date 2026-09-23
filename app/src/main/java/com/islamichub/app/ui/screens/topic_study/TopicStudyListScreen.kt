@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -58,6 +59,7 @@ import androidx.compose.ui.unit.sp
 import com.islamichub.app.data.AppContainer
 import com.islamichub.app.ui.components.PremiumHeroCard
 import com.islamichub.app.ui.components.loadAssetImage
+import com.islamichub.app.ui.theme.staggerEntrance
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -109,8 +111,9 @@ fun TopicStudyListScreen(
                             Icon(Icons.Filled.AccountTree, contentDescription = null,
                                 tint = Color.White.copy(alpha = 0.95f), modifier = Modifier.size(16.dp))
                             val topicCount = if (state.isLoading) "…" else state.topics.size.toString()
-                            val ayahCount = if (state.isLoading) "…" else state.topics.sumOf { it.allAyahs.size }.toString()
-                            Text("  ${topicCount}টি বিষয় • ${ayahCount}+ আয়াত",
+                            // v5.3.1 — curated ayahs are static; keyword-engine topics
+                            // resolve on demand, so show the full-Quran coverage instead
+                            Text("  ${topicCount}টি বিষয় • ৬,২৩৬ আয়াত কীওয়ার্ড স্ক্যান",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = Color.White.copy(alpha = 0.95f))
                             Spacer(Modifier.width(12.dp))
@@ -121,7 +124,11 @@ fun TopicStudyListScreen(
                                         .background(Color.White.copy(alpha = 0.15f))
                                         .padding(horizontal = 8.dp, vertical = 4.dp)
                                 ) {
-                                    Text(if (src == com.islamichub.app.data.repo.TopicSource.API) "API লাইভ" else "অফলাইন",
+                                    Text(when (src) {
+                                        com.islamichub.app.data.repo.TopicSource.API -> "API লাইভ"
+                                        com.islamichub.app.data.repo.TopicSource.ENGINE -> "কীওয়ার্ড ইঞ্জিন"
+                                        else -> "অফলাইন"
+                                    },
                                         style = MaterialTheme.typography.labelSmall,
                                         color = Color.White)
                                 }
@@ -237,9 +244,14 @@ fun TopicStudyListScreen(
                     }
                 }
 
-                // Topics grid
-                items(state.filteredTopics) { topic ->
-                    TopicCard(topic = topic, context = context) { onTopicClick(topic.slug) }
+                // Topics grid (stagger entrance, v5.3.1)
+                itemsIndexed(state.filteredTopics) { idx, topic ->
+                    TopicCard(
+                        topic = topic,
+                        context = context,
+                        ayahCount = vm.ayahCountOf(topic),
+                        modifier = Modifier.staggerEntrance(idx)
+                    ) { onTopicClick(topic.slug) }
                 }
 
                 // Empty state
@@ -291,14 +303,20 @@ private fun DomainChip(label: String, isSelected: Boolean, color: Color, onClick
 }
 
 @Composable
-private fun TopicCard(topic: ThematicTopic, context: android.content.Context, onClick: () -> Unit) {
+private fun TopicCard(
+    topic: ThematicTopic,
+    context: android.content.Context,
+    ayahCount: Int,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
     val bgBitmap = remember(topic.slug) { loadAssetImage(context, "img/premium-quran-bg.webp") }
     val accent = Color(topic.accentColor)
     // Get domain color (more colorful variety)
     val domainAccent = domainColor(topic.domain)
 
     Card(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(24.dp))
             .clickable(onClick = onClick),
@@ -376,7 +394,8 @@ private fun TopicCard(topic: ThematicTopic, context: android.content.Context, on
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Filled.MenuBook, contentDescription = null,
                             tint = Color.White, modifier = Modifier.size(16.dp))
-                        Text("  ${topic.allAyahs.size} আয়াত",
+                        Text(
+                            if (ayahCount > 0) "  $ayahCount আয়াত" else "  কীওয়ার্ড ইঞ্জিন",
                             style = MaterialTheme.typography.labelMedium,
                             color = Color.White)
                         Spacer(Modifier.width(12.dp))

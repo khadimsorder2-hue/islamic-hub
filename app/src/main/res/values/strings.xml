@@ -168,6 +168,7 @@
     <string name="settings_reciter">Reciter</string>
     <string name="settings_auto_pause">Auto pause timer</string>
     <string name="settings_bn_audio">Bangla meaning audio</string>
+    <string name="settings_bn_audio_coming_soon">Coming soon — Bangla recitation is not available yet. This toggle currently has no effect.</string>
     <string name="settings_word_audio">Word-by-word audio</string>
     <string name="settings_tafsir">Tafsir</string>
     <string name="settings_tafsir_source">Default tafsir source</string>

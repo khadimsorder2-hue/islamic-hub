@@ -39,13 +39,37 @@ class TopicStudyRepository(
 
     private val surahCache = mutableMapOf<Int, Surah>()
 
+    // v5.3.1 — keyword-driven thematic engine over the bundled full Quran.
+    // Turns 7 curated topics into 45 topics, each fully loaded from all
+    // 6,236 ayahs (offline) via +3 Bangla / +2 Arabic keyword scoring.
+    private val thematicEngine = ThematicQuranEngine(quranAssetSource)
+
     /**
-     * List all topics — returns bundled topics instantly.
-     * (Topic list is always from bundled data — API provides verse-level data,
-     * not topic-level categorization.)
+     * List all topics — curated (hand-written tafsir) first, then the
+     * keyword-driven catalog (ayaths resolved on demand in getTopicDetail).
      */
     suspend fun listTopics(): TopicListResult = withContext(Dispatchers.IO) {
-        fetchBundledTopics()
+        val curated = com.islamichub.app.ui.screens.topic_study.TopicStudyData.topics
+        val dynamic = QuranTopicCatalog.topics.map { it.toShellThematicTopic() }
+        TopicListResult(curated + dynamic, TopicSource.ENGINE)
+    }
+
+    /** Ayah counts for every dynamic topic (single Quran scan, memoized). */
+    suspend fun dynamicTopicCounts(): Map<String, Int> =
+        thematicEngine.allCounts()
+
+    /** True when the slug belongs to the keyword-driven catalog. */
+    fun isDynamicTopic(slug: String): Boolean =
+        QuranTopicCatalog.get(slug) != null
+
+    /**
+     * Find a topic anywhere (curated dataset OR dynamic catalog shell).
+     * Shells have empty ayah lists — use getTopicDetail to resolve them.
+     */
+    fun findTopic(slug: String): com.islamichub.app.ui.screens.topic_study.ThematicTopic? {
+        val curated = com.islamichub.app.ui.screens.topic_study.TopicStudyData.getTopic(slug)
+        if (curated != null) return curated
+        return QuranTopicCatalog.get(slug)?.toShellThematicTopic()
     }
 
     /**
@@ -60,18 +84,24 @@ class TopicStudyRepository(
     /**
      * Get topic detail with all ayahs resolved.
      *
-     * For each ayah reference:
-     *  1. Try Quran.com API for verse (gets Arabic + Bangla + transliteration)
-     *  2. Fall back to bundled Quran if API fails
-     *  3. Merge: API transliteration + bundled tafsir
+     * Curated topics (7): ayah refs are static, text resolved from
+     * bundled Quran + enriched with Quran.com API when online.
+     *
+     * Dynamic catalog topics (v5.3.1): ThematicQuranEngine scores the
+     * whole bundled Quran against the topic keywords and every matching
+     * ayah is returned offline (key ayahs = top 5 by relevance; online
+     * API enrichment is applied to the key ayahs only, best effort).
      */
     suspend fun getTopicDetail(slug: String): TopicDetailResult = withContext(Dispatchers.IO) {
-        val bundled = com.islamichub.app.ui.screens.topic_study.TopicStudyData.getTopic(slug)
-        val bundledResult = bundled?.let { resolveBundledTopic(it) }
-
-        if (bundled == null) {
+        val curated = com.islamichub.app.ui.screens.topic_study.TopicStudyData.getTopic(slug)
+        if (curated == null) {
+            val dynamicTopic = QuranTopicCatalog.get(slug)
+            if (dynamicTopic != null) {
+                return@withContext getDynamicTopicDetail(dynamicTopic)
+            }
             return@withContext TopicDetailResult.Error("Topic not found")
         }
+        val bundledResult = resolveBundledTopic(curated)
 
         // Try to enrich with Quran.com API data (transliteration + online translations)
         try {
@@ -92,6 +122,102 @@ class TopicStudyRepository(
             // API failed — use bundled-only result
             bundledResult ?: TopicDetailResult.Error("Topic not available offline")
         }
+    }
+
+    /**
+     * Keyword-engine topic detail: score the full bundled Quran, build the
+     * ThematicTopic (key = top-5 relevant), resolve text offline, then
+     * best-effort enrich the key ayahs via Quran.com API.
+     */
+    private suspend fun getDynamicTopicDetail(
+        topic: QuranKeywordTopic
+    ): TopicDetailResult {
+        val scored = thematicEngine.scoreTopic(topic)
+        if (scored.isEmpty()) {
+            return TopicDetailResult.Error(
+                "এই বিষয়ের আয়াত অফলাইন কুরআন ডেটাসেট থেকে মেলানো যায়নি"
+            )
+        }
+
+        val surahNames = surahNameMap()
+        val thematic = com.islamichub.app.ui.screens.topic_study.ThematicTopic(
+            slug = topic.slug,
+            nameBn = topic.nameBn,
+            nameEn = topic.nameEn,
+            nameAr = topic.nameAr,
+            domain = topic.domain,
+            categoryBn = topic.categoryBn,
+            overviewBn = topic.overviewBn,
+            keyAyahs = scored.take(KEY_AYAH_COUNT).map { it.toTopicAyahRef() },
+            allAyahs = scored.map { it.toTopicAyahRef() },
+            relatedTopics = emptyList(),
+            relatedStories = emptyList(),
+            relatedConcepts = topic.relatedConcepts,
+            accentColor = topic.accentColor
+        )
+
+        val resolvedAll = scored.map { s ->
+            com.islamichub.app.ui.screens.topic_study.ResolvedAyah(
+                surahNumber = s.surahNumber,
+                ayahNumber = s.ayahNumber,
+                surahNameBn = surahNames[s.surahNumber]?.first ?: "",
+                surahNameEn = surahNames[s.surahNumber]?.second ?: "",
+                arabic = s.arabic,
+                bengali = s.bengali,
+                english = s.english,
+                tafsirBn = s.matchedKeywordsNote(),
+                relation = com.islamichub.app.ui.screens.topic_study.AyahTopicRelation.THEMATIC,
+                reference = "${s.surahNumber}:${s.ayahNumber}"
+            )
+        }
+        val resolvedKey = resolvedAll.take(KEY_AYAH_COUNT).map { it }
+
+        // Best-effort: refresh the key ayahs from the online API
+        val enrichedKey = try {
+            resolvedKey.map { r ->
+                val parts = r.reference.split(":")
+                val s = parts.getOrNull(0)?.toIntOrNull()
+                val a = parts.getOrNull(1)?.toIntOrNull()
+                if (s != null && a != null) {
+                    resolveAyahFromApi(s, a, r.tafsirBn, r.relation)
+                } else r
+            }
+        } catch (_: Exception) {
+            resolvedKey
+        }
+
+        return TopicDetailResult.Success(
+            topic = thematic,
+            resolvedAyahs = resolvedAll,
+            source = TopicSource.ENGINE,
+            keyAyahs = enrichedKey
+        )
+    }
+
+    private fun ThematicQuranEngine.ScoredAyah.toTopicAyahRef():
+        com.islamichub.app.ui.screens.topic_study.TopicAyahRef =
+        com.islamichub.app.ui.screens.topic_study.TopicAyahRef(
+            surahNumber = surahNumber,
+            ayahNumber = ayahNumber,
+            tafsirBn = matchedKeywordsNote(),
+            relation = com.islamichub.app.ui.screens.topic_study.AyahTopicRelation.THEMATIC
+        )
+
+    /** Human-readable note of which keywords matched + relevance score. */
+    private fun ThematicQuranEngine.ScoredAyah.matchedKeywordsNote(): String {
+        val kws = matchedKeywords.take(4).joinToString(" • ")
+        return "কীওয়ার্ড মিল: $kws  (গুরুত্ব স্কোর $relevanceScore)\n" +
+            "থিম ইঞ্জিন সম্পূর্ণ কুরআনের ৬,২৩৬ আয়াতের মধ্যে কীওয়ার্ড মিলিয়ে এই আয়াতটি বেছে নিয়েছে।"
+    }
+
+    /** surahNumber → (Bangla name, English name) map, built once. */
+    private var surahNameMemo: Map<Int, Pair<String, String>>? = null
+    private suspend fun surahNameMap(): Map<Int, Pair<String, String>> {
+        surahNameMemo?.let { return it }
+        val meta = try { quranAssetSource?.loadMeta() } catch (_: Exception) { null }
+        val map = meta?.associate { it.number to (it.nameBengali to it.nameEnglish) } ?: emptyMap()
+        surahNameMemo = map
+        return map
     }
 
     /**
@@ -208,7 +334,36 @@ class TopicStudyRepository(
         if (surah != null) surahCache[number] = surah
         return surah
     }
+
+    companion object {
+        /** How many top-relevant ayahs are highlighted as "key" in dynamic topics */
+        const val KEY_AYAH_COUNT = 5
+    }
 }
+
+// ─── Dynamic-topic shell conversion ────────────────────────────────────────
+
+/**
+ * Catalog topic → ThematicTopic shell (empty ayah lists; text is resolved
+ * on demand by ThematicQuranEngine when the user opens the topic).
+ */
+fun QuranKeywordTopic.toShellThematicTopic():
+    com.islamichub.app.ui.screens.topic_study.ThematicTopic =
+    com.islamichub.app.ui.screens.topic_study.ThematicTopic(
+        slug = slug,
+        nameBn = nameBn,
+        nameEn = nameEn,
+        nameAr = nameAr,
+        domain = domain,
+        categoryBn = categoryBn,
+        overviewBn = overviewBn,
+        keyAyahs = emptyList(),
+        allAyahs = emptyList(),
+        relatedTopics = emptyList(),
+        relatedStories = emptyList(),
+        relatedConcepts = relatedConcepts,
+        accentColor = accentColor
+    )
 
 // ─── Result types ────────────────────────────────────────────────────────────
 
@@ -229,5 +384,6 @@ sealed class TopicDetailResult {
 
 enum class TopicSource(val label: String) {
     API("Quran.com API"),
-    BUNDLED_FALLBACK("Bundled verified dataset (offline)")
+    BUNDLED_FALLBACK("Bundled verified dataset (offline)"),
+    ENGINE("Keyword Engine — full Quran, offline")
 }

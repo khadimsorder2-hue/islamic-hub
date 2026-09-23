@@ -168,6 +168,7 @@
     <string name="settings_reciter">কারী</string>
     <string name="settings_auto_pause">অটো পজ টাইমার</string>
     <string name="settings_bn_audio">বাংলা অর্থ অডিও</string>
+    <string name="settings_bn_audio_coming_soon">শীঘ্রই আসছে — বাংলা অর্থ অডিও এখনো সহজলভ্য নয়। এই টগল বর্তমানে কোনো কাজ করে না।</string>
     <string name="settings_word_audio">শব্দে শব্দে অডিও</string>
     <string name="settings_tafsir">তাফসীর</string>
     <string name="settings_tafsir_source">ডিফল্ট তাফসীর উৎস</string>

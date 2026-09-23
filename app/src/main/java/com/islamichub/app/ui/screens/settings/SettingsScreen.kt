@@ -288,8 +288,13 @@ fun SettingsScreen(
                     }
                     Spacer(8.dp)
 
+                    // Honesty fix (v5.3.1): the Bangla meaning audio CDN/AI pipeline is
+                    // not implemented yet — the old toggle silently did nothing and reset
+                    // itself, confusing users. It now shows an explicit "coming soon" note
+                    // instead of pretending to work.
                     ToggleRow(
                         label = stringResource(R.string.settings_bn_audio),
+                        sublabel = stringResource(R.string.settings_bn_audio_coming_soon),
                         checked = state.banglaAudioEnabled,
                         onCheckedChange = vm::setBanglaAudioEnabled
                     )
@@ -731,7 +736,8 @@ private fun SettingsSection(
 private fun ToggleRow(
     label: String,
     checked: Boolean,
-    onCheckedChange: (Boolean) -> Unit
+    onCheckedChange: (Boolean) -> Unit,
+    sublabel: String? = null
 ) {
     Row(
         modifier = Modifier
@@ -741,11 +747,20 @@ private fun ToggleRow(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurface
-        )
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            if (sublabel != null) {
+                Text(
+                    text = sublabel,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
         Switch(checked = checked, onCheckedChange = onCheckedChange)
     }
 }

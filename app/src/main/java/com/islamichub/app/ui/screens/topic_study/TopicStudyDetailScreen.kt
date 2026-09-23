@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -67,7 +68,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.islamichub.app.data.AppContainer
+import com.islamichub.app.data.repo.QuranTopicCatalog
+import com.islamichub.app.data.repo.toShellThematicTopic
 import com.islamichub.app.ui.components.loadAssetImage
+import com.islamichub.app.ui.theme.staggerEntrance
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -225,27 +229,75 @@ fun TopicStudyDetailScreen(
             item {
                 SectionHeader("📖 QURAN", "মূল আয়াত", accent)
             }
-            items(state.resolvedKeyAyahs) { ayah ->
+            itemsIndexed(state.resolvedKeyAyahs) { idx, ayah ->
                 AyahCard(
                     ayah = ayah,
                     accent = accent,
                     isExpanded = state.expandedAyahRef == ayah.reference,
-                    onToggle = { vm.toggleAyahExpand(ayah.reference) }
+                    onToggle = { vm.toggleAyahExpand(ayah.reference) },
+                    modifier = Modifier.staggerEntrance(idx, enabled = state.resolvedKeyAyahs.size <= 20)
                 )
             }
 
             // ─── TAFSIR (all ayahs with tafsir) ────────────────
             if (state.resolvedAllAyahs.size > state.resolvedKeyAyahs.size) {
                 item {
-                    SectionHeader("📚 TAFSIR", "সকল আয়াত ও তাফসির", accent)
+                    Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                        SectionHeader("📚 TAFSIR", "সকল আয়াত ও তাফসির", accent, modifier = Modifier.weight(1f))
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(accent.copy(alpha = 0.12f))
+                                .padding(horizontal = 10.dp, vertical = 4.dp)
+                        ) {
+                            Text(
+                                "মোট ${state.resolvedAllAyahs.size} আয়াত",
+                                style = MaterialTheme.typography.labelMedium,
+                                color = accent,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
                 }
-                items(state.resolvedAllAyahs) { ayah ->
+                items(state.resolvedAllAyahs.take(state.visibleAyahs)) { ayah ->
                     AyahCard(
                         ayah = ayah,
                         accent = accent,
                         isExpanded = state.expandedAyahRef == ayah.reference,
                         onToggle = { vm.toggleAyahExpand(ayah.reference) }
                     )
+                }
+                // v5.3.1 — load-more for large keyword-engine result sets
+                if (state.hasMoreAyahs) {
+                    item {
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(16.dp))
+                                .clickable { vm.loadMoreAyahs() },
+                            shape = RoundedCornerShape(16.dp),
+                            colors = CardDefaults.cardColors(
+                                containerColor = accent.copy(alpha = 0.08f)
+                            )
+                        ) {
+                            Column(
+                                modifier = Modifier.fillMaxWidth().padding(16.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Text(
+                                    "আরও ${state.resolvedAllAyahs.size - state.visibleAyahs}টি আয়াত দেখুন",
+                                    style = MaterialTheme.typography.titleSmall,
+                                    color = accent,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Text(
+                                    "${state.visibleAyahs} / ${state.resolvedAllAyahs.size} দেখানো হচ্ছে",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                    }
                 }
             }
 
@@ -267,7 +319,10 @@ fun TopicStudyDetailScreen(
                             verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             topic.relatedTopics.forEach { slug ->
+                                // v5.3.1 — look up related topics in BOTH the curated
+                                // dataset and the keyword-driven catalog
                                 val related = TopicStudyData.getTopic(slug)
+                                    ?: QuranTopicCatalog.get(slug)?.toShellThematicTopic()
                                 if (related != null) {
                                     Row(
                                         modifier = Modifier
@@ -294,9 +349,16 @@ fun TopicStudyDetailScreen(
                                                 Text(related.nameBn,
                                                     style = MaterialTheme.typography.titleSmall,
                                                     fontWeight = FontWeight.Bold)
-                                                Text("${related.allAyahs.size} আয়াত • ${related.categoryBn}",
-                                                    style = MaterialTheme.typography.labelSmall,
-                                                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                                // Shell topics have no resolved count yet — show category only
+                                                if (related.allAyahs.isNotEmpty()) {
+                                                    Text("${related.allAyahs.size} আয়াত • ${related.categoryBn}",
+                                                        style = MaterialTheme.typography.labelSmall,
+                                                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                                } else {
+                                                    Text(related.categoryBn,
+                                                        style = MaterialTheme.typography.labelSmall,
+                                                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                                }
                                             }
                                         }
                                         Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null,
@@ -420,9 +482,11 @@ fun TopicStudyDetailScreen(
 }
 
 @Composable
-private fun SectionHeader(label: String, titleBn: String, accent: Color) {
+private fun SectionHeader(label: String, titleBn: String, accent: Color, modifier: Modifier = Modifier) {
     Row(
-        modifier = Modifier.fillMaxWidth().padding(top = 12.dp, bottom = 4.dp),
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(top = 12.dp, bottom = 4.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Box(
@@ -450,10 +514,11 @@ private fun AyahCard(
     ayah: ResolvedAyah,
     accent: Color,
     isExpanded: Boolean,
-    onToggle: () -> Unit
+    onToggle: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     Card(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(20.dp))
             .clickable(onClick = onToggle),
