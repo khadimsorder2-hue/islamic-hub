@@ -2,6 +2,35 @@
 
 All notable changes to the Islamic Hub project.
 
+## [v5.3.1] - 2025-09-23
+
+### 🐛 Critical Bug Fixes
+- **Quran audio wrong-ayah bug (SURAH 23+)** — `AudioController.kt` & `AudioDownloadService.kt` had a hardcoded ayah-count table missing Surah 23 (Al-Muminun, 118 ayahs). Every surah from 23 onward resolved to the wrong global ayah index → wrong surah/ayah audio played, Khatam playback misaligned, and Surah 114 crashed out-of-bounds. Both files now share one verified `AYAH_COUNTS` constant (114 entries, sum = 6236).
+- **Hijri calendar month navigation** — `CalendarViewModel.loadMonth()` ignored the month offset (always computed from today) and assumed fixed 29-day hijri months, so navigating months showed increasingly wrong dates. Now uses Aladhan `calendar/{year}/{month}` API for real per-day hijri dates (`PrayerRepository.getHijriMonthCalendar()`), with a labeled "আনুমানিক" offline fallback.
+- **Bangla audio toggle honesty fix** — the Settings toggle silently did nothing (no Bangla audio CDN exists) and reset itself. It now shows an explicit "শীঘ্রই আসছে" note instead of pretending to work.
+
+### 🆕 New Features
+- **Thematic Quran keyword engine** — Topic Study grew from 7 hand-curated topics to **45 topics (7 curated + 38 keyword-driven)**. New `ThematicQuranEngine` scans the full bundled Quran (6,236 ayahs, offline) with Bangla/Arabic keyword scoring (+3/+2, mirrors the Hadith engine), sorted by relevance, capped at 400 ayahs/topic with memoized single-pass counts. `FULL_RESOURCE.md`'s "338+ topics" claim now honestly reflects reality.
+- **Topic Study pagination + counts** — detail pages render engine results 30/page with a "মোট X আয়াত" badge, load-more card, and key-ayah (top-5) online enrichment.
+- **Hadith topics 12 → 32** — 20 new themes (খাতমে নবুয়ত, তওবা, দোয়া, রিয়া, শুকর, জুমুআ, মসজিদ, সাহাবীগণ, রিবা, পিতা-মাতা, সন্তান তরবিয়ত, প্রতিবেশীর হক, মৃত্যুর স্মরণ, দুনিয়া ও আখিরাত ইত্যাদি) over the same 24,424-hadith keyword scoring.
+- **Qada dashboard UI** — log-date picker (past dates, retroactive logging), দিন/সপ্তাহ/মাস/বছর tab dashboard with stacked missed-vs-completed bars, prayer filter chips, bottom-sheet breakdown, and hero color-shift (red→amber→green) as outstanding drops.
+- **Fasting dashboard UI** — past-date fast logging via date picker, period history dashboard with type-colored stacked bars (Ramadan gold / Nafl blue / Qada red / Sunnah green), animated streak counters.
+- **Khatam history section** — permanent khatam history timeline ("আমার খতম ইতিহাস"): total completed (count-up animation), average days, per-khatam cards with "রমজান গতি" badge, year-in-review bars, guarded history-clear dialog. `reset()` now preserves history; dedicated `clearHistory()` only wipes history explicitly.
+- **Calendar Qada/Roza dot indicators** — day cells show red dots for qada entries and green dots for completed fasts, driven by live DataStore-backed tracker data for the displayed month.
+- **Premium Animation Toolkit** (`ui/theme/PremiumAnimations.kt`) — shared reusable motion system: `staggerEntrance` (list/grid stagger fade+slide), `premiumTap` (scale-bounce + haptic), `PremiumCountUpText`, `premiumShimmer` skeleton, `premiumPulseHighlight` (playing-ayah glow), `PremiumProgressBar`, `premiumGlow`.
+
+### 🎨 Premium UI Pass (priority screens)
+- **QuranReaderScreen** — playing ayah pulses with a smooth highlight tint; play button glows while reciting.
+- **HomeScreen** — greeting entrance animation, next-prayer progress bar (between prev/next prayer), staggered quick-access grid.
+- **OnboardingScreen** — page-change re-entrance animation, springy premium tap on Next/Get-started.
+- **QiblaScreen** — compass needle now rotates via spring physics with shortest-path wrap handling (no more jumpy 0°/360° spin-back).
+- **PrayerScreen** — next-prayer progress card with animated progress bar, staggered prayer rows.
+
+### 🔧 Architecture
+- `ThematicQuranEngine` + `QuranTopicCatalog` (data/repo) — keyword-scoring engine & 38-topic catalog; `TopicSource.ENGINE` added.
+- `KhatamViewModel` — first ViewModel for the khatam screen (combine of 5 DataStore flows into one UI state).
+- `QadaRepository`/`FastingRepository` period-stat APIs + date-parameterized logging; `KhatamRepository` permanent history.
+
 ## [v5.3.0] - 2025-08-22
 
 ### 🆕 New Features

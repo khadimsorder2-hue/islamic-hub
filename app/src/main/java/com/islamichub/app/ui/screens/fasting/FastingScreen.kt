@@ -2,19 +2,19 @@ package com.islamichub.app.ui.screens.fasting
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -32,6 +32,8 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -40,8 +42,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SelectableDates
+import androidx.compose.material3.Tab
+import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -55,13 +61,45 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.islamichub.app.data.AppContainer
 import com.islamichub.app.ui.components.PremiumHeroCard
+import com.islamichub.app.ui.theme.AppColors
+import com.islamichub.app.ui.theme.AppRadius
+import com.islamichub.app.ui.theme.AppSpacing
+import com.islamichub.app.ui.theme.PremiumCountUpText
+import com.islamichub.app.ui.theme.premiumTap
+import com.islamichub.app.ui.theme.staggerEntrance
 import java.text.SimpleDateFormat
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 import java.util.Date
 import java.util.Locale
+import java.util.TimeZone
+
+/** Stacked-bar color per fast type (others → gray). */
+private fun fastTypeColor(type: FastType): Color = when (type) {
+    FastType.RAMADAN -> AppColors.brandSecondary   // রমজান — সোনালি 0xFFC9A34E
+    FastType.NAFL -> AppColors.info                // নফল — নীল 0xFF1565C0
+    FastType.QADA -> AppColors.error               // কাযা — লাল 0xFFC62828
+    FastType.SUNNAH -> AppColors.success           // সুন্নত — সবুজ 0xFF2E7D32
+    else -> Color(0xFF9E9E9E)                      // অন্যান্য — ধূসর
+}
+
+/** Stable display order for the type segments of the history bars. */
+private val fastBarOrder = listOf(FastType.RAMADAN, FastType.QADA, FastType.SUNNAH, FastType.NAFL)
+
+private fun fastSegments(byType: Map<FastType, Int>): List<Pair<FastType, Int>> {
+    val ordered = fastBarOrder.mapNotNull { type ->
+        byType[type]?.takeIf { it > 0 }?.let { type to it }
+    }
+    val rest = byType.entries
+        .filter { it.key !in fastBarOrder && it.value > 0 }
+        .map { it.key to it.value }
+    return ordered + rest
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -82,7 +120,9 @@ fun FastingScreen(
         ) {
             AddFastSheet(
                 selectedType = state.selectedType,
+                selectedLogDate = state.selectedLogDate,
                 onSelect = vm::selectType,
+                onSelectLogDate = vm::selectLogDate,
                 onConfirm = vm::addTodayFast,
                 onDismiss = vm::hideAddSheet
             )
@@ -189,10 +229,39 @@ fun FastingScreen(
                         StatRow("সুন্নত ও নফল", state.stats.allNafl.toString(), Color(0xFF00ACC1)),
                         StatRow("কাযা", state.stats.qadaFasts.toString(), Color(0xFFEF6C00)),
                         StatRow("এ মাসে", state.stats.thisMonthCount.toString(), Color(0xFF7E57C2))
-                    ).forEach { row ->
-                        StatCardMini(row)
+                    ).forEachIndexed { index, row ->
+                        StatCardMini(row, modifier = Modifier.staggerEntrance(index))
                     }
                 }
+            }
+
+            // NEW: history dashboard — period tabs + type-stacked bars
+            item {
+                Column(verticalArrangement = Arrangement.spacedBy(AppSpacing.md)) {
+                    Text("রোজার ইতিহাস",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(top = 8.dp))
+                    val periods = listOf(FastPeriod.DAY, FastPeriod.WEEK, FastPeriod.MONTH, FastPeriod.YEAR)
+                    val periodNames = listOf("দিন", "সপ্তাহ", "মাস", "বছর")
+                    TabRow(selectedTabIndex = periods.indexOf(state.selectedPeriod).coerceAtLeast(0)) {
+                        periods.forEachIndexed { index, period ->
+                            Tab(
+                                selected = state.selectedPeriod == period,
+                                onClick = { vm.selectPeriod(period) },
+                                text = { Text(periodNames[index]) }
+                            )
+                        }
+                    }
+                    if (state.periodStats.isEmpty()) {
+                        Text("এই সময়কালে কোনো রোজার রেকর্ড নেই।",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
+            }
+            itemsIndexed(state.periodStats) { index, stat ->
+                FastHistoryRow(stat = stat, modifier = Modifier.staggerEntrance(index))
             }
 
             // Recent entries
@@ -218,8 +287,11 @@ fun FastingScreen(
                     }
                 }
             } else {
-                items(state.recentEntries) { entry ->
-                    FastEntryRow(entry) { vm.removeFast(entry.date, entry.type) }
+                itemsIndexed(state.recentEntries) { index, entry ->
+                    FastEntryRow(
+                        entry = entry,
+                        modifier = Modifier.staggerEntrance(index)
+                    ) { vm.removeFast(entry.date, entry.type) }
                 }
             }
 
@@ -232,19 +304,19 @@ fun FastingScreen(
             }
             item {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    QuickAddRow("আইয়ামে বিজ (১৩, ১৪, ১৫ তারিখ)", "সুন্নত মুয়াক্কাদা", Color(0xFF00ACC1)) {
+                    QuickAddRow("আইয়ামে বিজ (১৩, ১৪, ১৫ তারিখ)", "সুন্নত মুয়াক্কাদা", Color(0xFF00ACC1), Modifier.staggerEntrance(0)) {
                         vm.addFastToday(FastType.SUNNAH)
                     }
-                    QuickAddRow("সোম ও বৃহস্পতিবার", "প্রিয় দিন", Color(0xFF3949AB)) {
+                    QuickAddRow("সোম ও বৃহস্পতিবার", "প্রিয় দিন", Color(0xFF3949AB), Modifier.staggerEntrance(1)) {
                         vm.addFastToday(FastType.MON_THU)
                     }
-                    QuickAddRow("শাওয়ালের ৬টি রোজা", "রমজানের ৩০ = সারাজীবন", Color(0xFF2E7D32)) {
+                    QuickAddRow("শাওয়ালের ৬টি রোজা", "রমজানের ৩০ = সারাজীবন", Color(0xFF2E7D32), Modifier.staggerEntrance(2)) {
                         vm.addFastToday(FastType.SHAWWAL)
                     }
-                    QuickAddRow("আশুরা (১০ মুহররম)", "বড় ফজিলত", Color(0xFF8D6E63)) {
+                    QuickAddRow("আশুরা (১০ মুহররম)", "বড় ফজিলত", Color(0xFF8D6E63), Modifier.staggerEntrance(3)) {
                         vm.addFastToday(FastType.ASHURA)
                     }
-                    QuickAddRow("আরাফাহ (৯ যিলহজ)", "গত বছরের-আগামী বছরের গুনাহ মাফ", Color(0xFF7E8CE0)) {
+                    QuickAddRow("আরাফাহ (৯ যিলহজ)", "গত বছরের-আগামী বছরের গুনাহ মাফ", Color(0xFF7E8CE0), Modifier.staggerEntrance(4)) {
                         vm.addFastToday(FastType.ARAFAH)
                     }
                 }
@@ -349,7 +421,14 @@ private fun StreakBanner(currentStreak: Int, longestStreak: Int) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Filled.LocalFireDepartment, contentDescription = null,
                             tint = Color.White, modifier = Modifier.size(28.dp))
-                        Text("  $currentStreak দিন",
+                        Spacer(Modifier.size(6.dp))
+                        PremiumCountUpText(
+                            targetValue = currentStreak.toFloat(),
+                            format = { it.toInt().toString() },
+                            style = MaterialTheme.typography.headlineSmall,
+                            color = Color.White
+                        )
+                        Text(" দিন",
                             style = MaterialTheme.typography.headlineSmall,
                             fontWeight = FontWeight.Bold, color = Color.White)
                     }
@@ -361,7 +440,14 @@ private fun StreakBanner(currentStreak: Int, longestStreak: Int) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Filled.TrendingUp, contentDescription = null,
                             tint = Color.White.copy(alpha = 0.9f), modifier = Modifier.size(20.dp))
-                        Text("  $longestStreak দিন",
+                        Spacer(Modifier.size(6.dp))
+                        PremiumCountUpText(
+                            targetValue = longestStreak.toFloat(),
+                            format = { it.toInt().toString() },
+                            style = MaterialTheme.typography.titleLarge,
+                            color = Color.White
+                        )
+                        Text(" দিন",
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.SemiBold, color = Color.White)
                     }
@@ -377,9 +463,9 @@ private fun StreakBanner(currentStreak: Int, longestStreak: Int) {
 private data class StatRow(val label: String, val value: String, val color: Color)
 
 @Composable
-private fun StatCardMini(row: StatRow) {
+private fun StatCardMini(row: StatRow, modifier: Modifier = Modifier) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(14.dp),
         colors = CardDefaults.cardColors(containerColor = row.color.copy(alpha = 0.1f))
     ) {
@@ -403,10 +489,52 @@ private fun StatCardMini(row: StatRow) {
     }
 }
 
+/** One history-dashboard row: label + type-stacked bar + type legend. */
 @Composable
-private fun FastEntryRow(entry: FastEntry, onRemove: () -> Unit) {
+private fun FastHistoryRow(stat: FastPeriodStat, modifier: Modifier = Modifier) {
+    val segments = remember(stat.periodKey) { fastSegments(stat.byType) }
+    val legend = remember(stat.periodKey) {
+        segments.joinToString(" • ") { "${it.first.bangla} ${it.second}" }
+    }
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(AppRadius.md),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+    ) {
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(AppSpacing.md),
+            verticalArrangement = Arrangement.spacedBy(AppSpacing.sm)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(stat.label,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface)
+                Text("রোজা ${stat.count} টি",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            StackedBarRow(
+                segments = segments.map { fastTypeColor(it.first) to it.second.toFloat() },
+                modifier = Modifier.fillMaxWidth()
+            )
+            if (legend.isNotBlank()) {
+                Text(legend,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        }
+    }
+}
+
+@Composable
+private fun FastEntryRow(entry: FastEntry, modifier: Modifier = Modifier, onRemove: () -> Unit) {
+    Card(
+        modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(14.dp)
     ) {
         Row(
@@ -431,12 +559,18 @@ private fun FastEntryRow(entry: FastEntry, onRemove: () -> Unit) {
 }
 
 @Composable
-private fun QuickAddRow(title: String, subtitle: String, color: Color, onClick: () -> Unit) {
+private fun QuickAddRow(
+    title: String,
+    subtitle: String,
+    color: Color,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
     Card(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(14.dp))
-            .clickable(onClick = onClick),
+            .premiumTap(onClick = onClick),
         shape = RoundedCornerShape(14.dp)
     ) {
         Row(
@@ -477,14 +611,50 @@ private fun QuickAddRow(title: String, subtitle: String, color: Color, onClick: 
     }
 }
 
+/** Horizontal stacked bar from (color, value) segments; weights by value. */
+@Composable
+private fun StackedBarRow(
+    segments: List<Pair<Color, Float>>,
+    modifier: Modifier = Modifier,
+    barHeight: Dp = 10.dp,
+    trackColor: Color = MaterialTheme.colorScheme.surfaceVariant
+) {
+    val total = segments.sumOf { it.second.toDouble() }
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(barHeight)
+            .clip(RoundedCornerShape(barHeight / 2))
+            .background(trackColor)
+    ) {
+        if (total > 0.0) {
+            segments.forEach { (color, value) ->
+                if (value > 0f) {
+                    Box(
+                        modifier = Modifier
+                            .weight((value / total).toFloat())
+                            .fillMaxHeight()
+                            .background(color)
+                    )
+                }
+            }
+        }
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun AddFastSheet(
     selectedType: FastType,
+    selectedLogDate: String,
     onSelect: (FastType) -> Unit,
+    onSelectLogDate: (String) -> Unit,
     onConfirm: () -> Unit,
     onDismiss: () -> Unit
 ) {
+    var showDatePicker by remember { mutableStateOf(false) }
+    val dateLabel = remember(selectedLogDate) { banglaDateLabel(selectedLogDate) }
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -495,13 +665,52 @@ private fun AddFastSheet(
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold)
 
+        // NEW: log-date selector — lets users record a fast on a past date
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .premiumTap { showDatePicker = true },
+            shape = RoundedCornerShape(AppRadius.sm),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.secondaryContainer
+            )
+        ) {
+            Row(
+                modifier = Modifier.padding(horizontal = AppSpacing.md, vertical = 10.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(AppSpacing.sm)
+            ) {
+                Icon(
+                    Icons.Filled.CalendarMonth,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                    modifier = Modifier.size(18.dp)
+                )
+                Column(modifier = Modifier.weight(1f)) {
+                    Text("রোজার তারিখ",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSecondaryContainer)
+                    Text(dateLabel,
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSecondaryContainer)
+                }
+                Text("পরিবর্তন",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.primary)
+            }
+        }
+        Text("অতীতের কোনো দিনের রোজা লিখতে তারিখে চাপ দিন।",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant)
+
         FastType.values().forEach { type ->
             val isSelected = type == selectedType
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(12.dp))
-                    .clickable { onSelect(type) }
+                    .premiumTap { onSelect(type) }
                     .border(
                         width = if (isSelected) 2.dp else 0.dp,
                         color = if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent,
@@ -550,5 +759,94 @@ private fun AddFastSheet(
         ) {
             Text("যোগ করুন", fontWeight = FontWeight.Bold, fontSize = 16.sp)
         }
+    }
+
+    // NEW: Material3 DatePickerDialog — past dates only (future rejected silently)
+    if (showDatePicker) {
+        val todayIso = remember { todayIso() }
+        val maxMillis = remember { isoToUtcMillis(todayIso) ?: System.currentTimeMillis() }
+        val seedMillis = remember(selectedLogDate) {
+            isoToUtcMillis(selectedLogDate) ?: maxMillis
+        }
+        val pickerState = rememberDatePickerState(
+            initialSelectedDateMillis = seedMillis,
+            selectableDates = object : SelectableDates {
+                override fun isSelectableDate(utcTimeMillis: Long): Boolean =
+                    utcTimeMillis <= maxMillis
+            }
+        )
+        DatePickerDialog(
+            onDismissRequest = { showDatePicker = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    val pickedIso = pickerState.selectedDateMillis?.let { millisToIso(it) }
+                    // ISO "yyyy-MM-dd" strings compare chronologically → future dates rejected
+                    if (pickedIso != null && pickedIso <= todayIso) {
+                        onSelectLogDate(pickedIso)
+                    }
+                    showDatePicker = false
+                }) { Text("ঠিক আছে") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDatePicker = false }) { Text("বাতিল") }
+            }
+        ) {
+            DatePicker(
+                state = pickerState,
+                title = {
+                    Text(
+                        "রোজার তারিখ",
+                        style = MaterialTheme.typography.titleMedium,
+                        modifier = Modifier.padding(start = AppSpacing.xl, top = AppSpacing.lg)
+                    )
+                }
+            )
+        }
+    }
+}
+
+// ─── Date helpers ─────────────────────────────────────────────────────────────
+// NOTE: millis↔date conversions use SimpleDateFormat because the app has
+// minSdk 24 WITHOUT coreLibraryDesugaring — java.time would crash on API 24/25
+// (and NoClassDefFoundError is not an Exception). java.time is only used for
+// the Bangla label inside banglaDateLabel(), guarded with Throwable.
+
+/** Local "yyyy-MM-dd" for today (same format as FastingViewModel's dates). */
+private fun todayIso(): String = try {
+    SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+} catch (_: Exception) {
+    ""
+}
+
+/** DatePicker (UTC midnight) millis → "yyyy-MM-dd", null on failure. */
+private fun millisToIso(millis: Long): String? = try {
+    val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.US)
+    sdf.timeZone = TimeZone.getTimeZone("UTC")
+    sdf.format(Date(millis))
+} catch (_: Exception) {
+    null
+}
+
+/** "yyyy-MM-dd" → UTC-normalized millis for the DatePicker, null on failure. */
+private fun isoToUtcMillis(iso: String): Long? = try {
+    val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.US)
+    sdf.timeZone = TimeZone.getTimeZone("UTC")
+    sdf.parse(iso)?.time
+} catch (_: Exception) {
+    null
+}
+
+/** "yyyy-MM-dd" → Bangla "d MMMM yyyy"; "আজ" for today/blank; raw ISO as last resort. */
+private fun banglaDateLabel(isoDate: String): String {
+    val todayIsoStr = todayIso()
+    if (isoDate.isBlank() || isoDate == todayIsoStr) return "আজ"
+    return try {
+        // java.time per spec — Throwable (not Exception) so missing classes on
+        // API < 26 degrade to the raw ISO string instead of crashing.
+        val date = LocalDate.parse(isoDate)
+        val formatter = DateTimeFormatter.ofPattern("d MMMM yyyy", Locale("bn"))
+        formatter.format(date)
+    } catch (_: Throwable) {
+        isoDate
     }
 }

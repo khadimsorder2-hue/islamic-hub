@@ -10,6 +10,9 @@ import android.hardware.SensorManager
 import android.location.Location
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -205,6 +208,17 @@ private fun computeQiblaBearing(lat: Double, lng: Double): Float {
     return ((bearing + 360).mod(360.0)).toFloat()
 }
 
+/**
+ * Shortest signed angle difference (degrees) between two compass angles —
+ * keeps the spring-animated needle from spin-back at the 0/360 boundary.
+ */
+private fun shortestAngleDiff(from: Float, to: Float): Float {
+    var d = (to - from) % 360f
+    if (d > 180f) d -= 360f
+    if (d < -180f) d += 360f
+    return d
+}
+
 @Composable
 private fun QiblaCompass(
     azimuth: Float,
@@ -214,6 +228,22 @@ private fun QiblaCompass(
     val primary = MaterialTheme.colorScheme.primary
     val onSurfaceVariant = MaterialTheme.colorScheme.onSurfaceVariant
     val secondary = MaterialTheme.colorScheme.secondary
+
+    // Smooth spring-animated azimuth: accumulate shortest-path diffs so the
+    // needle glides instead of jumping, even across the 0°/360° wrap.
+    var smoothedAzimuth by remember { mutableStateOf(azimuth) }
+    LaunchedEffect(azimuth) {
+        smoothedAzimuth += shortestAngleDiff(smoothedAzimuth, azimuth)
+    }
+    val animatedAzimuth by animateFloatAsState(
+        targetValue = smoothedAzimuth,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioLowBouncy,
+            stiffness = Spring.StiffnessLow
+        ),
+        label = "qiblaNeedle"
+    )
+
     Canvas(modifier = modifier) {
         val canvasSize = size.minDimension
         val center = Offset(size.width / 2, size.height / 2)
@@ -228,7 +258,7 @@ private fun QiblaCompass(
         )
 
         // Cardinal direction marks (rotate by -azimuth so N points to true north)
-        rotate(degrees = -azimuth, pivot = center) {
+        rotate(degrees = -animatedAzimuth, pivot = center) {
             // North pointer
             drawLine(
                 color = Color.Red,
@@ -249,8 +279,8 @@ private fun QiblaCompass(
             }
         }
 
-        // Qibla pointer (rotates by qiblaBearing - azimuth)
-        rotate(degrees = qiblaBearing - azimuth, pivot = center) {
+        // Qibla pointer (rotates by qiblaBearing - azimuth, spring-smoothed)
+        rotate(degrees = qiblaBearing - animatedAzimuth, pivot = center) {
             // Kaaba marker (gold/green arrow)
             drawLine(
                 color = primary,

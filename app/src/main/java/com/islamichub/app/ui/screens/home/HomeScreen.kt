@@ -87,6 +87,8 @@ import com.islamichub.app.ui.theme.AppSpacing
 import com.islamichub.app.ui.theme.AppRadius
 import com.islamichub.app.ui.theme.AppElevation
 import com.islamichub.app.ui.theme.AppFontSizes
+import com.islamichub.app.ui.theme.PremiumProgressBar
+import com.islamichub.app.ui.theme.staggerEntrance
 
 @Composable
 fun HomeScreen(
@@ -151,7 +153,8 @@ fun HomeScreen(
                             text = "আসসালামু আলাইকুম",
                             style = MaterialTheme.typography.displaySmall,
                             fontWeight = FontWeight.Bold,
-                            color = Color.White
+                            color = Color.White,
+                            modifier = Modifier.staggerEntrance(0)
                         )
                         Text(
                             text = state.hijriDate.ifBlank { "—" },
@@ -175,6 +178,17 @@ fun HomeScreen(
                             Text(state.nextPrayerTime.ifBlank { "--:--" },
                                 style = MaterialTheme.typography.titleMedium,
                                 color = Color.White.copy(alpha = 0.9f))
+                            homeNextPrayerProgress(state)?.let { fraction ->
+                                PremiumProgressBar(
+                                    progress = fraction,
+                                    modifier = Modifier
+                                        .fillMaxWidth(0.72f)
+                                        .padding(top = 6.dp),
+                                    fillColor = Color.White,
+                                    trackColor = Color.White.copy(alpha = 0.25f),
+                                    barHeight = 4.dp
+                                )
+                            }
                         }
                         Column(
                             horizontalAlignment = Alignment.CenterHorizontally,
@@ -257,13 +271,13 @@ fun HomeScreen(
                 GridFeature("নামাজের সময়", "৫ ওয়াক্ত", Icons.Filled.CalendarMonth, Screen.Prayer.route, "prayer-premium-bg.webp", Color(0xFF7E8CE0)),
                 GridFeature("কিবলা", "কম্পাস", Icons.Filled.CompassCalibration, Screen.Qibla.route, "qibla-premium-bg.webp", Color(0xFF2E7D32))
             )
-            features.chunked(2).forEach { rowFeatures ->
+            features.chunked(2).forEachIndexed { rowIdx, rowFeatures ->
                 Row(
                     modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    rowFeatures.forEach { feature ->
-                        Box(modifier = Modifier.weight(1f)) {
+                    rowFeatures.forEachIndexed { colIdx, feature ->
+                        Box(modifier = Modifier.weight(1f).staggerEntrance(rowIdx * 2 + colIdx)) {
                             PremiumCard(backgroundImage = feature.bgImage, context = context,
                                 onClick = { onNavigate(feature.route) }, height = 130,
                                 overlayColor = feature.color) {
@@ -589,3 +603,38 @@ private data class ChipItem(
     val route: String,
     val color: Color
 )
+
+/**
+ * Fraction (0f..1f) of the interval between the previous and next prayer for
+ * the hero progress bar. Returns null when prayer times / next-prayer name
+ * are missing or the "HH:mm" strings cannot be parsed.
+ */
+private fun homeNextPrayerProgress(state: HomeUiState): Float? {
+    val times = state.prayerTimes ?: return null
+    val nextName = state.nextPrayerName.trim()
+    if (nextName.isBlank()) return null
+    val order = listOf(
+        "Fajr" to times.fajr,
+        "Dhuhr" to times.dhuhr,
+        "Asr" to times.asr,
+        "Maghrib" to times.maghrib,
+        "Isha" to times.isha
+    )
+    fun toMinutes(raw: String): Int? = try {
+        val parts = raw.split(":")
+        val h = parts.getOrNull(0)?.trim()?.toIntOrNull() ?: return null
+        val m = parts.getOrNull(1)?.trim()?.takeWhile { it.isDigit() }?.toIntOrNull() ?: 0
+        if (h in 0..23 && m in 0..59) h * 60 + m else null
+    } catch (e: Exception) { null }
+
+    val parsed = order.mapNotNull { (name, raw) -> toMinutes(raw)?.let { name to it } }
+    if (parsed.isEmpty()) return null
+    val nextIdx = parsed.indexOfFirst { it.first.equals(nextName, ignoreCase = true) }
+    if (nextIdx < 0) return null
+    val nextMin = parsed[nextIdx].second
+    val prevMin = if (nextIdx > 0) parsed[nextIdx - 1].second else parsed.last().second - 24 * 60
+    val nowCal = java.util.Calendar.getInstance()
+    val nowMin = nowCal.get(java.util.Calendar.HOUR_OF_DAY) * 60 + nowCal.get(java.util.Calendar.MINUTE)
+    val span = (nextMin - prevMin).coerceAtLeast(1)
+    return ((nowMin - prevMin).toFloat() / span).coerceIn(0f, 1f)
+}

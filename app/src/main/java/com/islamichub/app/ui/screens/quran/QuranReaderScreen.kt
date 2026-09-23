@@ -69,6 +69,8 @@ import com.islamichub.app.ui.screens.tafsir.TafsirFullScreen
 import com.islamichub.app.ui.theme.AppSpacing
 import com.islamichub.app.ui.theme.AppRadius
 import com.islamichub.app.ui.theme.AppIconSizes
+import com.islamichub.app.ui.theme.premiumGlow
+import com.islamichub.app.ui.theme.premiumPulseHighlight
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -560,7 +562,13 @@ private fun AyahCard(
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Column(
-            modifier = Modifier.padding(16.dp),
+            modifier = Modifier
+                .premiumPulseHighlight(
+                    active = isPlayingAyah,
+                    color = MaterialTheme.colorScheme.primary,
+                    cornerRadius = 18.dp
+                )
+                .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Row(
@@ -580,7 +588,15 @@ private fun AyahCard(
                     )
                 }
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    IconButton(onClick = onPlayAyah, modifier = Modifier.size(36.dp)) {
+                    IconButton(
+                        onClick = onPlayAyah,
+                        modifier = Modifier
+                            .size(36.dp)
+                            .premiumGlow(
+                                active = isPlayingAyah,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                    ) {
                         Icon(
                             imageVector = Icons.Filled.PlayArrow,
                             contentDescription = "আয়াত চালান",

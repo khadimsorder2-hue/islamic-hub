@@ -2,6 +2,7 @@ package com.islamichub.app.ui.screens.calendar
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -15,7 +16,16 @@ data class CalendarUiState(
     val hijriYear: String = "",
     val days: List<HijriDayItem> = emptyList(),
     val isLoading: Boolean = true,
-    val selectedMonthOffset: Int = 0  // 0 = current month, -1 = prev, 1 = next
+    val selectedMonthOffset: Int = 0,  // 0 = current month, -1 = prev, 1 = next
+    // Day-level Qada/Roza indicators for the displayed Gregorian month.
+    // ADAPTATION NOTE: keyed by ISO "yyyy-MM-dd" strings instead of
+    // java.time.LocalDate — minSdk is 24 and coreLibraryDesugaring is not
+    // enabled, so LocalDate would crash on API 24/25 devices. Both source
+    // repositories (QadaRepository / FastingRepository) already store dates
+    // as "yyyy-MM-dd" strings, so the keys are equivalent to a LocalDate map.
+    // Missing/failed data falls back to empty maps — cells simply show no dots.
+    val qadaDates: Map<String, Boolean> = emptyMap(),  // true = any qada entry that day
+    val rozaDates: Map<String, Boolean> = emptyMap()   // true = a completed fast that day
 )
 
 data class HijriDayItem(
@@ -27,14 +37,64 @@ data class HijriDayItem(
     val weekdayBn: String,
     val weekdayEn: String,
     val isToday: Boolean = false,
-    val islamicEvent: String? = null
+    val islamicEvent: String? = null,
+    // Real Gregorian year/month of this cell — lets the UI build the
+    // "yyyy-MM-dd" key used by the qadaDates/rozaDates dot maps.
+    val gregorianYear: Int = 0,
+    val gregorianMonthIdx: Int = 0  // 0-indexed, matches Calendar.MONTH
 )
 
 class CalendarViewModel(private val container: AppContainer) : ViewModel() {
     private val _state = MutableStateFlow(CalendarUiState())
     val state: StateFlow<CalendarUiState> = _state.asStateFlow()
 
-    init { loadMonth(0) }
+    // Full history of tracker dates as ISO "yyyy-MM-dd" keys (parsed
+    // defensively — malformed entries are simply dropped, never crash).
+    private var qadaDaySet: Set<String> = emptySet()
+    private var rozaDaySet: Set<String> = emptySet()
+
+    init {
+        loadMonth(0)
+        observeTrackerData()
+    }
+
+    /**
+     * Collects the Qada + Fasting entry lists (both plain DataStore-backed
+     * AppContainer singletons exposing Flow<List<…>>) once and keeps the
+     * day-sets fresh; any change re-derives the current month's dot maps.
+     * If a repository is unreachable, dots degrade to empty maps silently.
+     */
+    private fun observeTrackerData() {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                container.qadaRepository.entries.collect { list ->
+                    // "has any qada entry that day" — completed or not
+                    qadaDaySet = list.map { it.date }.filter { it.isNotBlank() }.toSet()
+                    refreshDots()
+                }
+            } catch (_: Exception) { /* dot data unavailable — render without dots */ }
+        }
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                container.fastingRepository.entries.collect { list ->
+                    // only completed fasts count as "রোজা ছিল"
+                    rozaDaySet = list.filter { it.completed }.map { it.date }.toSet()
+                    refreshDots()
+                }
+            } catch (_: Exception) { /* dot data unavailable — render without dots */ }
+        }
+    }
+
+    /** Rebuilds the month-scoped dot maps from the full day-sets. */
+    private fun refreshDots() {
+        val offset = _state.value.selectedMonthOffset
+        val cal = Calendar.getInstance()
+        cal.add(Calendar.MONTH, offset)
+        val prefix = "%04d-%02d".format(cal.get(Calendar.YEAR), cal.get(Calendar.MONTH) + 1)
+        val qada = qadaDaySet.filter { it.startsWith(prefix) }.associateWith { true }
+        val roza = rozaDaySet.filter { it.startsWith(prefix) }.associateWith { true }
+        _state.value = _state.value.copy(qadaDates = qada, rozaDates = roza)
+    }
 
     fun loadMonth(offset: Int) {
         viewModelScope.launch {
@@ -137,7 +197,9 @@ class CalendarViewModel(private val container: AppContainer) : ViewModel() {
                             weekdayBn = weekdaysBn[weekdayIdx],
                             weekdayEn = weekdaysEn[weekdayIdx],
                             isToday = isToday,
-                            islamicEvent = islamicEventFor(hijriMonthIdx, hijriDayNum)
+                            islamicEvent = islamicEventFor(hijriMonthIdx, hijriDayNum),
+                            gregorianYear = year,
+                            gregorianMonthIdx = month
                         ))
 
                         if (day == 1) {
@@ -218,7 +280,9 @@ class CalendarViewModel(private val container: AppContainer) : ViewModel() {
                         weekdayBn = weekdaysBn[weekdayIdx],
                         weekdayEn = weekdaysEn[weekdayIdx],
                         isToday = isToday,
-                        islamicEvent = islamicEventFor(hijriMonthIdx, hijriDay)
+                        islamicEvent = islamicEventFor(hijriMonthIdx, hijriDay),
+                        gregorianYear = year,
+                        gregorianMonthIdx = month
                     ))
 
                     hijriDay++
@@ -238,6 +302,9 @@ class CalendarViewModel(private val container: AppContainer) : ViewModel() {
                 isLoading = false,
                 selectedMonthOffset = offset
             )
+            // Fresh month assignment wipes any previous dot maps — re-derive
+            // them immediately for the newly selected month.
+            refreshDots()
         }
     }
 

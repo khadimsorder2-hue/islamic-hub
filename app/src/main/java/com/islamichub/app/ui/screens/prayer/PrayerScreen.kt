@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -64,6 +65,8 @@ import com.islamichub.app.data.repo.JamatTime
 import com.islamichub.app.ui.components.PremiumHeroCard
 import com.islamichub.app.ui.components.PremiumSectionHeader
 import com.islamichub.app.ui.components.loadAssetImage
+import com.islamichub.app.ui.theme.PremiumProgressBar
+import com.islamichub.app.ui.theme.staggerEntrance
 import androidx.compose.ui.graphics.asImageBitmap
 
 @Composable
@@ -102,6 +105,11 @@ fun PrayerScreen(container: AppContainer) {
     val locationFallback = stringResource(R.string.prayer_location)
     val loadingText = stringResource(R.string.prayer_loading)
     val errorText = stringResource(R.string.prayer_error)
+
+    // Next-prayer progress (fraction between previous and next prayer)
+    val nextPrayerInfo = state.times?.let {
+        computeNextPrayerProgress(it, fajrName, dhuhrName, asrName, maghribName, ishaName)
+    }
 
     LazyColumn(
         contentPadding = PaddingValues(16.dp),
@@ -256,9 +264,50 @@ fun PrayerScreen(container: AppContainer) {
                         Triple(maghribName, t.maghrib, true),
                         Triple(ishaName, t.isha, true)
                     )
-                    items(rows, key = { it.first }) { row ->
+                    nextPrayerInfo?.let { info ->
+                        item(key = "next_prayer_progress") {
+                            Surface(
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(16.dp),
+                                color = MaterialTheme.colorScheme.secondaryContainer
+                            ) {
+                                Column(
+                                    modifier = Modifier.fillMaxWidth().padding(16.dp),
+                                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(
+                                            text = "পরবর্তী নামাজ: ${info.name}",
+                                            style = MaterialTheme.typography.titleSmall,
+                                            fontWeight = FontWeight.SemiBold,
+                                            color = MaterialTheme.colorScheme.onSecondaryContainer
+                                        )
+                                        Text(
+                                            text = info.time,
+                                            style = MaterialTheme.typography.titleSmall,
+                                            fontWeight = FontWeight.Bold,
+                                            color = MaterialTheme.colorScheme.primary
+                                        )
+                                    }
+                                    PremiumProgressBar(
+                                        progress = info.fraction,
+                                        modifier = Modifier.fillMaxWidth(),
+                                        fillColor = MaterialTheme.colorScheme.primary
+                                    )
+                                }
+                            }
+                        }
+                    }
+                    itemsIndexed(rows, key = { _, row -> row.first }) { index, row ->
                         val jamat = jamatTimes.firstOrNull { it.prayerName == row.first }
-                        PrayerRowPremium(row.first, row.second, row.third, jamat, context)
+                        PrayerRowPremium(
+                            row.first, row.second, row.third, jamat, context,
+                            modifier = Modifier.staggerEntrance(index)
+                        )
                     }
                 }
                 state.error?.let { err ->
@@ -318,7 +367,8 @@ fun PrayerScreen(container: AppContainer) {
 @Composable
 private fun PrayerRowPremium(
     name: String, time: String, isFard: Boolean,
-    jamat: JamatTime?, context: android.content.Context
+    jamat: JamatTime?, context: android.content.Context,
+    modifier: Modifier = Modifier
 ) {
     // Minimal compact design — no image, gradient only
     val prayerColor = when (name) {
@@ -339,7 +389,7 @@ private fun PrayerRowPremium(
     }
 
     Card(
-        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)),
+        modifier = modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = Color.Transparent),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
@@ -492,4 +542,60 @@ private fun JamatTimeDialog(
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text("বাতিল") } }
     )
+}
+
+private data class NextPrayerProgress(
+    val name: String,
+    val time: String,
+    val fraction: Float
+)
+
+/**
+ * Fraction (0f..1f) of the interval between the previous and the next prayer,
+ * for the premium progress bar. Times are expected as "HH:mm" strings and are
+ * parsed defensively — returns null when nothing is parseable.
+ */
+private fun computeNextPrayerProgress(
+    times: com.islamichub.app.data.model.PrayerTimes,
+    fajrName: String,
+    dhuhrName: String,
+    asrName: String,
+    maghribName: String,
+    ishaName: String
+): NextPrayerProgress? {
+    fun toMinutes(raw: String): Int? = try {
+        val parts = raw.split(":")
+        val h = parts.getOrNull(0)?.trim()?.toIntOrNull() ?: return null
+        val m = parts.getOrNull(1)?.trim()?.takeWhile { it.isDigit() }?.toIntOrNull() ?: 0
+        if (h in 0..23 && m in 0..59) h * 60 + m else null
+    } catch (e: Exception) {
+        null
+    }
+
+    val anchors = listOf(
+        fajrName to times.fajr,
+        dhuhrName to times.dhuhr,
+        asrName to times.asr,
+        maghribName to times.maghrib,
+        ishaName to times.isha
+    )
+    val parsed = anchors.mapNotNull { (name, raw) ->
+        toMinutes(raw)?.let { Triple(name, it, raw) }
+    }
+    if (parsed.isEmpty()) return null
+    val nowCal = java.util.Calendar.getInstance()
+    val nowMin = nowCal.get(java.util.Calendar.HOUR_OF_DAY) * 60 + nowCal.get(java.util.Calendar.MINUTE)
+    val nextIdx = parsed.indexOfFirst { it.second > nowMin }
+    return if (nextIdx >= 0) {
+        val next = parsed[nextIdx]
+        val prevMin = if (nextIdx > 0) parsed[nextIdx - 1].second else parsed.last().second - 24 * 60
+        val span = (next.second - prevMin).coerceAtLeast(1)
+        NextPrayerProgress(next.first, next.third, ((nowMin - prevMin).toFloat() / span).coerceIn(0f, 1f))
+    } else {
+        // After Isha — the next prayer is tomorrow's Fajr
+        val fajr = parsed.first()
+        val isha = parsed.last()
+        val span = (fajr.second + 24 * 60 - isha.second).coerceAtLeast(1)
+        NextPrayerProgress(fajr.first, fajr.third, ((nowMin - isha.second).toFloat() / span).coerceIn(0f, 1f))
+    }
 }

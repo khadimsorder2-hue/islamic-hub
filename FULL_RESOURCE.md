@@ -39,7 +39,7 @@
 - **Notes** per ayah (persistent)
 - **Copy & Share** ayah with all translations
 - **Search** — Offline (local) + Quran.com API with Arabic/Bangla/English
-- **Topic Study** — 338+ thematic ayah groupings
+- **Topic Study** — 45 topics (7 curated + 38 keyword-driven, full 6,236-ayah keyword scan, offline)
 - **Juz/Para List** — 30 Juz with surah ranges
 - **Khatam Tracker** — Full Quran reading progress
 - **Offline Download** — Cache translations+tafsirs per surah

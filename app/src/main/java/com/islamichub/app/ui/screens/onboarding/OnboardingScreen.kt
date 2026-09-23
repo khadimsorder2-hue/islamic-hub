@@ -20,7 +20,6 @@ import androidx.compose.material.icons.filled.AutoStories
 import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -28,6 +27,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -46,6 +46,8 @@ import androidx.compose.ui.unit.dp
 import com.islamichub.app.R
 import com.islamichub.app.data.AppContainer
 import com.islamichub.app.ui.components.PremiumHeroCard
+import com.islamichub.app.ui.theme.premiumTap
+import com.islamichub.app.ui.theme.staggerEntrance
 import kotlinx.coroutines.launch
 
 @Composable
@@ -138,8 +140,10 @@ fun OnboardingScreen(
             verticalArrangement = Arrangement.SpaceBetween,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Top: icon
+            // Top: icon — page content re-animates on page change
+            key(currentStep) {
             Column(
+                modifier = Modifier.staggerEntrance(0),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
@@ -178,8 +182,11 @@ fun OnboardingScreen(
                 style = MaterialTheme.typography.bodyLarge,
                 color = Color.White.copy(alpha = 0.85f),
                 textAlign = TextAlign.Center,
-                modifier = Modifier.padding(horizontal = 16.dp)
+                modifier = Modifier
+                    .staggerEntrance(1)
+                    .padding(horizontal = 16.dp)
             )
+            }
 
             // Bottom: buttons + progress dots
             Column(
@@ -216,8 +223,11 @@ fun OnboardingScreen(
                         Box {}
                     }
 
-                    Button(
-                        onClick = {
+                    Surface(
+                        shape = RoundedCornerShape(100),
+                        color = Color.White,
+                        contentColor = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.premiumTap {
                             when (currentStep) {
                                 1 -> {
                                     // Request location permission
@@ -240,20 +250,17 @@ fun OnboardingScreen(
                                         container.settingsRepository.setOnboardingDone(true)
                                         onComplete()
                                     }
-                                    return@Button
+                                    return@premiumTap
                                 }
                             }
                             if (currentStep < steps.size - 1) {
                                 currentStep++
                             }
-                        },
-                        colors = androidx.compose.material3.ButtonDefaults.buttonColors(
-                            containerColor = Color.White,
-                            contentColor = MaterialTheme.colorScheme.primary
-                        )
+                        }
                     ) {
                         Text(
-                            text = if (currentStep == steps.size - 1) "শুরু করুন" else "পরবর্তী"
+                            text = if (currentStep == steps.size - 1) "শুরু করুন" else "পরবর্তী",
+                            modifier = Modifier.padding(horizontal = 24.dp, vertical = 12.dp)
                         )
                     }
                 }

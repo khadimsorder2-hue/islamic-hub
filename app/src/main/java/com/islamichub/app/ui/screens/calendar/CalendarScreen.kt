@@ -49,6 +49,7 @@ import com.islamichub.app.data.AppContainer
 import com.islamichub.app.ui.components.PremiumHeroCard
 import com.islamichub.app.ui.components.PremiumSectionHeader
 import com.islamichub.app.ui.components.loadAssetImage
+import com.islamichub.app.ui.theme.AppColors
 import androidx.compose.foundation.Image
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
@@ -135,7 +136,17 @@ fun CalendarScreen(container: AppContainer) {
                     if (day.gregorianDay == 0) {
                         Box(modifier = Modifier.aspectRatio(1f))
                     } else {
-                        DayCell(day)
+                        // Build the "yyyy-MM-dd" key the ViewModel's dot maps are keyed by.
+                        val dateKey = "%04d-%02d-%02d".format(
+                            day.gregorianYear,
+                            day.gregorianMonthIdx + 1,
+                            day.gregorianDay
+                        )
+                        DayCell(
+                            day = day,
+                            hasQada = state.qadaDates[dateKey] == true,
+                            hasRoza = state.rozaDates[dateKey] == true
+                        )
                     }
                 }
             }
@@ -144,7 +155,11 @@ fun CalendarScreen(container: AppContainer) {
 }
 
 @Composable
-private fun DayCell(day: HijriDayItem) {
+private fun DayCell(
+    day: HijriDayItem,
+    hasQada: Boolean = false,
+    hasRoza: Boolean = false
+) {
     val isEvent = day.islamicEvent != null
     val bgBrush = when {
         day.isToday -> Brush.verticalGradient(
@@ -190,6 +205,36 @@ private fun DayCell(day: HijriDayItem) {
                     textAlign = TextAlign.Center,
                     maxLines = 1
                 )
+            }
+        }
+
+        // Qada/Roza indicator dots (up to 2, 6.dp each) under the day number.
+        // Rendered as a bottom-aligned overlay so the existing cell layout
+        // above stays untouched.
+        if (hasQada || hasRoza) {
+            Row(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = 3.dp),
+                horizontalArrangement = Arrangement.spacedBy(2.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                if (hasQada) {
+                    Box(
+                        modifier = Modifier
+                            .size(6.dp)
+                            .clip(CircleShape)
+                            .background(AppColors.error) // red = qada entry that day
+                    )
+                }
+                if (hasRoza) {
+                    Box(
+                        modifier = Modifier
+                            .size(6.dp)
+                            .clip(CircleShape)
+                            .background(AppColors.success) // green = fast kept that day
+                    )
+                }
             }
         }
     }
