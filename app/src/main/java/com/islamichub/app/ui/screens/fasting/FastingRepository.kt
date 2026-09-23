@@ -40,6 +40,17 @@ enum class FastType(val label: String, val bangla: String) {
     fun isObligatory(): Boolean = this == RAMADAN || this == QADA
 }
 
+/** Grouping granularity for the Roza history dashboard. */
+enum class FastPeriod { DAY, WEEK, MONTH, YEAR }
+
+/** One row of the Roza history dashboard. */
+data class FastPeriodStat(
+    val periodKey: String,
+    val label: String,
+    val count: Int,
+    val byType: Map<FastType, Int>
+)
+
 data class FastingStats(
     val totalFasts: Int = 0,
     val ramadanFasts: Int = 0,
@@ -162,4 +173,48 @@ class FastingRepository(private val context: Context) {
 
     private fun today(): String =
         SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+
+    /**
+     * History dashboard data: completed fasts grouped into day/week/month/year
+     * buckets, most recent first, with a per-type breakdown per bucket.
+     */
+    fun statsFor(period: FastPeriod): Flow<List<FastPeriodStat>> = entries.map { list ->
+        val completedList = list.filter { it.completed }
+        val cal = java.util.Calendar.getInstance()
+        val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+
+        fun keyFor(dateStr: String): Pair<String, String>? {
+            val date = try { sdf.parse(dateStr) } catch (_: Exception) { null } ?: return null
+            cal.time = date
+            return when (period) {
+                FastPeriod.DAY -> dateStr to dateStr
+                FastPeriod.WEEK -> {
+                    val year = cal.get(java.util.Calendar.YEAR)
+                    val week = cal.get(java.util.Calendar.WEEK_OF_YEAR)
+                    "%d-W%02d".format(year, week) to "সপ্তাহ %d, %d".format(week, year)
+                }
+                FastPeriod.MONTH -> {
+                    SimpleDateFormat("yyyy-MM", Locale.getDefault()).format(date) to
+                        SimpleDateFormat("MMMM yyyy", Locale.getDefault()).format(date)
+                }
+                FastPeriod.YEAR -> {
+                    val year = cal.get(java.util.Calendar.YEAR).toString()
+                    year to year
+                }
+            }
+        }
+
+        completedList
+            .mapNotNull { entry -> keyFor(entry.date)?.let { (key, label) -> Triple(key, label, entry) } }
+            .groupBy({ it.first }, { it.second to it.third })
+            .map { (key, labelAndEntries) ->
+                FastPeriodStat(
+                    periodKey = key,
+                    label = labelAndEntries.first().first,
+                    count = labelAndEntries.size,
+                    byType = labelAndEntries.map { it.second.type }.groupingBy { it }.eachCount()
+                )
+            }
+            .sortedByDescending { it.periodKey }
+    }
 }

@@ -65,28 +65,8 @@ class CalendarViewModel(private val container: AppContainer) : ViewModel() {
             val weekdaysBn = listOf("রবিবার", "সোমবার", "মঙ্গলবার", "বুধবার", "বৃহস্পতিবার", "শুক্রবার", "শনিবার")
             val weekdaysEn = listOf("Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat")
 
-            // Try to get hijri date from Aladhan API
-            var hijriBaseDay = 1
-            var hijriBaseMonthIdx = 0
-            var hijriBaseYear = 1447
-
-            try {
-                val result = container.prayerRepository.getDefaultPrayerTimes()
-                result.getOrNull()?.hijriDate?.let { hijriStr ->
-                    // Parse "17 Aug 2026" format → extract hijri
-                    val parts = hijriStr.split(" ")
-                    if (parts.size >= 4) {
-                        hijriBaseDay = parts[0].toIntOrNull() ?: 1
-                        val monthName = parts[1]
-                        hijriBaseMonthIdx = hijriMonthsEn.indexOfFirst { it.equals(monthName, ignoreCase = true) }
-                            .let { if (it >= 0) it else 0 }
-                        hijriBaseYear = parts[2].toIntOrNull() ?: 1447
-                    }
-                }
-            } catch (_: Exception) { }
-
             val year = cal.get(Calendar.YEAR)
-            val month = cal.get(Calendar.MONTH)
+            val month = cal.get(Calendar.MONTH) // 0-indexed
             val today = Calendar.getInstance()
             val isCurrentMonth = year == today.get(Calendar.YEAR) && month == today.get(Calendar.MONTH)
             val todayDay = today.get(Calendar.DAY_OF_MONTH)
@@ -98,66 +78,162 @@ class CalendarViewModel(private val container: AppContainer) : ViewModel() {
                 set(Calendar.DAY_OF_MONTH, 1)
             }.get(Calendar.DAY_OF_WEEK)
 
+            fun islamicEventFor(hijriMonthIdx: Int, hijriDay: Int): String? = when {
+                hijriMonthIdx == 0 && hijriDay == 10 -> "আশুরা (১০ মুহররম)"
+                hijriMonthIdx == 2 && hijriDay == 12 -> "ঈদে মিলাদুন্নবী (১২ রবিউল আউয়াল)"
+                hijriMonthIdx == 6 && hijriDay == 27 -> "শবে মেরাজ (২৭ রজব)"
+                hijriMonthIdx == 7 && hijriDay == 15 -> "শবে বরাত (১৫ শা'বান)"
+                hijriMonthIdx == 8 && hijriDay == 1 -> "রমজান শুরু"
+                hijriMonthIdx == 8 && hijriDay == 27 -> "শবে কদর (২৭ রমজান)"
+                hijriMonthIdx == 9 && hijriDay == 1 -> "ঈদুল ফিতর"
+                hijriMonthIdx == 11 && hijriDay == 9 -> "ঈদুল আযহা (৯ জিলহজ্জ)"
+                hijriMonthIdx == 11 && hijriDay == 10 -> "ঈদুল আযহা (১০ জিলহজ্জ)"
+                else -> null
+            }
+
             val daysList = mutableListOf<HijriDayItem>()
             // Add empty days for alignment (Calendar.SUNDAY=1, so subtract 1 to get 0-based index)
             for (i in 1 until firstDayOfWeek) {
                 daysList.add(HijriDayItem(0, "", "", "", "", "", "", false))
             }
 
-            // Generate days
-            var hijriDay = hijriBaseDay
-            var hijriMonthIdx = hijriBaseMonthIdx
-            var hijriYear = hijriBaseYear
-            val now = Calendar.getInstance()
+            // BUGFIX: fetch the *real* per-day Hijri date for this exact
+            // Gregorian month from Aladhan's calendar endpoint, instead of
+            // anchoring on today's Hijri date and incrementing with a fixed
+            // (wrong) 29-day month assumption. That old approach showed the
+            // wrong Hijri date for every month except the current one, and
+            // drifted further with each next/prev navigation.
+            var headerHijriDay = 1
+            var headerHijriMonthIdx = 0
+            var headerHijriYear = 1447
+            var usedRealCalendar = false
 
-            for (day in 1..daysInMonth) {
-                val dayCal = Calendar.getInstance().apply {
-                    set(Calendar.YEAR, year)
-                    set(Calendar.MONTH, month)
-                    set(Calendar.DAY_OF_MONTH, day)
+            try {
+                val monthResult = container.prayerRepository.getHijriMonthCalendar(
+                    year = year,
+                    month = month + 1 // Aladhan calendar endpoint is 1-indexed
+                )
+                val monthData = monthResult.getOrNull()
+                if (monthData != null && monthData.size >= daysInMonth) {
+                    usedRealCalendar = true
+                    for (day in 1..daysInMonth) {
+                        val hijri = monthData[day - 1].date.hijri
+                        val hijriDayNum = hijri.day.toIntOrNull() ?: day
+                        val hijriMonthIdx = (hijri.month.number - 1).coerceIn(0, 11)
+                        val hijriYearNum = hijri.year.toIntOrNull() ?: 1447
+
+                        val dayCal = Calendar.getInstance().apply {
+                            set(Calendar.YEAR, year); set(Calendar.MONTH, month); set(Calendar.DAY_OF_MONTH, day)
+                        }
+                        val weekdayIdx = dayCal.get(Calendar.DAY_OF_WEEK) - 1
+                        val isToday = isCurrentMonth && day == todayDay
+
+                        daysList.add(HijriDayItem(
+                            gregorianDay = day,
+                            gregorianMonth = monthNamesBn[month],
+                            hijriDay = hijriDayNum.toString(),
+                            hijriMonth = "${hijriMonthsBn[hijriMonthIdx]} (${hijriMonthsAr[hijriMonthIdx]})",
+                            hijriYear = "$hijriYearNum هـ",
+                            weekdayBn = weekdaysBn[weekdayIdx],
+                            weekdayEn = weekdaysEn[weekdayIdx],
+                            isToday = isToday,
+                            islamicEvent = islamicEventFor(hijriMonthIdx, hijriDayNum)
+                        ))
+
+                        if (day == 1) {
+                            headerHijriDay = hijriDayNum
+                            headerHijriMonthIdx = hijriMonthIdx
+                            headerHijriYear = hijriYearNum
+                        }
+                    }
                 }
-                // Calendar.DAY_OF_WEEK: 1=Sun, 2=Mon, ..., 7=Sat
-                // Our list: [Sun, Mon, Tue, Wed, Thu, Fri, Sat] (0-indexed)
-                val weekdayIdx = dayCal.get(Calendar.DAY_OF_WEEK) - 1
-                val isToday = isCurrentMonth && day == todayDay
+            } catch (_: Exception) { /* fall through to offline approximation below */ }
 
-                // Islamic events (Hijri-based)
-                var event: String? = null
-                if (hijriMonthIdx == 0 && hijriDay == 10) event = "আশুরা (১০ মুহররম)"
-                if (hijriMonthIdx == 2 && hijriDay == 12) event = "ঈদে মিলাদুন্নবী (১২ রবিউল আউয়াল)"
-                if (hijriMonthIdx == 6 && hijriDay == 27) event = "শবে মেরাজ (২৭ রজব)"
-                if (hijriMonthIdx == 7 && hijriDay == 15) event = "শবে বরাত (১৫ শা'বান)"
-                if (hijriMonthIdx == 8 && hijriDay == 1) event = "রমজান শুরু"
-                if (hijriMonthIdx == 8 && hijriDay == 27) event = "শবে কদর (২৭ রমজান)"
-                if (hijriMonthIdx == 9 && hijriDay == 1) event = "ঈদুল ফিতর"
-                if (hijriMonthIdx == 11 && hijriDay == 9) event = "ঈদুল আযহা (৯ জিলহজ্জ)"
-                if (hijriMonthIdx == 11 && hijriDay == 10) event = "ঈদুল আযহা (১০ জিলহজ্জ)"
+            // Offline fallback — only used when the Aladhan calendar call
+            // fails (no network). Anchors on today's real Hijri date and
+            // shifts by the same number of days as the Gregorian offset,
+            // which is far closer than the old "always assume 29-day
+            // months" approach, though still an approximation.
+            if (!usedRealCalendar) {
+                var hijriBaseDay = 1
+                var hijriBaseMonthIdx = 0
+                var hijriBaseYear = 1447
+                try {
+                    container.prayerRepository.getDefaultPrayerTimes().getOrNull()?.hijriDate?.let { hijriStr ->
+                        val parts = hijriStr.split(" ")
+                        if (parts.size >= 4) {
+                            hijriBaseDay = parts[0].toIntOrNull() ?: 1
+                            val monthName = parts[1]
+                            hijriBaseMonthIdx = hijriMonthsEn.indexOfFirst { it.equals(monthName, ignoreCase = true) }
+                                .let { if (it >= 0) it else 0 }
+                            hijriBaseYear = parts[2].toIntOrNull() ?: 1447
+                        }
+                    }
+                } catch (_: Exception) { }
 
-                daysList.add(HijriDayItem(
-                    gregorianDay = day,
-                    gregorianMonth = monthNamesBn[month],
-                    hijriDay = hijriDay.toString(),
-                    hijriMonth = "${hijriMonthsBn[hijriMonthIdx]} (${hijriMonthsAr[hijriMonthIdx]})",
-                    hijriYear = "$hijriYear هـ",
-                    weekdayBn = weekdaysBn[weekdayIdx],
-                    weekdayEn = weekdaysEn[weekdayIdx],
-                    isToday = isToday,
-                    islamicEvent = event
-                ))
+                // Shift the anchor by the Gregorian day-difference between
+                // today and the 1st of the target month (average Hijri
+                // month length 29.53 days), so navigating months at least
+                // moves in the right direction and rough range.
+                val firstOfMonthCal = Calendar.getInstance().apply {
+                    set(Calendar.YEAR, year); set(Calendar.MONTH, month); set(Calendar.DAY_OF_MONTH, 1)
+                }
+                val todayMidnight = Calendar.getInstance().apply {
+                    set(Calendar.HOUR_OF_DAY, 0); set(Calendar.MINUTE, 0); set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0)
+                }
+                val dayShift = ((firstOfMonthCal.timeInMillis - todayMidnight.timeInMillis) / 86_400_000L).toInt()
+                var totalHijriDay = hijriBaseDay + dayShift
+                var hijriMonthIdx = hijriBaseMonthIdx
+                var hijriYear = hijriBaseYear
+                // Normalize using 29.53-day average month length
+                while (totalHijriDay > 29) {
+                    totalHijriDay -= 30
+                    hijriMonthIdx++
+                    if (hijriMonthIdx > 11) { hijriMonthIdx = 0; hijriYear++ }
+                }
+                while (totalHijriDay < 1) {
+                    hijriMonthIdx--
+                    if (hijriMonthIdx < 0) { hijriMonthIdx = 11; hijriYear-- }
+                    totalHijriDay += 30
+                }
 
-                hijriDay++
-                // Approximate hijri month length (29 or 30)
-                if (hijriDay > 29) {
-                    hijriDay = 1
-                    hijriMonthIdx = (hijriMonthIdx + 1) % 12
-                    if (hijriMonthIdx == 0) hijriYear++
+                headerHijriDay = totalHijriDay
+                headerHijriMonthIdx = hijriMonthIdx
+                headerHijriYear = hijriYear
+
+                var hijriDay = totalHijriDay
+                for (day in 1..daysInMonth) {
+                    val dayCal = Calendar.getInstance().apply {
+                        set(Calendar.YEAR, year); set(Calendar.MONTH, month); set(Calendar.DAY_OF_MONTH, day)
+                    }
+                    val weekdayIdx = dayCal.get(Calendar.DAY_OF_WEEK) - 1
+                    val isToday = isCurrentMonth && day == todayDay
+
+                    daysList.add(HijriDayItem(
+                        gregorianDay = day,
+                        gregorianMonth = monthNamesBn[month],
+                        hijriDay = hijriDay.toString(),
+                        hijriMonth = "${hijriMonthsBn[hijriMonthIdx]} (${hijriMonthsAr[hijriMonthIdx]})",
+                        hijriYear = "$hijriYear هـ (আনুমানিক)",
+                        weekdayBn = weekdaysBn[weekdayIdx],
+                        weekdayEn = weekdaysEn[weekdayIdx],
+                        isToday = isToday,
+                        islamicEvent = islamicEventFor(hijriMonthIdx, hijriDay)
+                    ))
+
+                    hijriDay++
+                    if (hijriDay > 29) {
+                        hijriDay = 1
+                        hijriMonthIdx = (hijriMonthIdx + 1) % 12
+                        if (hijriMonthIdx == 0) hijriYear++
+                    }
                 }
             }
 
             _state.value = CalendarUiState(
                 monthTitle = "${monthNamesBn[month]} $year",
-                hijriMonthName = "${hijriMonthsBn[hijriBaseMonthIdx]} / ${hijriMonthsAr[hijriBaseMonthIdx]} / ${hijriMonthsEn[hijriBaseMonthIdx]}",
-                hijriYear = "$hijriBaseYear هـ",
+                hijriMonthName = "${hijriMonthsBn[headerHijriMonthIdx]} / ${hijriMonthsAr[headerHijriMonthIdx]} / ${hijriMonthsEn[headerHijriMonthIdx]}",
+                hijriYear = "$headerHijriYear هـ",
                 days = daysList,
                 isLoading = false,
                 selectedMonthOffset = offset

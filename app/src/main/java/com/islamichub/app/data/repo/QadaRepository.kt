@@ -37,6 +37,19 @@ data class QadaSummary(
     )
 }
 
+/** Grouping granularity for the Qada history dashboard. */
+enum class QadaPeriod { DAY, WEEK, MONTH, YEAR }
+
+/** One row of the Qada history dashboard — a time bucket with its missed/made-up counts. */
+data class QadaPeriodStat(
+    val periodKey: String,     // e.g. "2026-09-23", "2026-W38", "2026-09", "2026"
+    val label: String,         // human-readable label for the UI
+    val missed: Int,           // total qada logged in this period
+    val completed: Int         // total made up in this period
+) {
+    val outstanding: Int get() = (missed - completed).coerceAtLeast(0)
+}
+
 /**
  * Persistent Qada (missed prayer) tracker.
  * Single-writer: all writes go through [edit].
@@ -102,6 +115,56 @@ class QadaRepository(private val context: Context) {
     suspend fun reset() = withContext(Dispatchers.IO) {
         context.qadaStore.edit { it.remove(KEY_ENTRIES) }
     }
+
+    /**
+     * History dashboard data: [entries] grouped into day/week/month/year
+     * buckets, most recent first. Pass [prayer] to filter to a single
+     * prayer (Fajr/Dhuhr/Asr/Maghrib/Isha), or null for all prayers combined.
+     */
+    fun statsFor(period: QadaPeriod, prayer: String? = null): Flow<List<QadaPeriodStat>> = entries.map { list ->
+        val filtered = if (prayer != null) list.filter { it.prayer == prayer } else list
+        val cal = java.util.Calendar.getInstance()
+        val sdf = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault())
+
+        fun keyFor(dateStr: String): Pair<String, String>? {
+            val date = try { sdf.parse(dateStr) } catch (_: Exception) { null } ?: return null
+            cal.time = date
+            return when (period) {
+                QadaPeriod.DAY -> dateStr to dateStr
+                QadaPeriod.WEEK -> {
+                    val year = cal.get(java.util.Calendar.YEAR)
+                    val week = cal.get(java.util.Calendar.WEEK_OF_YEAR)
+                    val key = "%d-W%02d".format(year, week)
+                    key to "সপ্তাহ %d, %d".format(week, year)
+                }
+                QadaPeriod.MONTH -> {
+                    val monthKey = java.text.SimpleDateFormat("yyyy-MM", java.util.Locale.getDefault()).format(date)
+                    val monthLabel = java.text.SimpleDateFormat("MMMM yyyy", java.util.Locale.getDefault()).format(date)
+                    monthKey to monthLabel
+                }
+                QadaPeriod.YEAR -> {
+                    val year = cal.get(java.util.Calendar.YEAR).toString()
+                    year to year
+                }
+            }
+        }
+
+        filtered
+            .mapNotNull { entry -> keyFor(entry.date)?.let { (key, label) -> Triple(key, label, entry) } }
+            .groupBy({ it.first }, { it.second to it.third })
+            .map { (key, labelAndEntries) ->
+                QadaPeriodStat(
+                    periodKey = key,
+                    label = labelAndEntries.first().first,
+                    missed = labelAndEntries.sumOf { it.second.count },
+                    completed = labelAndEntries.sumOf { it.second.completed }
+                )
+            }
+            .sortedByDescending { it.periodKey }
+    }
+
+    /** Raw entries for a specific date — used by the "log kaza with date" UI. */
+    fun entriesOn(date: String): Flow<List<QadaEntry>> = entries.map { list -> list.filter { it.date == date } }
 
     private fun currentList(prefs: Preferences): List<QadaEntry> {
         return prefs[KEY_ENTRIES]?.let { json ->

@@ -82,6 +82,37 @@ class PrayerRepository(
     suspend fun getDefaultPrayerTimes(): Result<PrayerTimes> =
         getPrayerTimes(latitude = 21.4225, longitude = 39.8262)
 
+    /**
+     * Fetch the real per-day Hijri date for every day of a given Gregorian
+     * month, directly from Aladhan's calendar endpoint. Used by the Hijri
+     * calendar screen so navigating to a different month shows that month's
+     * *actual* Hijri dates instead of an approximation anchored on today.
+     *
+     * @param month 1-12 (Aladhan's calendar endpoint is 1-indexed)
+     */
+    suspend fun getHijriMonthCalendar(
+        year: Int,
+        month: Int,
+        latitude: Double = 21.4225,
+        longitude: Double = 39.8262
+    ): Result<List<com.islamichub.app.data.remote.AladhanTimingsData>> = withContext(Dispatchers.IO) {
+        try {
+            val response = api.getCalendar(
+                year = year,
+                month = month,
+                latitude = latitude,
+                longitude = longitude
+            )
+            if (response.code != 200) {
+                Result.failure(IllegalStateException("Aladhan code=${response.code}"))
+            } else {
+                Result.success(response.data)
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     fun hasLocationPermission(): Boolean {
         return ContextCompat.checkSelfPermission(
             context,

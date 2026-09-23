@@ -14,14 +14,20 @@ data class FastingUiState(
     val todayFast: FastType? = null,
     val recentEntries: List<FastEntry> = emptyList(),
     val showAddSheet: Boolean = false,
-    val selectedType: FastType = FastType.NAFL
+    val selectedType: FastType = FastType.NAFL,
+    // Date-selection for logging a fast against a specific day (e.g. adding
+    // a missed Ramadan day retroactively) instead of always "today".
+    val selectedLogDate: String = "",
+    // History dashboard state.
+    val selectedPeriod: FastPeriod = FastPeriod.MONTH,
+    val periodStats: List<FastPeriodStat> = emptyList()
 )
 
 class FastingViewModel(private val container: AppContainer) : ViewModel() {
 
     private val repo = container.fastingRepository
 
-    private val _uiState = MutableStateFlow(FastingUiState())
+    private val _uiState = MutableStateFlow(FastingUiState(selectedLogDate = todayStr()))
     val uiState: StateFlow<FastingUiState> = _uiState.asStateFlow()
 
     init {
@@ -42,6 +48,24 @@ class FastingViewModel(private val container: AppContainer) : ViewModel() {
                 }
             }
         }
+        loadStats()
+    }
+
+    private fun loadStats() {
+        viewModelScope.launch {
+            repo.statsFor(_uiState.value.selectedPeriod).collect { stats ->
+                _uiState.update { it.copy(periodStats = stats) }
+            }
+        }
+    }
+
+    fun selectPeriod(period: FastPeriod) {
+        _uiState.update { it.copy(selectedPeriod = period) }
+        loadStats()
+    }
+
+    fun selectLogDate(date: String) {
+        _uiState.update { it.copy(selectedLogDate = date) }
     }
 
     fun showAddSheet() {
@@ -58,8 +82,9 @@ class FastingViewModel(private val container: AppContainer) : ViewModel() {
 
     fun addTodayFast() {
         val type = _uiState.value.selectedType
+        val date = _uiState.value.selectedLogDate.ifBlank { todayStr() }
         viewModelScope.launch {
-            repo.addFast(type = type, date = todayStr())
+            repo.addFast(type = type, date = date)
             _uiState.update { it.copy(showAddSheet = false) }
         }
     }

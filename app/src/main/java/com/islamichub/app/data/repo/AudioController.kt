@@ -477,35 +477,30 @@ class AudioController(private val context: Context) {
 
     /**
      * Get ayah count for a surah.
+     *
+     * BUGFIX (v5.3.1): the previous table was missing Surah 23's ayah count
+     * (118), which silently shifted every surah number from 23 onward one
+     * slot down (e.g. index 23 held Surah 24's count, index 24 held Surah
+     * 25's, etc.), and the table was one entry short overall so Surah 114
+     * read out of bounds. Because globalAyahNumber() below sums this same
+     * table to find the CDN's absolute ayah index, every ayah from Surah 23
+     * onward resolved to the wrong absolute index — so tapping play on a
+     * given surah/ayah silently fetched a *different* surah/ayah's audio
+     * from the CDN. AYAH_COUNTS is now the single verified source (114
+     * entries, sums to 6236 — the correct total ayah count of the Quran)
+     * used by both getAyahCount() and globalAyahNumber() so they can never
+     * drift apart again.
      */
     private fun getAyahCount(surah: Int): Int {
-        val counts = intArrayOf(
-            0, 7, 286, 200, 176, 120, 165, 206, 75, 129, 109, 123, 111, 43, 52, 99,
-            128, 111, 110, 98, 135, 112, 78, 64, 77, 227, 93, 88, 69, 60, 34, 30,
-            73, 54, 45, 83, 182, 88, 75, 85, 54, 53, 89, 59, 37, 35, 38, 29, 18,
-            45, 60, 49, 62, 55, 78, 96, 29, 22, 24, 13, 14, 11, 11, 18, 12, 12,
-            30, 52, 52, 44, 28, 28, 20, 56, 40, 31, 50, 40, 46, 42, 29, 19, 36,
-            25, 22, 17, 19, 26, 30, 20, 15, 21, 11, 8, 8, 19, 5, 8, 8, 11, 11,
-            8, 3, 9, 5, 4, 7, 3, 6, 3, 5, 4, 5, 6
-        )
-        return if (surah in 1..114) counts[surah] else 0
+        return if (surah in 1..114) AYAH_COUNTS[surah] else 0
     }
 
     /**
      * Maps (surah, ayah) to the global ayah number used by AlQuran.cloud CDN.
      */
     private fun globalAyahNumber(surah: Int, ayah: Int): Int {
-        val cumulative = intArrayOf(
-            0, 7, 286, 200, 176, 120, 165, 206, 75, 129, 109, 123, 111, 43, 52, 99,
-            128, 111, 110, 98, 135, 112, 78, 64, 77, 227, 93, 88, 69, 60, 34, 30,
-            73, 54, 45, 83, 182, 88, 75, 85, 54, 53, 89, 59, 37, 35, 38, 29, 18,
-            45, 60, 49, 62, 55, 78, 96, 29, 22, 24, 13, 14, 11, 11, 18, 12, 12,
-            30, 52, 52, 44, 28, 28, 20, 56, 40, 31, 50, 40, 46, 42, 29, 19, 36,
-            25, 22, 17, 19, 26, 30, 20, 15, 21, 11, 8, 8, 19, 5, 8, 8, 11, 11,
-            8, 3, 9, 5, 4, 7, 3, 6, 3, 5, 4, 5, 6
-        )
         var sum = 0
-        for (i in 1 until surah) sum += cumulative[i]
+        for (i in 1 until surah) sum += AYAH_COUNTS[i]
         return sum + ayah
     }
 
@@ -516,6 +511,21 @@ class AudioController(private val context: Context) {
     )
 
     companion object {
+        /**
+         * Ayah count per surah, index 1..114 (index 0 unused). Verified against
+         * the standard Uthmani mushaf; sums to 6236, the total ayah count of
+         * the Quran. Single source of truth — see BUGFIX note on getAyahCount().
+         */
+        private val AYAH_COUNTS = intArrayOf(
+            0, 7, 286, 200, 176, 120, 165, 206, 75, 129, 109, 123, 111, 43, 52, 99,
+            128, 111, 110, 98, 135, 112, 78, 118, 64, 77, 227, 93, 88, 69, 60, 34, 30,
+            73, 54, 45, 83, 182, 88, 75, 85, 54, 53, 89, 59, 37, 35, 38, 29, 18,
+            45, 60, 49, 62, 55, 78, 96, 29, 22, 24, 13, 14, 11, 11, 18, 12, 12,
+            30, 52, 52, 44, 28, 28, 20, 56, 40, 31, 50, 40, 46, 42, 29, 19, 36,
+            25, 22, 17, 19, 26, 30, 20, 15, 21, 11, 8, 8, 19, 5, 8, 8, 11, 11,
+            8, 3, 9, 5, 4, 7, 3, 6, 3, 5, 4, 5, 6
+        )
+
         val availableRecitersStatic: List<Reciter> = listOf(
             Reciter("ar.alafasy", "Mishary Rashid Alafasy", "ar.alafasy"),
             Reciter("ar.abdurrahmaansudais", "Abdurrahmaan As-Sudais", "ar.abdurrahmaansudais"),
