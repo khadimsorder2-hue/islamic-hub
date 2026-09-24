@@ -2,7 +2,7 @@ package com.islamichub.app.ui.theme
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.staticCompositionLocalOf
-import androidx.compose.ui.text.TextUnit
+import androidx.compose.ui.unit.TextUnit
 
 /**
  * v5.5 — Global per-script reading text sizes.
