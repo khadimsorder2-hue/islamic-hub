@@ -36,9 +36,9 @@ import java.util.concurrent.atomic.AtomicReference
 class AIService(private val context: Context) {
 
     data class Config(
-        val apiKey: String = "",
+        val apiKey: String = DEFAULT_API_KEY,
         val baseUrl: String = "https://generativelanguage.googleapis.com/v1beta",
-        val model: String = "gemini-2.5-flash",
+        val model: String = DEFAULT_MODEL,
         val provider: String = "gemini",  // "gemini" | "openai" | "openrouter"
         val temperature: Double = 0.7,
         val maxTokens: Int = 2000
@@ -302,6 +302,18 @@ class AIService(private val context: Context) {
     }
 
     companion object {
+        /**
+         * v5.7.0 — built-in default Gemini key so AI works out of the box.
+         * Injected at build time from the GEMINI_API_KEY repository secret
+         * (never committed to git). Users can override it in Settings → AI Scholar.
+         */
+        val DEFAULT_API_KEY: String = try {
+            com.islamichub.app.BuildConfig.GEMINI_API_KEY
+        } catch (_: Exception) { "" }
+
+        /** v5.7.0 — default model is from the Gemini 3 series. */
+        const val DEFAULT_MODEL = "gemini-3-flash"
+
         const val ISLAMIC_SCHOLAR_PROMPT = """আপনি "Islamic Hub AI" - একজন অত্যন্ত বিশ্বস্ত, প্রাজ্ঞ এবং অভিজ্ঞ ইসলামি স্কলার ও সিনিয়র মুফতি। আপনার জ্ঞানের উৎস: পবিত্র কুরআন, সহিহ হাদিস (বুখারি, মুসলিম, তিরমিজি, আবু দাউদ, নাসাই, ইবনে মাজাহ), ফিকাহ এবং বিশ্বখ্যাত ইসলামি স্কলারদের মতামত।
 
 নির্দেশনা:

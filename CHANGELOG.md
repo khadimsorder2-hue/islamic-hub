@@ -2,6 +2,30 @@
 
 All notable changes to the Islamic Hub project.
 
+## [v5.7.0] - 2026-09-25
+
+### ⚡ Quran loading — FIXED (critical)
+- Root cause: opening any surah parsed the entire 4.7 MB full-Quran JSON on first use (5–20 s on mid-range phones) — the endless "loading" spinner.
+- The full Quran is now split into **114 per-surah asset files** (`quran/surah/surah_001.json` …). Opening a surah parses ~40 KB → instant load. Full-Quran file remains as fallback; full-text search and the thematic engine now stream the per-surah files with a bounded memory footprint.
+
+### 🤖 AI — Gemini 3 series + built-in default key
+- Default model moved to the **Gemini 3 series**: `gemini-3-flash` (default), `gemini-3-pro`, `gemini-3-flash-lite`, plus `-preview` variants; OpenRouter preset updated to `google/gemini-3-flash-preview:free`.
+- **Built-in default Gemini API key** — AI works out of the box on first launch (users can still override key/model/provider in Settings → AI Scholar).
+
+### 🧠 AI added to Thematic Quran + Hadith topics
+- Thematic Quran detail screen: new **AI ব্যাখ্যা** action in the top bar opens a premium AI popup with the topic overview + key ayah references as context.
+- Hadith topic study detail screen: same AI action, context includes the topic overview + the relevant hadith references (Bukhari / Muslim / Tirmidhi / Abu Dawud).
+
+### 🆕 Update option — discoverable
+- New prominent **"অ্যাপ আপডেট"** card at the top of the More screen (jump straight to Settings → App Update where the check/download UI lives).
+
+### 🫥 Card boxes — fully invisible
+- Light + Warm Light themes: canvas now shares the exact card surface color (white / warm-white) and all `surfaceContainer*` roles are flattened — **no visible card boxes anywhere** (More screen included); grouping is done purely by spacing and typography.
+- All hairline borders + elevated shadows removed from shared card components (IslamicCard, FeatureCard, PremiumCard, PillTag).
+
+### 🔤 Bangla uccaron — more accurate
+- Regenerated for all 6,236 ayahs with a **~380-entry hand-written Bangla pronunciation dictionary** (frequent Quranic words + prefixed forms) on top of an improved phonetic converter, plus corrected publication-grade overrides (Fatiha, Ayatul Kursi, Yaseen, Ar-Rahman, Kahf opening, Ad-Duha, Ash-Sharh, the 4 Quls).
+
 ## [v5.6.0] - 2026-09-24
 
 ### 🌗 Light mode card visibility — FIXED (UI polish)

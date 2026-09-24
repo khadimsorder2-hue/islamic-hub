@@ -40,6 +40,7 @@ import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.material.icons.filled.MenuBook
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Psychology
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Spa
 import androidx.compose.material3.Card
@@ -149,6 +150,9 @@ fun TopicStudyDetailScreen(
         vm.load(topicSlug)
     }
 
+    // v5.7.0 — AI explanation popup (Thematic Quran AI)
+    var showTopicAI by remember { mutableStateOf(false) }
+
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
@@ -162,6 +166,16 @@ fun TopicStudyDetailScreen(
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    }
+                },
+                actions = {
+                    // v5.7.0 — AI ব্যাখ্যা button
+                    IconButton(onClick = { showTopicAI = true }) {
+                        Icon(
+                            Icons.Filled.Psychology,
+                            contentDescription = "AI ব্যাখ্যা",
+                            tint = MaterialTheme.colorScheme.primary
+                        )
                     }
                 }
             )
@@ -548,6 +562,20 @@ fun TopicStudyDetailScreen(
             item { Spacer(Modifier.height(32.dp)) }
         }
     }
+
+    // v5.7.0 — Thematic Quran AI explanation popup
+    com.islamichub.app.ui.components.AIExplanationPopup(
+        container = container,
+        title = state.topic?.nameBn ?: "বিষয়ভিত্তিক কুরআন",
+        question = if (state.topic != null)
+            "\"${state.topic!!.nameBn}\" বিষয়টি সম্পর্কে কুরআন কী বলে? " +
+                "সংক্ষেপ: ${state.topic!!.overviewBn.take(300)}\nপ্রাসঙ্গিক আয়াত: " +
+                state.resolvedKeyAyahs.take(8).joinToString(", ") { it.reference }
+        else "",
+        context = "বিষয়ভিত্তিক (থিম্যাটিক) কুরআন স্টাডি",
+        show = showTopicAI,
+        onDismiss = { showTopicAI = false }
+    )
 }
 
 @Composable

@@ -154,17 +154,12 @@ fun PremiumCard(
             .fillMaxWidth()
             .scale(scale)
             .clip(RoundedCornerShape(20.dp))
-            .clickable(interactionSource = interactionSource, indication = null, onClick = onClick)
-            .border(
-                width = 1.dp,
-                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
-                shape = RoundedCornerShape(20.dp)
-            ),
+            .clickable(interactionSource = interactionSource, indication = null, onClick = onClick),
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
         elevation = CardDefaults.cardElevation(
-            defaultElevation = 3.dp,
-            pressedElevation = 6.dp
+            defaultElevation = 0.dp,
+            pressedElevation = 2.dp
         )
     ) {
         Box(

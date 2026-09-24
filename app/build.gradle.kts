@@ -24,8 +24,14 @@ android {
         applicationId = "com.islamichub.app"
         minSdk = 24
         targetSdk = 34
-        versionCode = 44
-        versionName = "5.6.0"
+        versionCode = 45
+        versionName = "5.7.0"
+
+        // v5.7.0 — default Gemini API key injected at build time from the
+        // GEMINI_API_KEY repository secret (never committed to git).
+        val geminiKey = (project.findProperty("GEMINI_API_KEY") as String?)
+            ?: System.getenv("GEMINI_API_KEY") ?: ""
+        buildConfigField("String", "GEMINI_API_KEY", "\"$geminiKey\"")
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {

@@ -32,9 +32,9 @@ data class SettingsUiState(
     val englishFontScale: Float = 1.0f,
     val showTransliteration: Boolean = true,
     val cacheSizeBytes: Long = 0L,
-    val aiApiKey: String = "",
+    val aiApiKey: String = com.islamichub.app.data.repo.AIService.DEFAULT_API_KEY,
     val aiBaseUrl: String = "https://generativelanguage.googleapis.com/v1beta",
-    val aiModel: String = "gemini-2.5-flash",
+    val aiModel: String = com.islamichub.app.data.repo.AIService.DEFAULT_MODEL,
     val aiProvider: String = "gemini",
     /** v5.6.0 — in-app update check state */
     val updateStatus: UpdateStatus = UpdateStatus.Idle,
@@ -169,7 +169,7 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
             container.settingsRepository.setAiProvider(provider)
             // Auto-set defaults per provider
             val (defaultUrl, defaultModel) = when (provider) {
-                "gemini" -> "https://generativelanguage.googleapis.com/v1beta" to "gemini-2.5-flash"
+                "gemini" -> "https://generativelanguage.googleapis.com/v1beta" to "gemini-3-flash"
                 "openrouter" -> "https://openrouter.ai/api/v1" to "stepfun/step-3.5-flash:free"
                 else -> "https://api.openai.com/v1" to "gpt-4o-mini"
             }

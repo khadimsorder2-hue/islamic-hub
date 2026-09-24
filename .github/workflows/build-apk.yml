@@ -52,9 +52,10 @@ jobs:
           fi
 
       - name: Build release APK
-        run: ./gradlew assembleRelease --no-daemon --stacktrace
+        run: ./gradlew assembleRelease -PGEMINI_API_KEY="${{ secrets.GEMINI_API_KEY }}" --no-daemon --stacktrace
         env:
           JAVA_TOOL_OPTIONS: "-Xmx4g"
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
 
       - name: Locate APK
         id: apk
@@ -107,10 +108,12 @@ jobs:
             - Tap to install (allow "Install from unknown sources" if prompted)
 
             ## What's new (${{ github.ref_name }})
-            - 🌗 **Light mode fixed** — cards no longer wash out into the background: full Material 3 surfaceContainer color ramp defined for every theme, visible hairline borders on cards, deeper canvas colors; dark mode look untouched
-            - 🆕 **In-app update checker** — Settings → "অ্যাপ আপডেট": check for updates anytime, release notes + one-tap APK download, silent auto-check once every 24 h with a dismissable dialog (rate-limit-proof GitHub redirect resolution)
-            - 🔥 **Fake Firebase toggle removed** — it never did anything (no SDK/config); replaced with the real update section
-            - 🔊 **Audio hardening** — verified ayah mapping (6236-ayah table, single source of truth); a failed ayah now retries once then auto-advances instead of stalling; offline audio cache wired into playback
+            - ⚡ **Quran loading fixed** — surahs now load instantly from 114 per-surah files instead of parsing the whole 4.7 MB Quran (the endless loading spinner is gone)
+            - 🤖 **AI upgraded to Gemini 3 series** — gemini-3-flash by default (plus Pro / Flash-Lite / Preview), with a built-in default API key so AI works out of the box
+            - 🧠 **AI added to Thematic Quran + Hadith topics** — new "AI ব্যাখ্যা" button in both topic study screens
+            - 🆕 **Update option now easy to find** — prominent "অ্যাপ আপডেট" card at the top of the More screen
+            - 🫥 **Card boxes fully invisible** — flat design in light/warm-light themes, no visible borders or boxes anywhere
+            - 🔤 **Bangla uccaron more accurate** — all 6,236 ayahs regenerated with a hand-written pronunciation dictionary + corrected recited-passage overrides
 
             ## Features (cumulative)
             - **Al-Quran**: 114 surahs, 6236 ayahs, full Arabic + Bengali + English (offline bundle + AlQuran.cloud)

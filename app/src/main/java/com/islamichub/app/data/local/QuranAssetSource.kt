@@ -52,7 +52,26 @@ class QuranAssetSource(private val context: Context) {
         parsed.surahs
     }
 
+    /**
+     * v5.7.0 — per-surah fast path: each surah lives in its own small JSON file
+     * (quran/surah/surah_001.json …), so opening a surah parses ~40 KB instead
+     * of the whole 4.7 MB Quran — fixes the endless "loading" spinner on
+     * first open. Falls back to the bundled full-Quran file if missing.
+     */
     suspend fun loadSurah(number: Int): Surah? = withContext(Dispatchers.IO) {
+        if (number in 1..114) {
+            try {
+                val text = readAsset("quran/surah/surah_%03d.json".format(number))
+                val parsed = try {
+                    gson.fromJson(text, SurahJson::class.java)
+                } catch (e: JsonSyntaxException) {
+                    null
+                }
+                if (parsed != null) return@withContext parsed.toDomain()
+            } catch (_: Exception) {
+                // fall through to full-Quran parse
+            }
+        }
         val cache = fullQuranCache ?: run {
             val text = readAsset("quran/quran.json")
             val parsed = try {
@@ -67,6 +86,22 @@ class QuranAssetSource(private val context: Context) {
     }
 
     suspend fun loadAllSurahs(): List<Surah> = withContext(Dispatchers.IO) {
+        // v5.7.0 — stream per-surah files when available (lower memory peak).
+        val cached: List<Surah>? = if (perSurahCache.size == 114) {
+            perSurahCache.values.sortedBy { it.number }
+        } else null
+        if (cached != null) return@withContext cached
+        val individual: List<Surah>? = runCatching {
+            (1..114).map { n: Int ->
+                perSurahCache.getOrPut(n) {
+                    gson.fromJson<SurahJson>(
+                        readAsset("quran/surah/surah_%03d.json".format(n)),
+                        SurahJson::class.java
+                    ).toDomain()
+                }
+            }
+        }.getOrNull()
+        if (individual != null) return@withContext individual
         val cache = fullQuranCache ?: run {
             val text = readAsset("quran/quran.json")
             val parsed = try {
@@ -109,6 +144,9 @@ class QuranAssetSource(private val context: Context) {
     }
 
     @Volatile private var bnUccaronCache: Map<Int, Map<Int, String>>? = null
+
+    /** v5.7.0 — parsed per-surah domain cache (surah number → Surah). */
+    private val perSurahCache = java.util.concurrent.ConcurrentHashMap<Int, Surah>()
 }
 
 // ─── JSON DTOs ──────────────────────────────────────────────────────────────

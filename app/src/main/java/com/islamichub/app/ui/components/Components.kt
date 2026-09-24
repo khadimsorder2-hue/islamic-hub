@@ -33,17 +33,12 @@ fun IslamicCard(
     content: @Composable () -> Unit
 ) {
     Card(
-        // v5.6.0: hairline border so cards stay crisp in light mode
+        // v5.7.0: border removed — card boxes are fully invisible now
         modifier = modifier
-            .fillMaxWidth()
-            .border(
-                width = 1.dp,
-                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.7f),
-                shape = MaterialTheme.shapes.medium
-            ),
+            .fillMaxWidth(),
         shape = MaterialTheme.shapes.medium,
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Box(modifier = Modifier.padding(16.dp)) {
             content()
@@ -60,20 +55,15 @@ fun FeatureCard(
     modifier: Modifier = Modifier
 ) {
     Card(
-        // v5.6.0: hairline border so cards stay crisp in light mode
+        // v5.7.0: border removed — card boxes are fully invisible now
         modifier = modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .border(
-                width = 1.dp,
-                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.7f),
-                shape = MaterialTheme.shapes.large
-            ),
+            .clickable(onClick = onClick),
         shape = MaterialTheme.shapes.large,
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerLow
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Column(
             modifier = Modifier.padding(16.dp),
@@ -157,7 +147,6 @@ fun PillTag(
         modifier = modifier
             .clip(RoundedCornerShape(50))
             .background(color)
-            .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.3f), RoundedCornerShape(50))
             .padding(horizontal = 12.dp, vertical = 4.dp)
     ) {
         Text(

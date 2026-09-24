@@ -109,13 +109,13 @@ class SettingsRepository(private val context: Context) {
     // User profile (name)
     val userName: Flow<String> = context.settingsStore.data.map { it[USER_NAME] ?: "" }
 
-    // AI Scholar config
-    val aiApiKey: Flow<String> = context.settingsStore.data.map { it[AI_API_KEY] ?: "" }
+    // AI Scholar config — v5.7.0: built-in default key + Gemini 3 model (works out of the box)
+    val aiApiKey: Flow<String> = context.settingsStore.data.map { it[AI_API_KEY] ?: AIService.DEFAULT_API_KEY }
     val aiBaseUrl: Flow<String> = context.settingsStore.data.map {
         it[AI_BASE_URL] ?: "https://generativelanguage.googleapis.com/v1beta"
     }
     val aiModel: Flow<String> = context.settingsStore.data.map {
-        it[AI_MODEL] ?: "gemini-2.5-flash"
+        it[AI_MODEL] ?: AIService.DEFAULT_MODEL
     }
     val aiProvider: Flow<String> = context.settingsStore.data.map {
         it[AI_PROVIDER] ?: "gemini"

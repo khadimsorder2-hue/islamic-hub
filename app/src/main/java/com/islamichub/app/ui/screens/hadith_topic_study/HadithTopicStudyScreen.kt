@@ -35,6 +35,7 @@ import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.MenuBook
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Psychology
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -53,6 +54,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -313,6 +315,11 @@ fun HadithTopicStudyDetailScreen(
 
     LaunchedEffect(topicSlug) { vm.load(topicSlug) }
 
+    // v5.7.0 — AI explanation popup (Hadith Topic AI)
+    var showTopicAI by androidx.compose.runtime.remember {
+        androidx.compose.runtime.mutableStateOf(false)
+    }
+
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
@@ -322,6 +329,16 @@ fun HadithTopicStudyDetailScreen(
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    }
+                },
+                actions = {
+                    // v5.7.0 — AI ব্যাখ্যা button
+                    IconButton(onClick = { showTopicAI = true }) {
+                        Icon(
+                            Icons.Filled.Psychology,
+                            contentDescription = "AI ব্যাখ্যা",
+                            tint = MaterialTheme.colorScheme.primary
+                        )
                     }
                 }
             )
@@ -534,6 +551,20 @@ fun HadithTopicStudyDetailScreen(
             item { Spacer(Modifier.height(32.dp)) }
         }
     }
+
+    // v5.7.0 — Hadith Topic AI explanation popup
+    com.islamichub.app.ui.components.AIExplanationPopup(
+        container = container,
+        title = state.topic?.nameBn ?: "হাদিস বিষয়",
+        question = if (state.topic != null)
+            "\"${state.topic!!.nameBn}\" বিষয়ে সহিহ হাদিস কী কী বলে? " +
+                "সংক্ষেপ: ${state.topic!!.overviewBn.take(300)}\nপ্রাসঙ্গিক হাদিস: " +
+                state.hadiths.take(6).joinToString(", ") { "${it.collectionNameBn} #${it.hadithNumber}" }
+        else "",
+        context = "হাদিস বিষয়ভিত্তিক স্টাডি (বুখারি, মুসলিম, তিরমিজি, আবু দাউদ)",
+        show = showTopicAI,
+        onDismiss = { showTopicAI = false }
+    )
 }
 
 @Composable
