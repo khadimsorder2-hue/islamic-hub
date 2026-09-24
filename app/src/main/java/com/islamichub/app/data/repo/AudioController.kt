@@ -25,7 +25,10 @@ import java.util.concurrent.atomic.AtomicReference
  *  - Playback speed: 0.5x–2.0x
  *  - Repeat mode: repeat current ayah
  */
-class AudioController(private val context: Context) {
+class AudioController(
+    private val context: Context,
+    private val audioDownloadService: AudioDownloadService? = null
+) {
 
     data class AudioState(
         val isPlaying: Boolean = false,
@@ -81,6 +84,9 @@ class AudioController(private val context: Context) {
     private var surahSequentialAyahCount: Int = 0
     private var surahSequentialCurrentAyah: Int = 0
 
+    // v5.6.0 — error recovery: retry the same ayah once, then skip to the next
+    private var errorRetryCount: Int = 0
+
     private val listener = object : Player.Listener {
         override fun onIsLoadingChanged(isLoading: Boolean) {
             _state.value = _state.value.copy(isLoading = isLoading)
@@ -112,11 +118,15 @@ class AudioController(private val context: Context) {
         }
 
         override fun onPlayerErrorChanged(error: PlaybackException?) {
+            if (error == null) return
             _state.value = _state.value.copy(
-                error = error?.message ?: error?.cause?.message,
+                error = error.message ?: error.cause?.message,
                 isLoading = false,
                 isPlaying = false
             )
+            // v5.6.0: never leave sequential playback stuck on a network error —
+            // retry the same ayah once, then advance to the next one.
+            scheduleErrorRecovery()
         }
     }
 
@@ -216,6 +226,75 @@ class AudioController(private val context: Context) {
         }
     }
 
+    /**
+     * v5.6.0 — recovery after a playback error (flaky network, CDN hiccup).
+     * Sequential modes + repeat mode auto-recover: retry same ayah once,
+     * then skip to the next ayah/surah. Single-ayah play just reports the
+     * error and stops (user can tap again).
+     */
+    private fun scheduleErrorRecovery() {
+        val state = _state.value
+        val autoRecover = state.mode == PlaybackMode.SURAH_SEQUENTIAL ||
+            state.mode == PlaybackMode.KHATAM_SEQUENTIAL || state.isRepeatMode
+        if (!autoRecover) return
+        if (errorRetryCount < 1) {
+            errorRetryCount++
+            handler.postDelayed({
+                val s = _state.value
+                val stillActive = s.mode == PlaybackMode.SURAH_SEQUENTIAL ||
+                    s.mode == PlaybackMode.KHATAM_SEQUENTIAL || s.isRepeatMode
+                if (stillActive && s.currentSurah != null && s.currentAyah != null) {
+                    playAyahAudioInternal(s.currentSurah!!, s.currentAyah!!, currentReciter)
+                }
+            }, 1_200L)
+        } else {
+            errorRetryCount = 0
+            handler.postDelayed({ advanceAfterError() }, 600L)
+        }
+    }
+
+    /** Advance past a permanently-failed ayah (mirrors onAyahEnded advance logic). */
+    private fun advanceAfterError() {
+        val state = _state.value
+        val surah = state.currentSurah ?: return
+        val ayah = state.currentAyah ?: return
+        when (state.mode) {
+            PlaybackMode.SURAH_SEQUENTIAL -> {
+                if (ayah < surahSequentialAyahCount) {
+                    surahSequentialCurrentAyah = ayah + 1
+                    playAyahAudioInternal(surah, ayah + 1, currentReciter)
+                } else {
+                    _state.value = _state.value.copy(
+                        isPlaying = false, positionMs = 0L, mode = PlaybackMode.NONE
+                    )
+                }
+            }
+            PlaybackMode.KHATAM_SEQUENTIAL -> {
+                if (ayah < surahSequentialAyahCount) {
+                    surahSequentialCurrentAyah = ayah + 1
+                    playAyahAudioInternal(surah, ayah + 1, currentReciter)
+                } else if (khatamCurrentSurahIndex < khatamSurahQueue.size - 1) {
+                    khatamCurrentSurahIndex++
+                    val nextSurah = khatamSurahQueue[khatamCurrentSurahIndex]
+                    surahSequentialAyahCount = getAyahCount(nextSurah)
+                    surahSequentialCurrentAyah = 1
+                    playAyahAudioInternal(nextSurah, 1, currentReciter)
+                } else {
+                    _state.value = _state.value.copy(
+                        isPlaying = false, positionMs = 0L,
+                        currentSurah = null, currentAyah = null,
+                        isKhatamMode = false, mode = PlaybackMode.NONE
+                    )
+                }
+            }
+            else -> {
+                _state.value = _state.value.copy(
+                    isPlaying = false, positionMs = 0L, mode = PlaybackMode.NONE
+                )
+            }
+        }
+    }
+
     private fun ensurePlayer(): ExoPlayer {
         return player ?: synchronized(this) {
             player ?: ExoPlayer.Builder(context)
@@ -233,6 +312,7 @@ class AudioController(private val context: Context) {
      */
     fun playSurah(surahNumber: Int, reciter: Reciter = currentReciter) {
         currentReciter = reciter
+        errorRetryCount = 0
         surahSequentialAyahCount = getAyahCount(surahNumber)
         surahSequentialCurrentAyah = 1
         _state.value = _state.value.copy(
@@ -250,6 +330,7 @@ class AudioController(private val context: Context) {
      */
     fun playAyah(surahNumber: Int, ayahNumber: Int, reciter: Reciter = currentReciter) {
         currentReciter = reciter
+        errorRetryCount = 0
         surahSequentialAyahCount = getAyahCount(surahNumber)
         _state.value = _state.value.copy(
             mode = PlaybackMode.SINGLE_AYAH,
@@ -262,13 +343,24 @@ class AudioController(private val context: Context) {
     }
 
     /**
-     * Internal: play Arabic ayah audio from CDN.
+     * Internal: play Arabic ayah audio. Prefers an offline-downloaded copy
+     * (audio_cache) when available, otherwise streams from the CDN.
+     * URL uses the global ayah index computed from the verified AYAH_COUNTS
+     * table — see getAyahCount() for the v5.3.1 wrong-audio bugfix.
      */
     private fun playAyahAudioInternal(surahNumber: Int, ayahNumber: Int, reciter: Reciter) {
-        val url = "https://cdn.islamic.network/quran/audio/128/${reciter.editionId}/" +
-            "${globalAyahNumber(surahNumber, ayahNumber)}.mp3"
+        val localPath = audioDownloadService
+            ?.getLocalAyahPath(reciter.editionId, surahNumber, ayahNumber)
+        val uri = if (localPath != null) {
+            android.net.Uri.fromFile(java.io.File(localPath))
+        } else {
+            android.net.Uri.parse(
+                "https://cdn.islamic.network/quran/audio/128/${reciter.editionId}/" +
+                    "${globalAyahNumber(surahNumber, ayahNumber)}.mp3"
+            )
+        }
         val mediaItem = MediaItem.Builder()
-            .setUri(url)
+            .setUri(uri)
             .setMediaMetadata(
                 MediaMetadata.Builder()
                     .setTitle("Surah $surahNumber Ayah $ayahNumber")
@@ -312,6 +404,7 @@ class AudioController(private val context: Context) {
      */
     fun startKhatamPlayer(startSurah: Int = 1, reciter: Reciter = currentReciter) {
         currentReciter = reciter
+        errorRetryCount = 0
         khatamSurahQueue = (startSurah..114).toList()
         khatamCurrentSurahIndex = 0
         val firstSurah = khatamSurahQueue[khatamCurrentSurahIndex]

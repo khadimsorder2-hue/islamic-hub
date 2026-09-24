@@ -236,8 +236,8 @@
     <string name="settings_ai_model">AI Model</string>
     <string name="settings_ai_configured">AI configured</string>
     <string name="settings_ai_not_configured">AI not configured — set API key to use</string>
-    <string name="settings_firebase">Firebase</string>
-    <string name="settings_firebase_enabled">Enable Firebase</string>
+    <string name="settings_update">অ্যাপ আপডেট</string>
+    <string name="settings_check_update">আপডেট চেক করুন</string>
 
     <!-- Word-by-word -->
     <string name="word_by_word_title">Word by Word</string>

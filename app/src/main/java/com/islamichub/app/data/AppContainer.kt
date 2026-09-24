@@ -36,6 +36,7 @@ import com.islamichub.app.data.repo.QuranRepository
 import com.islamichub.app.data.repo.SettingsRepository
 import com.islamichub.app.data.repo.TafsirRepository
 import com.islamichub.app.data.repo.TrackerRepository
+import com.islamichub.app.data.repo.UpdateChecker
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import okhttp3.OkHttpClient
@@ -119,7 +120,7 @@ class AppContainer(internal val context: Context) {
     val duaRepository: DuaRepository by lazy { DuaRepository(DuaData.duas, DuaData.dhikrOptions) }
     val prayerRepository: PrayerRepository by lazy { PrayerRepository(aladhanApi, context) }
     val tasbihRepository: TasbihRepository by lazy { TasbihRepository(context) }
-    val audioController: AudioController by lazy { AudioController(context) }
+    val audioController: AudioController by lazy { AudioController(context, audioDownloadService) }
     val prayerScheduler: PrayerScheduler by lazy { PrayerScheduler(context, prayerRepository) }
     val aiService: AIService by lazy { AIService(context) }
 
@@ -142,6 +143,9 @@ class AppContainer(internal val context: Context) {
 
     // v1.9.0 new services
     val audioDownloadService: AudioDownloadService by lazy { AudioDownloadService(context) }
+
+    /** v5.6.0 — in-app update checker (GitHub Releases based) */
+    val updateChecker: UpdateChecker by lazy { UpdateChecker(context) }
     val translationCache: TranslationCacheService by lazy { TranslationCacheService(context) }
     val backupRestoreService: BackupRestoreService by lazy {
         BackupRestoreService(

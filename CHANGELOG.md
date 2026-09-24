@@ -2,6 +2,31 @@
 
 All notable changes to the Islamic Hub project.
 
+## [v5.6.0] - 2026-09-24
+
+### 🌗 Light mode card visibility — FIXED (UI polish)
+- Root cause: Material 3 `surfaceContainer*` color roles were never defined, so cards fell back to the baseline scheme (~#F7F2FA) on the near-white Warm Ivory background (#FCFAF7), and filled Cards have 0 dp elevation — every card washed out into the canvas in light mode while dark mode (baseline #211F26 on #121016) kept its contrast.
+- **All three schemes now define the full surfaceContainer ramp**: light mode gets a soft grey-lavender canvas (#F2EFF5) with pure-white cards; Warm Light gets a deeper cream canvas (#F2E8CE) with warm-white cards; dark mode's ramp is pinned explicitly so it can never drift back to baseline defaults (look preserved).
+- `outline`/`outlineVariant` strengthened so OutlinedCards, text fields and chips read as visible hairline borders in light mode.
+- Shared card components (IslamicCard, FeatureCard, PremiumCard) now draw a subtle hairline border and use the surfaceContainerLow container — crisp card edges in both themes.
+
+### 🆕 In-app update checker — NEW
+- Settings → **"অ্যাপ আপডেট"**: shows the current version, a "চেক করুন" button, and a rich status card — সর্বশেষ ভার্সন (green), নতুন ভার্সন পাওয়া গেছে with release notes + one-tap "আপডেট ডাউনলোড করুন" (opens the signed APK directly), or a retryable error row.
+- **Silent auto-check on app launch** (throttled to once per 24 h, persisted in DataStore): a dismissable dialog appears when a newer release exists — never on failure, never during onboarding.
+- Network design: resolves the latest tag through GitHub's `releases/latest` **HTTP redirect (zero API rate-limit impact)** — deliberately not the REST API, whose unauthenticated 60 req/h per-IP quota is routinely exhausted on carrier NAT networks; the REST API is used only best-effort for release notes. APK asset URL is HEAD-verified with a release-page fallback.
+
+### 🔥 Fake Firebase toggle — REMOVED (honesty fix)
+- The Settings screen shipped a "Firebase" status card + toggle that did **nothing**: there is no Firebase SDK, no google-services.json, and the switch only flipped a DataStore boolean while claiming "অ্যানালিটিক্স ও ক্র্যাশ রিপোর্ট চলছে". The misleading section is gone, replaced by the real App Update section. (Real Firebase integration needs a google-services.json from the app owner's own Firebase console.)
+
+### 🔊 Audio — reliability hardening
+- Verified end-to-end: the single AYAH_COUNTS source table (114 entries, sums to 6236) drives both `getAyahCount()` and `globalAyahNumber()` in AudioController and AudioDownloadService — surah/ayah → CDN absolute-index mapping is provably correct (the pre-v5.3.1 wrong-audio bug cannot regress).
+- New error-recovery: a failed ayah download mid-sequence no longer stalls playback — **retry the same ayah once, then auto-advance** to the next ayah/surah (surah, khatam and repeat modes).
+- Offline cache is now wired into playback: if an ayah exists in audio_cache it plays locally, else streams from cdn.islamic.network.
+
+### 🐛 Other fixes
+- Settings data-store: stale `firebase_enabled` key removed; new `last_update_check_ms` throttle key added.
+- Unused `Brush` import dropped from SettingsScreen; stale Firebase feature-card composable removed.
+
 ## [v5.5.0] - 2026-09-24
 
 ### 🔤 Bangla Uccaron (Transliteration) — NEW

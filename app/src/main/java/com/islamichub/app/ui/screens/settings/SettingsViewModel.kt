@@ -12,6 +12,7 @@ import com.islamichub.app.data.AppContainer
 import com.islamichub.app.data.repo.AutoPauseOption
 import com.islamichub.app.data.repo.BackgroundMode
 import com.islamichub.app.data.repo.TafsirSource
+import com.islamichub.app.data.repo.UpdateChecker
 
 data class SettingsUiState(
     val quranFontScale: Float = 1.0f,
@@ -35,10 +36,21 @@ data class SettingsUiState(
     val aiBaseUrl: String = "https://generativelanguage.googleapis.com/v1beta",
     val aiModel: String = "gemini-2.5-flash",
     val aiProvider: String = "gemini",
-    val firebaseEnabled: Boolean = false,
+    /** v5.6.0 — in-app update check state */
+    val updateStatus: UpdateStatus = UpdateStatus.Idle,
+    val currentVersion: String = "",
     /** Number of cached AI responses */
     val cacheCount: Int = 0
 )
+
+/** v5.6.0 — result of an in-app update check */
+sealed class UpdateStatus {
+    data object Idle : UpdateStatus()
+    data object Checking : UpdateStatus()
+    data object UpToDate : UpdateStatus()
+    data class Available(val update: UpdateChecker.AppUpdate) : UpdateStatus()
+    data class Error(val message: String) : UpdateStatus()
+}
 
 class SettingsViewModel(private val container: AppContainer) : ViewModel() {
     private val _state = MutableStateFlow(SettingsUiState())
@@ -79,7 +91,10 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
             val aiUrl = container.settingsRepository.aiBaseUrl.first()
             val aiModel = container.settingsRepository.aiModel.first()
             val aiProvider = container.settingsRepository.aiProvider.first()
-            val firebase = container.settingsRepository.firebaseEnabled.first()
+            val versionName = try {
+                container.context.packageManager
+                    .getPackageInfo(container.context.packageName, 0).versionName ?: ""
+            } catch (_: Exception) { "" }
 
             _state.value = SettingsUiState(
                 quranFontScale = fontScale,
@@ -102,7 +117,7 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
                 aiBaseUrl = aiUrl,
                 aiModel = aiModel,
                 aiProvider = aiProvider,
-                firebaseEnabled = firebase
+                currentVersion = versionName
             )
         }
     }
@@ -175,11 +190,40 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
             )
         }
     }
-    fun setFirebaseEnabled(enabled: Boolean) {
+    // ─── In-app update check (v5.6.0) ────────────────────────────────────
+    fun checkForUpdate() {
+        if (_state.value.updateStatus is UpdateStatus.Checking) return
+        _state.value = _state.value.copy(updateStatus = UpdateStatus.Checking)
         viewModelScope.launch {
-            container.settingsRepository.setFirebaseEnabled(enabled)
-            _state.value = _state.value.copy(firebaseEnabled = enabled)
+            val current = _state.value.currentVersion.ifBlank {
+                try {
+                    container.context.packageManager
+                        .getPackageInfo(container.context.packageName, 0).versionName ?: "0.0.0"
+                } catch (_: Exception) { "0.0.0" }
+            }
+            when (val result = container.updateChecker.check(current)) {
+                is UpdateChecker.UpdateResult.Success -> {
+                    _state.value = _state.value.copy(
+                        updateStatus = if (result.update.isNewer)
+                            UpdateStatus.Available(result.update)
+                        else UpdateStatus.UpToDate
+                    )
+                }
+                is UpdateChecker.UpdateResult.Failure -> {
+                    _state.value = _state.value.copy(
+                        updateStatus = UpdateStatus.Error(result.message)
+                    )
+                }
+            }
         }
+    }
+
+    fun dismissUpdateStatus() {
+        _state.value = _state.value.copy(updateStatus = UpdateStatus.Idle)
+    }
+
+    fun openUpdateDownload(url: String) {
+        container.updateChecker.openDownloadPage(url)
     }
 
     fun setQuranFontScale(scale: Float) {

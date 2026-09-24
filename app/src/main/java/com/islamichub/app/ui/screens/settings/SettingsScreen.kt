@@ -25,6 +25,7 @@ import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
@@ -47,7 +48,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -60,6 +60,7 @@ import com.islamichub.app.data.repo.AudioController
 import com.islamichub.app.data.repo.AutoPauseOption
 import com.islamichub.app.data.repo.BackgroundMode
 import com.islamichub.app.data.repo.TafsirSource
+import com.islamichub.app.ui.theme.AppColors
 import com.islamichub.app.ui.theme.arabicSp
 import com.islamichub.app.ui.theme.banglaSp
 import com.islamichub.app.ui.theme.englishSp
@@ -671,155 +672,134 @@ fun SettingsScreen(
                 }
             }
 
-            // ─── Firebase ─────────────────────────────────────────────
+            // ─── App Update (v5.6.0) ──────────────────────────────────
             item {
-                SettingsSection(title = stringResource(R.string.settings_firebase)) {
-                    // Premium Firebase status card
-                    Card(
+                SettingsSection(title = stringResource(R.string.settings_update)) {
+                    // Current version + manual check button
+                    Row(
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(20.dp),
-                        colors = CardDefaults.cardColors(
-                            containerColor = Color.Transparent
-                        ),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .background(
-                                    Brush.verticalGradient(
-                                        colors = if (state.firebaseEnabled)
-                                            listOf(Color(0xFFFF6F00), Color(0xFFFF8F00))
-                                        else
-                                            listOf(Color(0xFF9E9E9E), Color(0xFF757575))
-                                    )
-                                )
-                                .padding(20.dp)
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "বর্তমান ভার্সন",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Text(
+                                text = "v${state.currentVersion}".ifBlank { "v—" },
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        val checking = state.updateStatus is UpdateStatus.Checking
+                        OutlinedButton(
+                            onClick = vm::checkForUpdate,
+                            enabled = !checking
                         ) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    modifier = Modifier.weight(1f)
-                                ) {
-                                    Box(
-                                        modifier = Modifier
-                                            .size(48.dp)
-                                            .clip(CircleShape)
-                                            .background(Color.White.copy(alpha = 0.25f)),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Text(
-                                            if (state.firebaseEnabled) "🔥" else "💤",
-                                            style = MaterialTheme.typography.titleLarge
-                                        )
-                                    }
-                                    Spacer(12.dp)
-                                    Column {
-                                        Text(
-                                            text = if (state.firebaseEnabled) "সক্রিয়" else "নিষ্ক্রিয়",
-                                            style = MaterialTheme.typography.titleMedium,
-                                            fontWeight = FontWeight.Bold,
-                                            color = Color.White
-                                        )
-                                        Text(
-                                            text = if (state.firebaseEnabled)
-                                                "অ্যানালিটিক্স ও ক্র্যাশ রিপোর্ট চলছে"
-                                            else "Firebase বন্ধ আছে",
-                                            style = MaterialTheme.typography.labelSmall,
-                                            color = Color.White.copy(alpha = 0.95f)
-                                        )
-                                    }
-                                }
-                                Switch(
-                                    checked = state.firebaseEnabled,
-                                    onCheckedChange = vm::setFirebaseEnabled,
-                                    colors = androidx.compose.material3.SwitchDefaults.colors(
-                                        checkedThumbColor = Color.White,
-                                        checkedTrackColor = Color.White.copy(alpha = 0.4f),
-                                        uncheckedThumbColor = Color.White,
-                                        uncheckedTrackColor = Color.White.copy(alpha = 0.3f)
-                                    )
+                            if (checking) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(14.dp),
+                                    strokeWidth = 2.dp
                                 )
+                            } else {
+                                Icon(Icons.Filled.Cached, contentDescription = null)
                             }
+                            Spacer(4.dp)
+                            Text("চেক করুন")
                         }
                     }
                     Spacer(12.dp)
 
-                    // Firebase features grid
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        FirebaseFeatureCard(
-                            icon = "📊",
-                            title = "Analytics",
-                            subtitle = "ব্যবহার পরিসংখ্যান",
-                            color = Color(0xFF2E7D32),
-                            enabled = state.firebaseEnabled,
-                            modifier = Modifier.weight(1f)
-                        )
-                        FirebaseFeatureCard(
-                            icon = "🐛",
-                            title = "Crashlytics",
-                            subtitle = "ক্র্যাশ রিপোর্ট",
-                            color = Color(0xFFC62828),
-                            enabled = state.firebaseEnabled,
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
-                    Spacer(8.dp)
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        FirebaseFeatureCard(
-                            icon = "☁️",
-                            title = "Cloud Sync",
-                            subtitle = "ক্লাউড ব্যাকআপ",
-                            color = Color(0xFF1565C0),
-                            enabled = state.firebaseEnabled,
-                            modifier = Modifier.weight(1f)
-                        )
-                        FirebaseFeatureCard(
-                            icon = "🔔",
-                            title = "Push",
-                            subtitle = "নোটিফিকেশন",
-                            color = Color(0xFF6D45C7),
-                            enabled = state.firebaseEnabled,
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
-                    Spacer(12.dp)
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceVariant
-                        )
-                    ) {
-                        Column(modifier = Modifier.padding(12.dp)) {
+                    // Status area
+                    when (val st = state.updateStatus) {
+                        is UpdateStatus.Checking -> {
                             Text(
-                                text = "📋 Firebase সেটআপ গাইড:",
-                                style = MaterialTheme.typography.labelMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                            Spacer(4.dp)
-                            Text(
-                                text = "১. Firebase Console এ প্রজেক্ট তৈরি করুন\n" +
-                                       "২. google-services.json ডাউনলোড করুন\n" +
-                                       "৩. অ্যাপ প্যাকেজ: com.islamichub.app\n" +
-                                       "৪. Analytics ও Crashlytics চালু করুন\n" +
-                                       "৫. উপরের টগল চালু করুন",
+                                text = "সর্বশেষ ভার্সন খোঁজা হচ্ছে…",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
+                        is UpdateStatus.UpToDate -> {
+                            Surface(
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(12.dp),
+                                color = AppColors.success.copy(alpha = 0.12f)
+                            ) {
+                                Text(
+                                    text = "✓ আপনার অ্যাপ সর্বশেষ ভার্সনে আছে",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = AppColors.success,
+                                    modifier = Modifier.fillMaxWidth().padding(12.dp)
+                                )
+                            }
+                        }
+                        is UpdateStatus.Available -> {
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(14.dp),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.10f)
+                                )
+                            ) {
+                                Column(
+                                    modifier = Modifier.fillMaxWidth().padding(14.dp),
+                                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    Text(
+                                        text = "🎉 নতুন ভার্সন পাওয়া গেছে — v${st.update.latestVersion}",
+                                        style = MaterialTheme.typography.titleSmall,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
+                                    if (st.update.releaseNotes.isNotBlank()) {
+                                        Text(
+                                            text = st.update.releaseNotes,
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurface,
+                                            maxLines = 6
+                                        )
+                                    }
+                                    androidx.compose.material3.Button(
+                                        onClick = { vm.openUpdateDownload(st.update.downloadUrl) },
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        Text("⬇  আপডেট ডাউনলোড করুন")
+                                    }
+                                    TextButton(
+                                        onClick = vm::dismissUpdateStatus,
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        Text(
+                                            "এই ভার্সনটাই থাকবে",
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                        is UpdateStatus.Error -> {
+                            Column {
+                                Text(
+                                    text = "⚠ আপডেট চেক করা যায়নি (${st.message})",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.error
+                                )
+                                TextButton(onClick = vm::checkForUpdate) {
+                                    Text("আবার চেষ্টা করুন")
+                                }
+                            }
+                        }
+                        is UpdateStatus.Idle -> { /* nothing yet */ }
                     }
+
+                    Spacer(8.dp)
+                    Text(
+                        text = "অ্যাপ সরাসরি GitHub Release থেকে আপডেট হয় — ডাউনলোড শেষে ফাইলটি ওপেন করে ইনস্টল করুন। অ্যাপ চালু হলেও মাঝে মাঝে স্বয়ংক্রিয়ভাবে চেক করা হয়।",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
             }
 
@@ -916,50 +896,6 @@ private fun formatCacheSize(bytes: Long): String {
         bytes < 1024 -> "$bytes B"
         bytes < 1024 * 1024 -> "${bytes / 1024} KB"
         else -> "${"%.1f".format(bytes / 1024.0 / 1024.0)} MB"
-    }
-}
-
-@Composable
-private fun androidx.compose.foundation.layout.RowScope.FirebaseFeatureCard(
-    icon: String,
-    title: String,
-    subtitle: String,
-    color: Color,
-    enabled: Boolean,
-    modifier: Modifier = Modifier
-) {
-    Card(
-        modifier = modifier,
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = if (enabled) color.copy(alpha = 0.12f)
-                            else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = if (enabled) 2.dp else 0.dp)
-    ) {
-        Column(
-            modifier = Modifier.fillMaxWidth().padding(12.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(36.dp)
-                    .clip(CircleShape)
-                    .background(if (enabled) color else Color(0xFF9E9E9E)),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(icon, style = MaterialTheme.typography.titleMedium)
-            }
-            Text(title,
-                style = MaterialTheme.typography.labelMedium,
-                fontWeight = FontWeight.Bold,
-                color = if (enabled) color else Color(0xFF9E9E9E))
-            Text(subtitle,
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = androidx.compose.ui.text.style.TextAlign.Center)
-        }
     }
 }
 

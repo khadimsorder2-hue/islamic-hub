@@ -6,6 +6,7 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.floatPreferencesKey
 import androidx.datastore.preferences.core.intPreferencesKey
+import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
@@ -120,9 +121,9 @@ class SettingsRepository(private val context: Context) {
         it[AI_PROVIDER] ?: "gemini"
     }
 
-    // Firebase config (user can paste google-services.json content)
-    val firebaseEnabled: Flow<Boolean> = context.settingsStore.data.map {
-        it[FIREBASE_ENABLED] ?: false
+    // v5.6.0: in-app update auto-check throttle (last successful/attempted check)
+    val lastUpdateCheckMs: Flow<Long> = context.settingsStore.data.map {
+        it[LAST_UPDATE_CHECK_MS] ?: 0L
     }
 
     suspend fun setQuranFontScale(scale: Float) = withContext(Dispatchers.IO) {
@@ -207,8 +208,9 @@ class SettingsRepository(private val context: Context) {
         context.settingsStore.edit { it[AI_PROVIDER] = provider }
     }
 
-    suspend fun setFirebaseEnabled(enabled: Boolean) = withContext(Dispatchers.IO) {
-        context.settingsStore.edit { it[FIREBASE_ENABLED] = enabled }
+    // v5.6.0: persist the last time we auto-checked for app updates
+    suspend fun setLastUpdateCheckMs(ms: Long) = withContext(Dispatchers.IO) {
+        context.settingsStore.edit { it[LAST_UPDATE_CHECK_MS] = ms }
     }
 
     suspend fun clearCache() = withContext(Dispatchers.IO) {
@@ -255,6 +257,6 @@ class SettingsRepository(private val context: Context) {
         private val AI_BASE_URL = stringPreferencesKey("ai_base_url")
         private val AI_MODEL = stringPreferencesKey("ai_model")
         private val AI_PROVIDER = stringPreferencesKey("ai_provider")
-        private val FIREBASE_ENABLED = booleanPreferencesKey("firebase_enabled")
+        private val LAST_UPDATE_CHECK_MS = longPreferencesKey("last_update_check_ms")
     }
 }

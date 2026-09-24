@@ -107,11 +107,10 @@ jobs:
             - Tap to install (allow "Install from unknown sources" if prompted)
 
             ## What's new (${{ github.ref_name }})
-            - 🔤 **বাংলা উচ্চারণ (Bangla transliteration) for the whole Quran** — all 6,236 ayahs bundled offline, shown under each Arabic ayah in the reader, tafsir & thematic study (toggle in Settings)
-            - 🔠 **Text size controls on every page** — independent আরবি / বাংলা / English sliders (70%–180%) with live preview, applied across 18 reading screens
-            - 🐛 **Thematic Quran fix** — tapping the expanded tafsir no longer collapses it; শোনো / সংরক্ষণ / শেয়ার chips are now fully functional (play with selected reciter, real bookmark, share)
-            - 🎨 **Quran AI button redesigned** — labeled gradient "AI তাফসীর" pill + "শব্দে শব্দ" chip per ayah
-            - ✨ **Premium tafsir screen** — gradient ayah hero, premium section headers, per-script font scaling
+            - 🌗 **Light mode fixed** — cards no longer wash out into the background: full Material 3 surfaceContainer color ramp defined for every theme, visible hairline borders on cards, deeper canvas colors; dark mode look untouched
+            - 🆕 **In-app update checker** — Settings → "অ্যাপ আপডেট": check for updates anytime, release notes + one-tap APK download, silent auto-check once every 24 h with a dismissable dialog (rate-limit-proof GitHub redirect resolution)
+            - 🔥 **Fake Firebase toggle removed** — it never did anything (no SDK/config); replaced with the real update section
+            - 🔊 **Audio hardening** — verified ayah mapping (6236-ayah table, single source of truth); a failed ayah now retries once then auto-advances instead of stalling; offline audio cache wired into playback
 
             ## Features (cumulative)
             - **Al-Quran**: 114 surahs, 6236 ayahs, full Arabic + Bengali + English (offline bundle + AlQuran.cloud)
