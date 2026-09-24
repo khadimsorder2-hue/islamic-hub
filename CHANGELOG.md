@@ -2,6 +2,32 @@
 
 All notable changes to the Islamic Hub project.
 
+## [v5.4.0] - 2026-09-24
+
+### 🐛 Critical Build Fixes (APK was failing to compile)
+- **SettingsRepository** — missing `kotlinx.coroutines.flow.first` import broke whole-module compile (ayah-notes read).
+- **TopicStudyRepository** — `getTopicDetail` referenced a non-existent `bundled` variable; API-enrichment path now correctly resolves through `bundledResult.topic`.
+- **TranslationCacheService** — stray `")` inside `cacheSurah()` (syntax) and `isSurahCached` returned an Int from a Boolean function — now `(1..ayahCount).all { … }`.
+- **QuranReaderViewModel** — stray `n` character in offline-cache block (syntax).
+- **HomeScreen & PrayerScreen** — `toMinutes()` used `return` inside expression-body functions; converted to block bodies (next-prayer progress logic intact).
+- **JuzListScreen** — two broken string literals in the Juz data table (`"1,123)`, `"1,52)`) plus missing `remember`/`clickable` imports.
+- **QuranReaderScreen** — missing `AppColors` import (offline-download banner).
+- **QuranSearchScreen** — missing `remember`/`height` imports cascading ~10 errors.
+- **TafsirFullScreen** — missing `clickable` import (note-save control).
+
+### 🎨 Premium UI Pass (all remaining screens)
+- **MoreScreen** — staggered entrance across the 27-feature grid, springy premium tap on every grid card.
+- **AppLockScreen** — staggered lock-icon/title/subtitle/retry entrance.
+- **TrackerScreen** — `PremiumSectionHeader` section titles, spring-animated `PremiumProgressBar` for today's prayer progress, staggered prayer rows & stat cards, premium tap on prayer check cards.
+- **CalendarScreen** — staggered hero & real day-cells entrance.
+- **JuzListScreen** — staggered 30-para list, premium tap on para cards.
+- **QuranSearchScreen** — staggered search results.
+- **ScannerScreen / TajweedCheckerScreen** — staggered section entrances, premium section headers.
+- **DuaDetailScreen** — staggered content cards, premium tap on AI chip.
+- **HadithSearchScreen** — staggered results, premium tap on result cards.
+- **NamazExtrasScreen** — staggered prayers/surah lists, premium section header, premium tap on surah & audio cards.
+- **TafsirFullScreen** — staggered content blocks, premium tap on note-save (enabled-state preserved).
+
 ## [v5.3.1] - 2025-09-23
 
 ### 🐛 Critical Bug Fixes

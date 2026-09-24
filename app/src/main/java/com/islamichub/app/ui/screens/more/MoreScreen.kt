@@ -1,7 +1,6 @@
 package com.islamichub.app.ui.screens.more
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -56,6 +55,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.islamichub.app.R
 import com.islamichub.app.ui.navigation.Screen
+import com.islamichub.app.ui.theme.premiumTap
+import com.islamichub.app.ui.theme.staggerEntrance
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -148,7 +149,8 @@ fun MoreScreen(
                 }
             }
 
-            // 3-column grid rows
+            // 3-column grid rows — staggered entrance, one index per card
+            var idx = 0
             rows.forEach { rowItems ->
                 item {
                     Row(
@@ -158,9 +160,10 @@ fun MoreScreen(
                         rowItems.forEach { item ->
                             MoreGridCard(
                                 item = item,
-                                modifier = Modifier.weight(1f),
+                                modifier = Modifier.weight(1f).staggerEntrance(idx),
                                 onClick = { onNavigate(item.route) }
                             )
+                            idx++
                         }
                         // No placeholder — items flow naturally without empty boxes
                         if (rowItems.size < 3) {
@@ -184,7 +187,7 @@ private fun androidx.compose.foundation.layout.RowScope.MoreGridCard(
     Card(
         modifier = modifier
             .clip(RoundedCornerShape(20.dp))
-            .clickable(onClick = onClick),
+            .premiumTap(onClick = onClick),
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(containerColor = Color.Transparent),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)

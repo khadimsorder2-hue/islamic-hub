@@ -33,7 +33,7 @@ class TranslationCacheService(private val context: Context) {
     }
 
     suspend fun cacheSurah(surah: Int, verses: List<CachedVerse>) = withContext(Dispatchers.IO) {
-        val dir = File(cacheDir, "surah_$surah")"); dir.mkdirs()
+        val dir = File(cacheDir, "surah_$surah"); dir.mkdirs()
         verses.forEach { v ->
             val file = File(dir, "${v.ayah}.json")
             file.writeText(gson.toJson(v))
@@ -43,7 +43,7 @@ class TranslationCacheService(private val context: Context) {
     fun isSurahCached(surah: Int, ayahCount: Int): Boolean {
         val dir = File(cacheDir, "surah_$surah")
         if (!dir.exists()) return false
-        return (1..ayahCount).count { File(dir, "$it.json").exists() }
+        return (1..ayahCount).all { File(dir, "$it.json").exists() }
     }
 
     fun getCacheSize(): Long = cacheDir.walkTopDown().filter { it.isFile }.sumOf { it.length() }

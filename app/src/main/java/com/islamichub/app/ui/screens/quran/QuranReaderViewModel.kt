@@ -285,7 +285,7 @@ class QuranReaderViewModel(
                 )
                 if (response.isSuccessful) {
                     val verses = response.body()?.verses ?: return@launch
-n                    val cached = verses.map { v ->
+                    val cached = verses.map { v ->
                         TranslationCacheService.CachedVerse(
                             surah = surahNumber,
                             ayah = v.verseNumber ?: return@map null,

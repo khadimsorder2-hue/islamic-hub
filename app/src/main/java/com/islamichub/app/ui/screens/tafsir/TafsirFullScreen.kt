@@ -58,6 +58,8 @@ import com.islamichub.app.data.AppContainer
 import androidx.compose.ui.text.input.TextFieldValue
 import android.widget.Toast
 import android.content.Intent
+import com.islamichub.app.ui.theme.premiumTap
+import com.islamichub.app.ui.theme.staggerEntrance
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -134,7 +136,7 @@ fun TafsirFullScreen(
             // ─── Ayah Preview ───
             if (state.arabicText.isNotBlank()) {
                 Surface(
-                    modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(20.dp),
+                    modifier = Modifier.fillMaxWidth().staggerEntrance(0), shape = RoundedCornerShape(20.dp),
                     color = MaterialTheme.colorScheme.primaryContainer
                 ) {
                     Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -157,7 +159,7 @@ fun TafsirFullScreen(
             state.transliteration?.let { translit ->
                 if (translit.isNotBlank()) {
                     Surface(
-                        modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp),
+                        modifier = Modifier.fillMaxWidth().staggerEntrance(1), shape = RoundedCornerShape(16.dp),
                         color = MaterialTheme.colorScheme.surfaceVariant
                     ) {
                         Column(modifier = Modifier.padding(16.dp)) {
@@ -188,7 +190,7 @@ fun TafsirFullScreen(
                     val bgColor = if (sel.language == "en") MaterialTheme.colorScheme.tertiaryContainer else MaterialTheme.colorScheme.secondaryContainer
                     val txtColor = if (sel.language == "en") MaterialTheme.colorScheme.onTertiaryContainer else MaterialTheme.colorScheme.onSecondaryContainer
                     Surface(
-                        modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp), color = bgColor
+                        modifier = Modifier.fillMaxWidth().staggerEntrance(2), shape = RoundedCornerShape(16.dp), color = bgColor
                     ) {
                         Column(modifier = Modifier.padding(16.dp)) {
                             Text(sel.name, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold,
@@ -224,7 +226,7 @@ fun TafsirFullScreen(
                         val bgColor = if (sel.language == "en") MaterialTheme.colorScheme.tertiaryContainer else MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.15f)
                         val txtColor = if (sel.language == "en") MaterialTheme.colorScheme.onTertiaryContainer else MaterialTheme.colorScheme.onSurface
                         Surface(
-                            modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(20.dp), color = bgColor
+                            modifier = Modifier.fillMaxWidth().staggerEntrance(3), shape = RoundedCornerShape(20.dp), color = bgColor
                         ) {
                             Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -240,7 +242,7 @@ fun TafsirFullScreen(
                         }
                     } else if (sel.language == "en") {
                         Surface(
-                            modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp),
+                            modifier = Modifier.fillMaxWidth().staggerEntrance(3), shape = RoundedCornerShape(16.dp),
                             color = MaterialTheme.colorScheme.surfaceVariant
                         ) {
                             Text("English tafsir লোড হচ্ছে…", style = MaterialTheme.typography.bodySmall,
@@ -254,7 +256,7 @@ fun TafsirFullScreen(
             if (state.tafsirText != null) {
                 Text("তাফসীর উৎস (অফলাইন)", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
                 Surface(
-                    modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp),
+                    modifier = Modifier.fillMaxWidth().staggerEntrance(4), shape = RoundedCornerShape(16.dp),
                     color = MaterialTheme.colorScheme.surfaceVariant
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
@@ -270,7 +272,7 @@ fun TafsirFullScreen(
             Text("🤲 AI তাফসীর (খতিবের ভাষায়)", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
             if (state.isAILoading) {
                 Surface(
-                    modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp),
+                    modifier = Modifier.fillMaxWidth().staggerEntrance(5), shape = RoundedCornerShape(16.dp),
                     color = MaterialTheme.colorScheme.surfaceVariant
                 ) {
                     Column(modifier = Modifier.padding(32.dp), horizontalAlignment = Alignment.CenterHorizontally,
@@ -282,7 +284,7 @@ fun TafsirFullScreen(
             }
             state.aiExplanation?.let { explanation ->
                 Surface(
-                    modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(20.dp),
+                    modifier = Modifier.fillMaxWidth().staggerEntrance(5), shape = RoundedCornerShape(20.dp),
                     color = MaterialTheme.colorScheme.secondaryContainer
                 ) {
                     Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -298,7 +300,7 @@ fun TafsirFullScreen(
             }
             if (state.aiExplanation == null && !state.isAILoading) {
                 Surface(
-                    modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp),
+                    modifier = Modifier.fillMaxWidth().staggerEntrance(5), shape = RoundedCornerShape(16.dp),
                     color = MaterialTheme.colorScheme.surfaceVariant
                 ) {
                     Text("AI তাফসীর ব্যবহার করতে Settings এ API key যোগ করুন",
@@ -311,7 +313,7 @@ fun TafsirFullScreen(
             if (showNoteEditor) {
                 Text("📝 নোট", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
                 Surface(
-                    modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp),
+                    modifier = Modifier.fillMaxWidth().staggerEntrance(6), shape = RoundedCornerShape(16.dp),
                     color = MaterialTheme.colorScheme.surfaceVariant
                 ) {
                     Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -332,7 +334,7 @@ fun TafsirFullScreen(
                             ) {
                                 Text(
                                     if (state.isNoteSaving) "সংরক্ষণ হচ্ছে…" else "সংরক্ষণ করুন",
-                                    modifier = Modifier.clickable(enabled = !state.isNoteSaving) { vm.saveNote() }
+                                    modifier = Modifier.premiumTap(enabled = !state.isNoteSaving) { vm.saveNote() }
                                         .padding(horizontal = 16.dp, vertical = 8.dp),
                                     style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, color = Color.White
                                 )
@@ -342,7 +344,7 @@ fun TafsirFullScreen(
                 }
             } else if (state.noteText.isNotBlank()) {
                 Surface(
-                    modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp),
+                    modifier = Modifier.fillMaxWidth().staggerEntrance(6), shape = RoundedCornerShape(16.dp),
                     color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f)
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {

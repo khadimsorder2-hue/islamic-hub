@@ -1,11 +1,13 @@
 package com.islamichub.app.ui.screens.quran
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -15,6 +17,8 @@ import com.islamichub.app.data.AppContainer
 import com.islamichub.app.ui.theme.AppColors
 import com.islamichub.app.ui.theme.AppRadius
 import com.islamichub.app.ui.theme.AppSpacing
+import com.islamichub.app.ui.theme.premiumTap
+import com.islamichub.app.ui.theme.staggerEntrance
 
 /** 30 Juz of the Quran with surah ranges */
 @Composable
@@ -43,9 +47,12 @@ fun JuzListScreen(
             contentPadding = PaddingValues(AppSpacing.lg),
             verticalArrangement = Arrangement.spacedBy(AppSpacing.sm)
         ) {
-            items(juzData) { juz ->
+            itemsIndexed(juzData) { index, juz ->
                 Card(
-                    modifier = Modifier.fillMaxWidth().clickable { onSurahClick(juz.startSurah) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .staggerEntrance(index)
+                        .premiumTap(onClick = { onSurahClick(juz.startSurah) }),
                     shape = RoundedCornerShape(AppRadius.md),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
                 ) {
@@ -81,8 +88,8 @@ object JuzData {
         JuzInfo(3,2,3,"আল-বাকারা","আলে ইমরান",142,200), JuzInfo(4,3,4,"আলে ইমরান","আন-নিসা",1,176),
         JuzInfo(5,4,5,"আন-নিসা","আল-মায়েদাহ",1,120), JuzInfo(6,5,6,"আল-মায়েদাহ","আল-আনআম",1,111),
         JuzInfo(7,7,8,"আল-আরাফ","আল-আনফাল",1,87), JuzInfo(8,8,9,"আল-আনফাল","আত-তাওবা",1,75),
-        JuzInfo(9,9,10,"আত-তাওবা","ইউনুস",1,92), JuzInfo(10,10,11,"ইউনুস","হুদ","1,123),
-        JuzInfo(11,11,12,"হুদ","ইউসুফ",1,111), JuzInfo(12,12,13,"ইউসুফ","রাদ","1,52),
+        JuzInfo(9,9,10,"আত-তাওবা","ইউনুস",1,92), JuzInfo(10,10,11,"ইউনুস","হুদ",1,123),
+        JuzInfo(11,11,12,"হুদ","ইউসুফ",1,111), JuzInfo(12,12,13,"ইউসুফ","রাদ",1,52),
         JuzInfo(13,13,14,"রাদ","ইবরাহীম",1,52), JuzInfo(14,15,16,"আল-হিজর","আন-নাহল",1,128),
         JuzInfo(15,16,17,"আন-নাহল","আল-ইসরা",1,111), JuzInfo(16,17,18,"আল-ইসরা","আল-কাহফ",1,110),
         JuzInfo(17,18,19,"আল-কাহফ","মারিয়াম",1,98), JuzInfo(18,19,20,"মারিয়াম","ত্বা-হা",1,135),

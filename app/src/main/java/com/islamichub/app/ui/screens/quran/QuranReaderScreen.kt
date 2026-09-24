@@ -66,6 +66,7 @@ import com.islamichub.app.data.AppContainer
 import com.islamichub.app.data.model.Ayah
 import com.islamichub.app.ui.components.PremiumHeroCard
 import com.islamichub.app.ui.screens.tafsir.TafsirFullScreen
+import com.islamichub.app.ui.theme.AppColors
 import com.islamichub.app.ui.theme.AppSpacing
 import com.islamichub.app.ui.theme.AppRadius
 import com.islamichub.app.ui.theme.AppIconSizes

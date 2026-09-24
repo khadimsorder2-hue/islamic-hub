@@ -1,7 +1,6 @@
 package com.islamichub.app.ui.screens.namaz_extras
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -49,6 +48,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.islamichub.app.R
 import com.islamichub.app.data.AppContainer
+import com.islamichub.app.ui.components.PremiumSectionHeader
+import com.islamichub.app.ui.theme.premiumTap
+import com.islamichub.app.ui.theme.staggerEntrance
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -81,6 +83,7 @@ fun NamazExtrasScreen(
             return@Scaffold
         }
 
+        val surahHeaderIndex = (data.extraPrayers?.size ?: 0) + 1
         LazyColumn(
             modifier = Modifier.padding(padding),
             contentPadding = PaddingValues(16.dp),
@@ -89,7 +92,7 @@ fun NamazExtrasScreen(
             // Hero card
             item {
                 Card(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().staggerEntrance(0),
                     shape = RoundedCornerShape(24.dp),
                     colors = CardDefaults.cardColors(
                         containerColor = MaterialTheme.colorScheme.primaryContainer
@@ -115,10 +118,10 @@ fun NamazExtrasScreen(
             }
 
             // Extra prayers list
-            data.extraPrayers?.forEach { (id, prayer) ->
+            data.extraPrayers?.entries?.forEachIndexed { idx, (id, prayer) ->
                 item {
                     Card(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier.fillMaxWidth().staggerEntrance(idx + 1),
                         shape = RoundedCornerShape(16.dp),
                         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
                         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
@@ -174,21 +177,19 @@ fun NamazExtrasScreen(
 
             // Short surahs for namaz
             item {
-                Text(
-                    text = "নামাজের ছোট সূরা সমূহ",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.padding(top = 16.dp, bottom = 4.dp)
+                PremiumSectionHeader(
+                    title = "নামাজের ছোট সূরা সমূহ",
+                    modifier = Modifier.padding(top = 16.dp, bottom = 4.dp).staggerEntrance(surahHeaderIndex)
                 )
             }
-            data.namazSurahs?.forEach { surah ->
+            data.namazSurahs?.forEachIndexed { idx, surah ->
                 item {
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
+                            .staggerEntrance(surahHeaderIndex + 1 + idx)
                             .clip(RoundedCornerShape(16.dp))
-                            .clickable { selectedSurah = surah },
+                            .premiumTap { selectedSurah = surah },
                         shape = RoundedCornerShape(16.dp),
                         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
                     ) {
@@ -296,7 +297,7 @@ private fun NamazSurahFullScreen(
             surah.content?.arabic?.let { arabic ->
                 if (arabic.isNotBlank()) {
                     Card(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier.fillMaxWidth().staggerEntrance(0),
                         shape = RoundedCornerShape(20.dp),
                         colors = CardDefaults.cardColors(
                             containerColor = MaterialTheme.colorScheme.primaryContainer
@@ -328,7 +329,7 @@ private fun NamazSurahFullScreen(
             surah.pronunciationBn?.let { pron ->
                 if (pron.isNotBlank()) {
                     Card(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier.fillMaxWidth().staggerEntrance(1),
                         shape = RoundedCornerShape(16.dp),
                         colors = CardDefaults.cardColors(
                             containerColor = MaterialTheme.colorScheme.surfaceVariant
@@ -352,7 +353,7 @@ private fun NamazSurahFullScreen(
             surah.content?.transliteration?.let { tr ->
                 if (tr.isNotBlank()) {
                     Card(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier.fillMaxWidth().staggerEntrance(2),
                         shape = RoundedCornerShape(16.dp),
                         colors = CardDefaults.cardColors(
                             containerColor = MaterialTheme.colorScheme.surfaceVariant
@@ -376,7 +377,7 @@ private fun NamazSurahFullScreen(
             surah.content?.bangla?.let { bn ->
                 if (bn.isNotBlank()) {
                     Card(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier.fillMaxWidth().staggerEntrance(3),
                         shape = RoundedCornerShape(20.dp),
                         colors = CardDefaults.cardColors(
                             containerColor = MaterialTheme.colorScheme.secondaryContainer
@@ -402,8 +403,9 @@ private fun NamazSurahFullScreen(
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .staggerEntrance(4)
                     .clip(RoundedCornerShape(16.dp))
-                    .clickable {
+                    .premiumTap {
                         surah.audioUrl?.let { audioUrl ->
                             val fileName = audioUrl.replace("namaz-audio/", "")
                             // Use shared AudioController → FloatingAudioPlayer shows automatically

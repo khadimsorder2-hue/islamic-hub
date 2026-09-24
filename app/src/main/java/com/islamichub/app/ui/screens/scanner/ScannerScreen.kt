@@ -56,6 +56,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
 import com.islamichub.app.data.AppContainer
+import com.islamichub.app.ui.components.PremiumSectionHeader
+import com.islamichub.app.ui.theme.staggerEntrance
 import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -132,7 +134,7 @@ fun ScannerScreen(
         ) {
             // Hero
             Card(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().staggerEntrance(0),
                 shape = RoundedCornerShape(20.dp),
                 colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer
@@ -161,7 +163,8 @@ fun ScannerScreen(
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .size(280.dp),
+                        .size(280.dp)
+                        .staggerEntrance(1),
                     shape = RoundedCornerShape(20.dp)
                 ) {
                     Image(
@@ -183,7 +186,8 @@ fun ScannerScreen(
                                 MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
                             )
                         )
-                    ),
+                    )
+                    .staggerEntrance(1),
                 contentAlignment = Alignment.Center
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -203,7 +207,7 @@ fun ScannerScreen(
 
             // Buttons
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().staggerEntrance(2),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 OutlinedButton(
@@ -237,7 +241,7 @@ fun ScannerScreen(
                         }, 1500)
                     }
                 },
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().staggerEntrance(3),
                 enabled = imageBitmap != null && !isAnalyzing
             ) {
                 Text(if (isAnalyzing) "বিশ্লেষণ চলছে…" else "AI দিয়ে বিশ্লেষণ করুন")
@@ -257,19 +261,14 @@ fun ScannerScreen(
 
             result?.let { res ->
                 Card(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().staggerEntrance(4),
                     shape = RoundedCornerShape(16.dp),
                     colors = CardDefaults.cardColors(
                         containerColor = MaterialTheme.colorScheme.secondaryContainer
                     )
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
-                        Text(
-                            text = "বিশ্লেষণ ফলাফল",
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.onSecondaryContainer
-                        )
+                        PremiumSectionHeader(title = "বিশ্লেষণ ফলাফল")
                         Text(
                             text = res,
                             style = MaterialTheme.typography.bodyMedium,

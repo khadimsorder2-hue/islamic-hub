@@ -30,6 +30,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.islamichub.app.data.AppContainer
+import com.islamichub.app.ui.components.PremiumSectionHeader
+import com.islamichub.app.ui.theme.staggerEntrance
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -62,7 +64,7 @@ fun TajweedCheckerScreen(
         ) {
             // Description card
             Card(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().staggerEntrance(0),
                 shape = RoundedCornerShape(20.dp),
                 colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer
@@ -88,7 +90,7 @@ fun TajweedCheckerScreen(
                 value = state.inputText,
                 onValueChange = vm::onInputChange,
                 label = { Text("আরবি টেক্সট লিখুন অথবা paste করুন") },
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().staggerEntrance(1),
                 minLines = 3,
                 maxLines = 6,
                 shape = RoundedCornerShape(16.dp)
@@ -96,7 +98,7 @@ fun TajweedCheckerScreen(
 
             Button(
                 onClick = vm::analyze,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().staggerEntrance(2),
                 enabled = !state.isAnalyzing && state.inputText.isNotBlank() && state.apiKeyConfigured
             ) {
                 Text(if (state.isAnalyzing) "বিশ্লেষণ চলছে…" else "তাজবীদ যাচাই করুন")
@@ -121,7 +123,7 @@ fun TajweedCheckerScreen(
 
             state.error?.let { err ->
                 Card(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().staggerEntrance(3),
                     shape = RoundedCornerShape(12.dp),
                     colors = CardDefaults.cardColors(
                         containerColor = MaterialTheme.colorScheme.errorContainer
@@ -138,19 +140,14 @@ fun TajweedCheckerScreen(
 
             state.result?.let { result ->
                 Card(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().staggerEntrance(4),
                     shape = RoundedCornerShape(16.dp),
                     colors = CardDefaults.cardColors(
                         containerColor = MaterialTheme.colorScheme.surfaceVariant
                     )
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
-                        Text(
-                            text = "বিশ্লেষণ ফলাফল",
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.primary
-                        )
+                        PremiumSectionHeader(title = "বিশ্লেষণ ফলাফল")
                         Text(
                             text = result,
                             style = MaterialTheme.typography.bodyMedium,

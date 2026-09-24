@@ -105,22 +105,22 @@ class TopicStudyRepository(
 
         // Try to enrich with Quran.com API data (transliteration + online translations)
         try {
-            val resolved = bundled.allAyahs.map { ref ->
+            val resolved = bundledResult.topic.allAyahs.map { ref ->
                 resolveAyahFromApi(ref.surahNumber, ref.ayahNumber, ref.tafsirBn, ref.relation)
             }
-            val keyResolved = bundled.keyAyahs.map { ref ->
+            val keyResolved = bundledResult.topic.keyAyahs.map { ref ->
                 resolveAyahFromApi(ref.surahNumber, ref.ayahNumber, ref.tafsirBn, ref.relation)
             }
 
             TopicDetailResult.Success(
-                topic = bundled,
+                topic = bundledResult.topic,
                 resolvedAyahs = resolved,
                 source = TopicSource.API,
                 keyAyahs = keyResolved
             )
         } catch (_: Exception) {
             // API failed — use bundled-only result
-            bundledResult ?: TopicDetailResult.Error("Topic not available offline")
+            bundledResult
         }
     }
 

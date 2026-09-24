@@ -1,7 +1,6 @@
 package com.islamichub.app.ui.screens.dua
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -38,6 +37,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.islamichub.app.data.AppContainer
 import com.islamichub.app.data.model.Dua
+import com.islamichub.app.ui.theme.premiumTap
+import com.islamichub.app.ui.theme.staggerEntrance
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -79,7 +80,7 @@ fun DuaDetailScreen(
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 Card(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().staggerEntrance(0),
                     shape = RoundedCornerShape(20.dp),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primary)
                 ) {
@@ -101,7 +102,7 @@ fun DuaDetailScreen(
                 }
 
                 Card(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().staggerEntrance(1),
                     shape = RoundedCornerShape(20.dp),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
                 ) {
@@ -131,7 +132,7 @@ fun DuaDetailScreen(
                 }
 
                 Card(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().staggerEntrance(2),
                     shape = RoundedCornerShape(20.dp),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
                 ) {
@@ -167,20 +168,20 @@ fun DuaDetailScreen(
                     text = "Reference: ${d.reference}",
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.secondary,
-                    modifier = Modifier.padding(8.dp)
+                    modifier = Modifier.padding(8.dp).staggerEntrance(3)
                 )
 
                 // AI explanation button
                 var showAI by remember { mutableStateOf(false) }
                 Row(
-                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp).staggerEntrance(4),
                     horizontalArrangement = Arrangement.End
                 ) {
                     Box(
                         modifier = Modifier
                             .clip(androidx.compose.foundation.shape.RoundedCornerShape(50))
                             .background(MaterialTheme.colorScheme.primaryContainer)
-                            .clickable { showAI = true }
+                            .premiumTap { showAI = true }
                             .padding(horizontal = 12.dp, vertical = 6.dp)
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {

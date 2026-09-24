@@ -563,13 +563,15 @@ private fun computeNextPrayerProgress(
     maghribName: String,
     ishaName: String
 ): NextPrayerProgress? {
-    fun toMinutes(raw: String): Int? = try {
-        val parts = raw.split(":")
-        val h = parts.getOrNull(0)?.trim()?.toIntOrNull() ?: return null
-        val m = parts.getOrNull(1)?.trim()?.takeWhile { it.isDigit() }?.toIntOrNull() ?: 0
-        if (h in 0..23 && m in 0..59) h * 60 + m else null
-    } catch (e: Exception) {
-        null
+    fun toMinutes(raw: String): Int? {
+        return try {
+            val parts = raw.split(":")
+            val h = parts.getOrNull(0)?.trim()?.toIntOrNull() ?: return null
+            val m = parts.getOrNull(1)?.trim()?.takeWhile { it.isDigit() }?.toIntOrNull() ?: 0
+            if (h in 0..23 && m in 0..59) h * 60 + m else null
+        } catch (e: Exception) {
+            null
+        }
     }
 
     val anchors = listOf(

@@ -1,13 +1,12 @@
 package com.islamichub.app.ui.screens.hadith
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -36,6 +35,8 @@ import androidx.compose.ui.unit.dp
 import com.islamichub.app.R
 import com.islamichub.app.data.AppContainer
 import com.islamichub.app.data.repo.HadithSearchResult
+import com.islamichub.app.ui.theme.premiumTap
+import com.islamichub.app.ui.theme.staggerEntrance
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -107,8 +108,8 @@ fun HadithSearchScreen(
                     contentPadding = PaddingValues(vertical = 8.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    items(state.results, key = { "${it.collectionId}:${it.hadithNumber}" }) { r ->
-                        HadithSearchResultCard(r) { onHadithClick(r.collectionId, r.hadithNumber) }
+                    itemsIndexed(state.results, key = { _, r -> "${r.collectionId}:${r.hadithNumber}" }) { index, r ->
+                        HadithSearchResultCard(r, Modifier.staggerEntrance(index)) { onHadithClick(r.collectionId, r.hadithNumber) }
                     }
                 }
             }
@@ -117,11 +118,15 @@ fun HadithSearchScreen(
 }
 
 @Composable
-private fun HadithSearchResultCard(result: HadithSearchResult, onClick: () -> Unit) {
+private fun HadithSearchResultCard(
+    result: HadithSearchResult,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
     Card(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick),
+            .premiumTap(onClick = onClick),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)

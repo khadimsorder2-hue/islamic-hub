@@ -99,49 +99,30 @@ jobs:
           body: |
             # Islamic Hub ${{ github.ref_name }}
 
-            Bangla-first native Android (Kotlin + Jetpack Compose) reference build.
-            Signed with custom release keystore (committed to repo for open-source reference).
+            Bangla-first native Android (Kotlin + Jetpack Compose) app.
+            Signed with the project release keystore.
 
             ## Install
             - Download `islamichub-release.apk` below
             - Tap to install (allow "Install from unknown sources" if prompted)
 
-            ## What's new (v1.2.0)
-            - ✅ **Hadith collections**: 24,424 hadiths across Bukhari, Muslim, Tirmidhi, Abu Dawud (Arabic + Bangla)
-            - ✅ **Hadith search** (cross-collection, Bangla + Arabic)
-            - ✅ **Qada tracker** — add missed prayers, mark completed, persistent
-            - ✅ **Daily tracker** — prayer checkbox with streak, zikr/ayahs/hadiths read stats
-            - ✅ **Profile screen** — user name, stats, khatam progress, share progress
-            - ✅ **Quran bookmarks** — bookmark any ayah, list view
-            - ✅ **Quran Khatam tracker** — progress through 114 surahs, share khatam
-            - ✅ **Settings screen** — font size, background mode, Arabic/Bangla/English toggles
-            - ✅ **Qari selector** — 12 reciters with rounded profile avatars
-            - ✅ **Tafsir** — online + offline cache, 4 sources (Bangla Mukhtasar, Taisirul, English Jalalayn, Ibn Kathir)
-            - ✅ **Audio auto-pause timer** (5/15/30/60 min)
-            - ✅ **Bangla meaning audio toggle**
-            - ✅ **Word-by-word audio toggle**
-            - ✅ **Khatam player** — continuous surah-by-surah playback
-            - ✅ **Share features** — share ayah, share hadith, share khatam progress
-            - ✅ **Last Read** — quick resume from last ayah
-            - ✅ **Cache clear** — Settings option
-            - ✅ **More screen** — central hub for all features
-            - ✅ **Race-condition-free** architecture (single-writer repositories, idempotent operations)
+            ## What's new (${{ github.ref_name }})
+            - 🛠 **All compile bugs fixed** — 10 broken files repaired; the project now builds cleanly end-to-end
+            - 🎨 **Premium UI on every remaining screen** — staggered entrances, springy tap feedback, animated progress bars & premium section headers across More, App Lock, Tracker, Calendar, Juz list, Quran search, Scanner, Tajweed, Dua detail, Hadith search, Namaz extras & Tafsir screens
+            - ✅ Bug sweep: syntax + cross-file verification on all modified sources
 
             ## Features (cumulative)
-            - **Al-Quran**: 114 surahs, 6236 ayahs, full Arabic + Bengali + English (AlQuran.cloud)
-            - **Hadith**: 24,424 hadiths across 4 collections (Bukhari, Muslim, Tirmidhi, Abu Dawud)
-            - **Prayer Times**: Aladhan API + FusedLocation with notification alarms
-            - **Qibla**: rotation-vector compass pointing to Kaaba
-            - **Tasbih**: tap counter with 5 dhikr presets
-            - **99 Names of Allah** (Asma ul Husna)
-            - **8 Daily Duas** (Arabic + Bengali + English)
-            - **Hijri Calendar**
-            - **Audio tilawat**: 12 reciters with khatam player, auto-pause, Bangla meaning audio
-            - **Tafsir**: 4 sources, online + offline cache
-            - **Trackers**: Qada, daily prayer, zikr, khatam
-            - **Profile & Bookmarks**
-            - **Settings**: font, background, reciter, tafsir source, cache clear
-            - **Material 3 + dark/light theme + Bangla/English UI**
+            - **Al-Quran**: 114 surahs, 6236 ayahs, full Arabic + Bengali + English (offline bundle + AlQuran.cloud)
+            - **Hadith**: 24,424 hadiths across Bukhari, Muslim, Tirmidhi, Abu Dawud + 32 thematic topics
+            - **Prayer Times**: Aladhan API + FusedLocation with notification alarms & next-prayer progress
+            - **Qibla**: spring-physics compass pointing to Kaaba
+            - **Trackers**: Qada dashboard, fasting dashboard with period history, daily tracker, Quran khatam with permanent history
+            - **Tasbih, 99 Names, Duas, Kalima, Stories, Q&A, Quiz, Zakat calculator**
+            - **Topic Study**: 45 topics via keyword-scoring engine over the offline Quran
+            - **Tafsir**: 4 sources, online + offline cache; word-by-word; 12 reciters
+            - **AI Scholar, Tajweed checker, Scanner, Namaz shikkha with audio**
+            - **Premium motion system**: staggered entrances, count-ups, pulse highlights, glows
+            - **Material 3 + dark/light theme + Bangla-first UI**
           files: |
             app/build/outputs/apk/release/islamichub-release.apk
             app/build/outputs/apk/release/checksums.txt

@@ -1,7 +1,6 @@
 package com.islamichub.app.ui.screens.tracker
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -31,7 +30,6 @@ import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -52,6 +50,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.islamichub.app.R
 import com.islamichub.app.data.AppContainer
+import com.islamichub.app.ui.components.PremiumSectionHeader
+import com.islamichub.app.ui.theme.PremiumProgressBar
+import com.islamichub.app.ui.theme.premiumTap
+import com.islamichub.app.ui.theme.staggerEntrance
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -156,20 +158,7 @@ fun TrackerScreen(
 
             // ─── Today's Prayer Progress Card ───
             item {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(4.dp, 18.dp)
-                            .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.primary)
-                    )
-                    Text("  আজকের নামাজ প্রগ্রেস",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold)
-                }
+                PremiumSectionHeader(title = "আজকের নামাজ প্রগ্রেস")
             }
             item {
                 Card(
@@ -184,11 +173,12 @@ fun TrackerScreen(
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         // Progress bar
-                        LinearProgressIndicator(
-                            progress = { doneCount / 5f },
-                            modifier = Modifier.fillMaxWidth().height(10.dp).clip(RoundedCornerShape(5.dp)),
-                            color = MaterialTheme.colorScheme.primary,
-                            trackColor = MaterialTheme.colorScheme.surface
+                        PremiumProgressBar(
+                            progress = doneCount / 5f,
+                            modifier = Modifier.fillMaxWidth(),
+                            trackColor = MaterialTheme.colorScheme.surface,
+                            fillColor = MaterialTheme.colorScheme.primary,
+                            barHeight = 10.dp
                         )
                         Text("${doneCount} / ৫ ওয়াক্ত সম্পন্ন",
                             style = MaterialTheme.typography.bodyMedium,
@@ -211,26 +201,17 @@ fun TrackerScreen(
                     prayerBn = prayerBn[idx],
                     emoji = prayerEmojis[idx],
                     isDone = doneFlags[idx],
-                    onToggle = { vm.togglePrayer(prayers[idx]) }
+                    onToggle = { vm.togglePrayer(prayers[idx]) },
+                    modifier = Modifier.staggerEntrance(idx)
                 )
             }
 
             // ─── Stats Section Header ───
             item {
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(4.dp, 18.dp)
-                            .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.secondary)
-                    )
-                    Text("  পরিসংখ্যান",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold)
-                }
+                PremiumSectionHeader(
+                    title = "পরিসংখ্যান",
+                    modifier = Modifier.padding(top = 8.dp)
+                )
             }
 
             // ─── 2-column stats grid ───
@@ -244,14 +225,14 @@ fun TrackerScreen(
                         value = state.totalZikr.toString(),
                         label = "মোট তসবিহ",
                         color = Color(0xFFB36283),
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.weight(1f).staggerEntrance(0)
                     )
                     StatGridCard(
                         icon = Icons.Filled.AutoStories,
                         value = state.totalAyahs.toString(),
                         label = "আয়াত পঠিত",
                         color = Color(0xFF6D45C7),
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.weight(1f).staggerEntrance(1)
                     )
                 }
             }
@@ -265,14 +246,14 @@ fun TrackerScreen(
                         value = state.totalHadiths.toString(),
                         label = "হাদিস পঠিত",
                         color = Color(0xFF1B5E20),
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.weight(1f).staggerEntrance(2)
                     )
                     StatGridCard(
                         icon = Icons.Filled.Bolt,
                         value = "${(doneCount * 100) / 5}%",
                         label = "আজকের প্রগ্রেস",
                         color = Color(0xFFFF6B35),
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.weight(1f).staggerEntrance(3)
                     )
                 }
             }
@@ -341,13 +322,14 @@ private fun PremiumPrayerCheckCard(
     prayerBn: String,
     emoji: String,
     isDone: Boolean,
-    onToggle: () -> Unit
+    onToggle: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     Card(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(20.dp))
-            .clickable(onClick = onToggle),
+            .premiumTap(onClick = onToggle),
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(containerColor = Color.Transparent),
         elevation = CardDefaults.cardElevation(defaultElevation = if (isDone) 2.dp else 1.dp)

@@ -28,6 +28,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.fragment.app.FragmentActivity
+import com.islamichub.app.ui.theme.staggerEntrance
 
 /**
  * App Lock screen with BiometricPrompt.
@@ -58,7 +59,8 @@ fun AppLockScreen(
                 modifier = Modifier
                     .size(80.dp)
                     .clip(CircleShape)
-                    .background(Color.White.copy(alpha = 0.25f)),
+                    .background(Color.White.copy(alpha = 0.25f))
+                    .staggerEntrance(0),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
@@ -73,18 +75,18 @@ fun AppLockScreen(
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
                 color = Color.White,
-                modifier = Modifier.padding(top = 16.dp)
+                modifier = Modifier.padding(top = 16.dp).staggerEntrance(1)
             )
             Text(
                 text = "অ্যাপ আনলক করতে বায়োমেট্রিক প্রমাণীকরণ ব্যবহার করুন",
                 style = MaterialTheme.typography.bodyMedium,
                 color = Color.White.copy(alpha = 0.85f),
                 textAlign = TextAlign.Center,
-                modifier = Modifier.padding(top = 8.dp)
+                modifier = Modifier.padding(top = 8.dp).staggerEntrance(2)
             )
             Button(
                 onClick = { showBiometricPrompt(context, onUnlock) },
-                modifier = Modifier.padding(top = 24.dp),
+                modifier = Modifier.padding(top = 24.dp).staggerEntrance(3),
                 colors = androidx.compose.material3.ButtonDefaults.buttonColors(
                     containerColor = Color.White,
                     contentColor = MaterialTheme.colorScheme.primary

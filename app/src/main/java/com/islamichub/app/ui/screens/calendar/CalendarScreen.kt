@@ -14,7 +14,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -50,6 +50,7 @@ import com.islamichub.app.ui.components.PremiumHeroCard
 import com.islamichub.app.ui.components.PremiumSectionHeader
 import com.islamichub.app.ui.components.loadAssetImage
 import com.islamichub.app.ui.theme.AppColors
+import com.islamichub.app.ui.theme.staggerEntrance
 import androidx.compose.foundation.Image
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
@@ -81,7 +82,8 @@ fun CalendarScreen(container: AppContainer) {
             PremiumHeroCard(
                 backgroundImage = "quran-premium-bg.webp",
                 context = context,
-                height = 120
+                height = 120,
+                modifier = Modifier.staggerEntrance(0)
             ) {
                 Column(
                     modifier = Modifier.fillMaxSize().padding(16.dp),
@@ -132,7 +134,7 @@ fun CalendarScreen(container: AppContainer) {
                 horizontalArrangement = Arrangement.spacedBy(2.dp),
                 modifier = Modifier.weight(1f)
             ) {
-                items(state.days) { day ->
+                itemsIndexed(state.days) { index, day ->
                     if (day.gregorianDay == 0) {
                         Box(modifier = Modifier.aspectRatio(1f))
                     } else {
@@ -145,7 +147,8 @@ fun CalendarScreen(container: AppContainer) {
                         DayCell(
                             day = day,
                             hasQada = state.qadaDates[dateKey] == true,
-                            hasRoza = state.rozaDates[dateKey] == true
+                            hasRoza = state.rozaDates[dateKey] == true,
+                            modifier = Modifier.staggerEntrance(index)
                         )
                     }
                 }
@@ -158,7 +161,8 @@ fun CalendarScreen(container: AppContainer) {
 private fun DayCell(
     day: HijriDayItem,
     hasQada: Boolean = false,
-    hasRoza: Boolean = false
+    hasRoza: Boolean = false,
+    modifier: Modifier = Modifier
 ) {
     val isEvent = day.islamicEvent != null
     val bgBrush = when {
@@ -175,7 +179,7 @@ private fun DayCell(
     val textColor = if (day.isToday) Color.White else MaterialTheme.colorScheme.onSurface
 
     Box(
-        modifier = Modifier
+        modifier = modifier
             .aspectRatio(1f)
             .clip(RoundedCornerShape(8.dp))
             .background(bgBrush)
