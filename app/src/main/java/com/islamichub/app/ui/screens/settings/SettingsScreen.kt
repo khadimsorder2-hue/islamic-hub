@@ -72,6 +72,7 @@ import com.islamichub.app.ui.theme.AppColors
 import com.islamichub.app.ui.theme.arabicSp
 import com.islamichub.app.ui.theme.banglaSp
 import com.islamichub.app.ui.theme.englishSp
+import com.islamichub.app.ui.theme.staggerEntrance
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -124,7 +125,7 @@ fun SettingsScreen(
 
             // ─── Theme Mode ───────────────────────────────────────────
             item {
-                SettingsSection(title = "থিম মোড", icon = Icons.Filled.Palette, accent = Color(0xFF607D8B)) {
+                SettingsSection(index = 0, title = "থিম মোড", icon = Icons.Filled.Palette, accent = Color(0xFF607D8B)) {
                     Text("অ্যাপের রঙ নির্বাচন করুন",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -178,7 +179,7 @@ fun SettingsScreen(
 
             // ─── Quran Appearance ─────────────────────────────────────
             item {
-                SettingsSection(
+                SettingsSection(index = 1, 
                     title = stringResource(R.string.settings_quran_appearance),
                     icon = Icons.Filled.MenuBook,
                     accent = Color(0xFF2E7D32)
@@ -238,7 +239,7 @@ fun SettingsScreen(
 
             // ─── Text Size (all pages) — v5.5 ─────────────────────────
             item {
-                SettingsSection(title = "লেখার সাইজ (সব পেজ)", icon = Icons.Filled.FormatSize, accent = Color(0xFF1565C0)) {
+                SettingsSection(index = 2, title = "লেখার সাইজ (সব পেজ)", icon = Icons.Filled.FormatSize, accent = Color(0xFF1565C0)) {
                     Text(
                         text = "বাংলা, ইংরেজি ও আরবি লেখার সাইজ কমিয়ে/বাড়িয়ে নিন — পরিবর্তন সব পেজে সাথে সাথে প্রয়োগ হবে।",
                         style = MaterialTheme.typography.labelSmall,
@@ -334,7 +335,7 @@ fun SettingsScreen(
                     Surface(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp),
-                        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)
+                        color = MaterialTheme.colorScheme.surfaceContainerLow.copy(alpha = 0.6f)
                     ) {
                         Column(modifier = Modifier.padding(14.dp)) {
                             Text(
@@ -373,7 +374,7 @@ fun SettingsScreen(
 
             // ─── Audio ────────────────────────────────────────────────
             item {
-                SettingsSection(title = stringResource(R.string.settings_audio), icon = Icons.Filled.Headphones, accent = Color(0xFFEF6C00)) {
+                SettingsSection(index = 3, title = stringResource(R.string.settings_audio), icon = Icons.Filled.Headphones, accent = Color(0xFFEF6C00)) {
                     // Reciter selector
                     Card(
                         modifier = Modifier
@@ -460,7 +461,7 @@ fun SettingsScreen(
 
             // ─── Tafsir ───────────────────────────────────────────────
             item {
-                SettingsSection(title = stringResource(R.string.settings_tafsir), icon = Icons.Filled.AutoStories, accent = Color(0xFF00695C)) {
+                SettingsSection(index = 4, title = stringResource(R.string.settings_tafsir), icon = Icons.Filled.AutoStories, accent = Color(0xFF00695C)) {
                     Text(
                         text = stringResource(R.string.settings_tafsir_source),
                         style = MaterialTheme.typography.bodyMedium,
@@ -480,7 +481,7 @@ fun SettingsScreen(
 
             // ─── AI Scholar ───────────────────────────────────────────
             item {
-                SettingsSection(title = stringResource(R.string.settings_ai_scholar), icon = Icons.Filled.AutoAwesome, accent = Color(0xFF6D45C7)) {
+                SettingsSection(index = 5, title = stringResource(R.string.settings_ai_scholar), icon = Icons.Filled.AutoAwesome, accent = Color(0xFF6D45C7)) {
                     // Provider selector
                     Text(
                         text = "AI Provider নির্বাচন করুন",
@@ -686,7 +687,7 @@ fun SettingsScreen(
 
             // ─── App Update (v5.6.0) ──────────────────────────────────
             item {
-                SettingsSection(title = stringResource(R.string.settings_update), icon = Icons.Filled.SystemUpdate, accent = Color(0xFF2E7D32)) {
+                SettingsSection(index = 6, title = stringResource(R.string.settings_update), icon = Icons.Filled.SystemUpdate, accent = Color(0xFF2E7D32)) {
                     // Current version + manual check button
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -817,7 +818,7 @@ fun SettingsScreen(
 
             // ─── Cache ────────────────────────────────────────────────
             item {
-                SettingsSection(title = stringResource(R.string.settings_cache), icon = Icons.Filled.CleaningServices, accent = Color(0xFF5D4037)) {
+                SettingsSection(index = 7, title = stringResource(R.string.settings_cache), icon = Icons.Filled.CleaningServices, accent = Color(0xFF5D4037)) {
                     Text(
                         text = formatCacheSize(state.cacheSizeBytes),
                         style = MaterialTheme.typography.bodyMedium,
@@ -842,9 +843,10 @@ private fun SettingsSection(
     title: String,
     icon: androidx.compose.ui.graphics.vector.ImageVector,
     accent: Color,
+    index: Int = 0,
     body: @Composable () -> Unit
 ) {
-    Column(modifier = Modifier.fillMaxWidth()) {
+    Column(modifier = Modifier.fillMaxWidth().staggerEntrance(index)) {
         // v5.8.0 — More-section style header: circular gradient icon badge +
         // title with accent underline, sitting on an invisible (borderless,
         // shadowless) container so only the icon gives the section identity.

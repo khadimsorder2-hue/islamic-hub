@@ -534,6 +534,12 @@ fun KhatamScreen(
     if (showClearHistoryDialog) {
         AlertDialog(
             onDismissRequest = { showClearHistoryDialog = false },
+            icon = {
+                com.islamichub.app.ui.components.PremiumDialogIcon(
+                    icon = androidx.compose.material.icons.Icons.Filled.DeleteForever,
+                    tint = androidx.compose.ui.graphics.Color(0xFFC62828)
+                )
+            },
             title = { Text("ইতিহাস মুছুন") },
             text = { Text("সত্যিই সব খতম ইতিহাস মুছে ফেলবেন? এটা ফেরানো যাবে না।") },
             confirmButton = {

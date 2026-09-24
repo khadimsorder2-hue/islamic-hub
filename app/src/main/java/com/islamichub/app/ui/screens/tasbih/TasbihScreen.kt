@@ -49,6 +49,7 @@ import androidx.compose.ui.unit.sp
 import com.islamichub.app.R
 import com.islamichub.app.data.AppContainer
 import com.islamichub.app.data.model.DhikrOption
+import com.islamichub.app.ui.theme.staggerEntrance
 
 @Composable
 fun TasbihScreen(container: AppContainer) {
@@ -126,7 +127,7 @@ fun TasbihScreen(container: AppContainer) {
 
             // Stats row
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().staggerEntrance(1),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 StatCard(
@@ -147,7 +148,8 @@ fun TasbihScreen(container: AppContainer) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(1f),
+                    .weight(1f)
+                    .staggerEntrance(2),
                 contentAlignment = Alignment.Center
             ) {
                 Box(

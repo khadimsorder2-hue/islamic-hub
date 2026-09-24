@@ -49,6 +49,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.islamichub.app.data.AppContainer
 import com.islamichub.app.ui.components.PremiumHeroCard
+import com.islamichub.app.ui.theme.staggerEntrance
 import java.text.NumberFormat
 import java.util.Locale
 
@@ -103,7 +104,7 @@ fun ZakatScreen(
             // Info card
             item {
                 Card(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().staggerEntrance(1),
                     shape = RoundedCornerShape(16.dp),
                     colors = CardDefaults.cardColors(
                         containerColor = MaterialTheme.colorScheme.secondaryContainer
@@ -129,7 +130,7 @@ fun ZakatScreen(
             }
             item {
                 Card(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().staggerEntrance(2),
                     shape = RoundedCornerShape(16.dp)
                 ) {
                     Column(
@@ -162,7 +163,7 @@ fun ZakatScreen(
             item { SectionHeader("স্বর্ণ ও রৌপ্য") }
             item {
                 Card(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().staggerEntrance(3),
                     shape = RoundedCornerShape(16.dp)
                 ) {
                     Column(
@@ -201,7 +202,7 @@ fun ZakatScreen(
             item { SectionHeader("নগদ ও ব্যাংক") }
             item {
                 Card(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().staggerEntrance(4),
                     shape = RoundedCornerShape(16.dp)
                 ) {
                     Column(
@@ -219,7 +220,7 @@ fun ZakatScreen(
             item { SectionHeader("ব্যবসা ও বিনিয়োগ") }
             item {
                 Card(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().staggerEntrance(5),
                     shape = RoundedCornerShape(16.dp)
                 ) {
                     Column(
@@ -237,7 +238,7 @@ fun ZakatScreen(
             item { SectionHeader("দায় (Liabilities)") }
             item {
                 Card(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().staggerEntrance(6),
                     shape = RoundedCornerShape(16.dp)
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
@@ -249,7 +250,7 @@ fun ZakatScreen(
             // Calculate button
             item {
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().staggerEntrance(7),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     Button(
@@ -325,7 +326,7 @@ private fun NumField(
 private fun ResultCard(result: ZakatResult) {
     val nf = NumberFormat.getNumberInstance(Locale("bn", "BD"))
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().staggerEntrance(8),
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(
             containerColor = Color.Transparent

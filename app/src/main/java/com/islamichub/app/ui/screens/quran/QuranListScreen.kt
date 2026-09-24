@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -55,6 +56,7 @@ import com.islamichub.app.ui.theme.AppColors
 import com.islamichub.app.ui.theme.AppRadius
 import com.islamichub.app.ui.theme.AppSpacing
 import com.islamichub.app.ui.theme.AppElevation
+import com.islamichub.app.ui.theme.staggerEntrance
 
 @Composable
 fun QuranListScreen(
@@ -130,13 +132,15 @@ fun QuranListScreen(
             ),
             verticalArrangement = Arrangement.spacedBy(AppSpacing.sm)
         ) {
-            items(state.surahs, key = { it.number }) { surah ->
-                PremiumSurahCard(
-                    surah = surah,
-                    progress = state.progressMap[surah.number] ?: 0f,
-                    onPlay = { vm.playSurah(surah.number) },
-                    onOpen = { onSurahClick(surah.number) }
-                )
+            itemsIndexed(state.surahs, key = { _, surah -> surah.number }) { index, surah ->
+                Box(modifier = Modifier.staggerEntrance(index)) {
+                    PremiumSurahCard(
+                        surah = surah,
+                        progress = state.progressMap[surah.number] ?: 0f,
+                        onPlay = { vm.playSurah(surah.number) },
+                        onOpen = { onSurahClick(surah.number) }
+                    )
+                }
             }
         }
     }

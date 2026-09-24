@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -74,6 +75,7 @@ import com.islamichub.app.data.local.HadithJson
 import com.islamichub.app.ui.components.PremiumHeroCard
 import com.islamichub.app.ui.theme.arabicSp
 import com.islamichub.app.ui.theme.banglaSp
+import com.islamichub.app.ui.theme.staggerEntrance
 import kotlinx.coroutines.launch
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -270,8 +272,10 @@ fun HadithCollectionScreen(
                 contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                items(filteredHadiths.take(500), key = { it.hadithNumber }) { hadith ->
-                    HadithRow(hadith) { onHadithClick(collectionId, hadith.hadithNumber) }
+                itemsIndexed(filteredHadiths.take(500), key = { _, h -> h.hadithNumber }) { index, hadith ->
+                    Box(modifier = Modifier.staggerEntrance(index)) {
+                        HadithRow(hadith) { onHadithClick(collectionId, hadith.hadithNumber) }
+                    }
                 }
                 if (filteredHadiths.size > 500) {
                     item {

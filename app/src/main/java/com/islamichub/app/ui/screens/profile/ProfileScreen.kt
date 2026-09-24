@@ -71,6 +71,7 @@ import androidx.compose.ui.unit.sp
 import com.islamichub.app.R
 import com.islamichub.app.data.AppContainer
 import com.islamichub.app.ui.components.PremiumHeroCard
+import com.islamichub.app.ui.theme.staggerEntrance
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -203,7 +204,7 @@ fun ProfileScreen(
                     else -> Triple("নতুন", "🌙", Color(0xFF7E57C2))
                 }
                 Card(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().staggerEntrance(1),
                     shape = RoundedCornerShape(20.dp),
                     colors = CardDefaults.cardColors(containerColor = Color.Transparent),
                     elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
@@ -282,7 +283,7 @@ fun ProfileScreen(
             // ─── Stats Grid (2-column) ───
             item {
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().staggerEntrance(2),
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     StatGridCard(
@@ -454,7 +455,7 @@ fun ProfileScreen(
             }
             item {
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().staggerEntrance(4),
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     AchievementCard(
@@ -522,7 +523,7 @@ fun ProfileScreen(
             }
             item {
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().staggerEntrance(3),
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     BackupActionCard(

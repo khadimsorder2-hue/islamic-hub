@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -56,6 +57,7 @@ import com.islamichub.app.ui.components.PremiumHeroCard
 import com.islamichub.app.ui.components.PremiumSectionHeader
 import com.islamichub.app.ui.components.loadAssetImage
 import com.islamichub.app.ui.theme.banglaSp
+import com.islamichub.app.ui.theme.staggerEntrance
 import androidx.compose.ui.graphics.asImageBitmap
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -120,25 +122,31 @@ fun StoriesScreen(
             // ─── Prophets ───
             if (state.prophets.isNotEmpty()) {
                 item { PremiumSectionHeader(title = "নবী ও রাসূলগণের জীবনী") }
-                items(state.prophets, key = { it.id }) { prophet ->
-                    StoryCardProphet(prophet, context) { selectedProphet = prophet }
+                itemsIndexed(state.prophets, key = { _, prophet -> prophet.id }) { index, prophet ->
+                    Box(modifier = Modifier.staggerEntrance(index)) {
+                        StoryCardProphet(prophet, context) { selectedProphet = prophet }
+                    }
                 }
             }
 
             // ─── Khalifas ───
             if (state.khalifas.isNotEmpty()) {
                 item { PremiumSectionHeader(title = "খুলাফায়ে রাশেদীন") }
-                items(state.khalifas, key = { it.id }) { khalifa ->
-                    StoryCardKhalifa(khalifa, context) { selectedKhalifa = khalifa }
+                itemsIndexed(state.khalifas, key = { _, khalifa -> khalifa.id }) { index, khalifa ->
+                    Box(modifier = Modifier.staggerEntrance(index)) {
+                        StoryCardKhalifa(khalifa, context) { selectedKhalifa = khalifa }
+                    }
                 }
             }
 
             // ─── Meraj ───
             if (state.merajChapters.isNotEmpty()) {
                 item { PremiumSectionHeader(title = state.merajTitle) }
-                items(state.merajChapters, key = { it.id ?: it.title ?: "" }) { chapter ->
-                    ChapterCard(chapter, context) {
-                        selectedChapter = state.merajTitle to chapter
+                itemsIndexed(state.merajChapters, key = { _, chapter -> chapter.id ?: chapter.title ?: "" }) { index, chapter ->
+                    Box(modifier = Modifier.staggerEntrance(index)) {
+                        ChapterCard(chapter, context) {
+                            selectedChapter = state.merajTitle to chapter
+                        }
                     }
                 }
             }
@@ -146,9 +154,11 @@ fun StoriesScreen(
             // ─── Sirat ───
             if (state.siratChapters.isNotEmpty()) {
                 item { PremiumSectionHeader(title = state.siratTitle) }
-                items(state.siratChapters.take(10), key = { it.id ?: it.title ?: "" }) { chapter ->
-                    ChapterCard(chapter, context) {
-                        selectedChapter = state.siratTitle to chapter
+                itemsIndexed(state.siratChapters.take(10), key = { _, chapter -> chapter.id ?: chapter.title ?: "" }) { index, chapter ->
+                    Box(modifier = Modifier.staggerEntrance(index)) {
+                        ChapterCard(chapter, context) {
+                            selectedChapter = state.siratTitle to chapter
+                        }
                     }
                 }
                 if (state.siratChapters.size > 10) {

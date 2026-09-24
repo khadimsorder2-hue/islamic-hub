@@ -109,6 +109,12 @@ fun AiScholarScreen(
     if (showClearCacheDialog) {
         AlertDialog(
             onDismissRequest = { showClearCacheDialog = false },
+            icon = {
+                com.islamichub.app.ui.components.PremiumDialogIcon(
+                    icon = androidx.compose.material.icons.Icons.Filled.Delete,
+                    tint = androidx.compose.ui.graphics.Color(0xFFC62828)
+                )
+            },
             title = { Text("AI ক্যাশ মুছবেন?") },
             text = { Text("এতে ${state.cacheCount}টি সংরক্ষিত উত্তর মুছে যাবে। এটি পূর্বাবস্থায় ফেরানো যাবে না।") },
             confirmButton = {

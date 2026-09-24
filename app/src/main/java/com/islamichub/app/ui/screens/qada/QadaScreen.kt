@@ -378,6 +378,12 @@ fun QadaScreen(
     if (showResetDialog) {
         AlertDialog(
             onDismissRequest = { showResetDialog = false },
+            icon = {
+                com.islamichub.app.ui.components.PremiumDialogIcon(
+                    icon = androidx.compose.material.icons.Icons.Filled.Delete,
+                    tint = androidx.compose.ui.graphics.Color(0xFFC62828)
+                )
+            },
             title = { Text(stringResource(R.string.qada_reset_confirm)) },
             confirmButton = {
                 TextButton(onClick = {

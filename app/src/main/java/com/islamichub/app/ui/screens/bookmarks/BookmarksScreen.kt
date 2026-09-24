@@ -50,6 +50,7 @@ import com.islamichub.app.data.AppContainer
 import com.islamichub.app.data.repo.Bookmark
 import com.islamichub.app.ui.components.PremiumHeroCard
 import com.islamichub.app.ui.components.PremiumSectionHeader
+import com.islamichub.app.ui.theme.staggerEntrance
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -161,7 +162,7 @@ fun BookmarksScreen(
 
                 item {
                     Card(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier.fillMaxWidth().staggerEntrance(idx),
                         shape = RoundedCornerShape(20.dp),
                         colors = CardDefaults.cardColors(containerColor = Color.Transparent),
                         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
@@ -222,10 +223,10 @@ fun BookmarksScreen(
 
                 // 2-column grid of bookmark cards
                 val chunked = surahBookmarks.chunked(2)
-                chunked.forEach { rowBms ->
+                chunked.forEachIndexed { rowIdx, rowBms ->
                     item {
                         Row(
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier.fillMaxWidth().staggerEntrance(idx + rowIdx),
                             horizontalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
                             rowBms.forEach { bm ->

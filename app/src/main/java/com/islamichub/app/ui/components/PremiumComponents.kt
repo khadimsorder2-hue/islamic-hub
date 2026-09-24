@@ -344,3 +344,33 @@ fun PremiumMiniAudioPlayer(
         }
     }
 }
+
+/**
+ * v5.8.1 — Premium dialog icon: circular gradient badge shown above the dialog
+ * title, giving every dialog a consistent branded identity instead of the
+ * plain stock Material look.
+ */
+@Composable
+fun PremiumDialogIcon(
+    icon: ImageVector,
+    tint: Color = MaterialTheme.colorScheme.primary
+) {
+    Box(
+        modifier = Modifier
+            .size(56.dp)
+            .clip(CircleShape)
+            .background(
+                brush = Brush.linearGradient(
+                    colors = listOf(tint, tint.copy(alpha = 0.6f))
+                )
+            ),
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = Color.White,
+            modifier = Modifier.size(28.dp)
+        )
+    }
+}

@@ -25,6 +25,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavType
@@ -155,7 +161,31 @@ fun IslamicHubNavGraph(container: AppContainer) {
         NavHost(
             navController = navController,
             startDestination = Screen.Home.route,
-            modifier = Modifier.padding(innerPadding)
+            modifier = Modifier.padding(innerPadding),
+            enterTransition = {
+                slideInHorizontally(
+                    animationSpec = tween(340, easing = FastOutSlowInEasing),
+                    initialOffsetX = { it / 6 }
+                ) + fadeIn(animationSpec = tween(300))
+            },
+            exitTransition = {
+                slideOutHorizontally(
+                    animationSpec = tween(300, easing = FastOutSlowInEasing),
+                    targetOffsetX = { -it / 8 }
+                ) + fadeOut(animationSpec = tween(260))
+            },
+            popEnterTransition = {
+                slideInHorizontally(
+                    animationSpec = tween(340, easing = FastOutSlowInEasing),
+                    initialOffsetX = { -it / 6 }
+                ) + fadeIn(animationSpec = tween(300))
+            },
+            popExitTransition = {
+                slideOutHorizontally(
+                    animationSpec = tween(300, easing = FastOutSlowInEasing),
+                    targetOffsetX = { it / 8 }
+                ) + fadeOut(animationSpec = tween(260))
+            }
         ) {
             composable(Screen.Home.route) {
                 HomeScreen(

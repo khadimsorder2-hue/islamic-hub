@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -78,6 +79,7 @@ import com.islamichub.app.ui.theme.englishSp
 import com.islamichub.app.ui.theme.premiumGlow
 import com.islamichub.app.ui.theme.premiumPulseHighlight
 import com.islamichub.app.ui.theme.premiumTap
+import com.islamichub.app.ui.theme.staggerEntrance
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -260,7 +262,7 @@ fun QuranReaderScreen(
                             Surface(
                                 modifier = Modifier.fillMaxWidth(),
                                 shape = RoundedCornerShape(AppRadius.md.value),
-                                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f)
+                                color = MaterialTheme.colorScheme.surfaceContainerLow.copy(alpha = 0.7f)
                             ) {
                                 Column(modifier = Modifier.padding(AppSpacing.lg)) {
                                     Row(
@@ -315,7 +317,7 @@ fun QuranReaderScreen(
                             Surface(
                                 modifier = Modifier.fillMaxWidth(),
                                 shape = RoundedCornerShape(AppRadius.md.value),
-                                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                                color = MaterialTheme.colorScheme.surfaceContainerLow.copy(alpha = 0.5f)
                             ) {
                                 Row(
                                     modifier = Modifier.fillMaxWidth().padding(AppSpacing.md),
@@ -411,7 +413,8 @@ fun QuranReaderScreen(
                         )
                     }
 
-                    items(surah.ayahs, key = { it.numberInSurah }) { ayah ->
+                    itemsIndexed(surah.ayahs, key = { _, ayah -> ayah.numberInSurah }) { ayahIndex, ayah ->
+                        Box(modifier = Modifier.staggerEntrance(ayahIndex)) {
                         val overrideBangla = if (state.selectedTranslationIndex >= 0 && state.onlineTranslationsLoaded)
                             vm.getBanglaTextForAyah(ayah.numberInSurah, ayah.bengali)
                         else ayah.bengali
@@ -446,6 +449,7 @@ fun QuranReaderScreen(
                                 context.startActivity(Intent.createChooser(shareIntent, "আয়াত শেয়ার করুন"))
                             }
                         )
+                        }
                     }
                 }
             }
@@ -538,6 +542,9 @@ private fun AudioPlaybackBar(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(bottom = 4.dp)
+                    .clip(RoundedCornerShape(2.dp)),
+                color = MaterialTheme.colorScheme.primary,
+                trackColor = MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.35f)
             )
         }
     }

@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
@@ -32,6 +33,7 @@ import androidx.compose.ui.unit.dp
 import com.islamichub.app.R
 import com.islamichub.app.data.AppContainer
 import com.islamichub.app.data.model.NameOfAllah
+import com.islamichub.app.ui.theme.staggerEntrance
 import com.islamichub.app.ui.theme.arabicSp
 import com.islamichub.app.ui.theme.banglaSp
 import com.islamichub.app.ui.theme.englishSp
@@ -73,8 +75,10 @@ fun NamesScreen(container: AppContainer) {
                 }
             }
         }
-        items(state.names, key = { it.number }) { name ->
-            NameRow(name)
+        itemsIndexed(state.names, key = { _, name -> name.number }) { index, name ->
+            Box(modifier = Modifier.staggerEntrance(index)) {
+                NameRow(name)
+            }
         }
     }
 }

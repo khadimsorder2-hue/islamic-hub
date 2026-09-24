@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -46,6 +47,7 @@ import com.islamichub.app.data.AppContainer
 import com.islamichub.app.data.local.ExtendedDua
 import com.islamichub.app.ui.components.PremiumHeroCard
 import com.islamichub.app.ui.components.PremiumSectionHeader
+import com.islamichub.app.ui.theme.staggerEntrance
 import com.islamichub.app.ui.theme.banglaSp
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -137,8 +139,10 @@ fun DuaListScreen(
                             title = "${category.icon ?: "🤲"}  ${category.name ?: category.id} (${duas.size})"
                         )
                     }
-                    items(duas, key = { it.id }) { dua ->
-                        ExtendedDuaRow(dua) { onDuaClick(dua.id) }
+                    itemsIndexed(duas, key = { _, dua -> dua.id }) { index, dua ->
+                        Box(modifier = Modifier.staggerEntrance(index)) {
+                            ExtendedDuaRow(dua) { onDuaClick(dua.id) }
+                        }
                     }
                 }
             }

@@ -203,7 +203,7 @@ fun TafsirFullScreen(
                 if (translit.isNotBlank()) {
                     Surface(
                         modifier = Modifier.fillMaxWidth().staggerEntrance(1), shape = RoundedCornerShape(16.dp),
-                        color = MaterialTheme.colorScheme.surfaceVariant
+                        color = MaterialTheme.colorScheme.surfaceContainerLow
                     ) {
                         Column(modifier = Modifier.padding(16.dp)) {
                             Text("🔊 উচ্চারণ (Transliteration)", style = MaterialTheme.typography.labelMedium,
@@ -292,7 +292,7 @@ fun TafsirFullScreen(
                     } else if (sel.language == "en") {
                         Surface(
                             modifier = Modifier.fillMaxWidth().staggerEntrance(3), shape = RoundedCornerShape(16.dp),
-                            color = MaterialTheme.colorScheme.surfaceVariant
+                            color = MaterialTheme.colorScheme.surfaceContainerLow
                         ) {
                             Text("English tafsir লোড হচ্ছে…", style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(16.dp))
@@ -306,7 +306,7 @@ fun TafsirFullScreen(
                 PremiumSectionHeader("তাফসীর উৎস (অফলাইন)")
                 Surface(
                     modifier = Modifier.fillMaxWidth().staggerEntrance(4), shape = RoundedCornerShape(16.dp),
-                    color = MaterialTheme.colorScheme.surfaceVariant
+                    color = MaterialTheme.colorScheme.surfaceContainerLow
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         if (state.isCached) {
@@ -324,7 +324,7 @@ fun TafsirFullScreen(
             if (state.isAILoading) {
                 Surface(
                     modifier = Modifier.fillMaxWidth().staggerEntrance(5), shape = RoundedCornerShape(16.dp),
-                    color = MaterialTheme.colorScheme.surfaceVariant
+                    color = MaterialTheme.colorScheme.surfaceContainerLow
                 ) {
                     Column(modifier = Modifier.padding(32.dp), horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -354,7 +354,7 @@ fun TafsirFullScreen(
             if (state.aiExplanation == null && !state.isAILoading) {
                 Surface(
                     modifier = Modifier.fillMaxWidth().staggerEntrance(5), shape = RoundedCornerShape(16.dp),
-                    color = MaterialTheme.colorScheme.surfaceVariant
+                    color = MaterialTheme.colorScheme.surfaceContainerLow
                 ) {
                     Text("AI তাফসীর ব্যবহার করতে Settings এ API key যোগ করুন",
                         style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -367,7 +367,7 @@ fun TafsirFullScreen(
                 Text("📝 নোট", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
                 Surface(
                     modifier = Modifier.fillMaxWidth().staggerEntrance(6), shape = RoundedCornerShape(16.dp),
-                    color = MaterialTheme.colorScheme.surfaceVariant
+                    color = MaterialTheme.colorScheme.surfaceContainerLow
                 ) {
                     Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         OutlinedTextField(

@@ -47,6 +47,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import com.islamichub.app.R
 import com.islamichub.app.data.AppContainer
+import com.islamichub.app.ui.theme.staggerEntrance
 import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.sin
@@ -87,6 +88,7 @@ fun QiblaScreen(container: AppContainer) {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         // Premium hero
+        Box(modifier = Modifier.staggerEntrance(0)) {
         com.islamichub.app.ui.components.PremiumHeroCard(
             backgroundImage = "qibla-premium-bg.webp",
             context = context,
@@ -106,6 +108,7 @@ fun QiblaScreen(container: AppContainer) {
                     color = androidx.compose.ui.graphics.Color.White
                 )
             }
+        }
         }
 
         if (!hasPermission) {

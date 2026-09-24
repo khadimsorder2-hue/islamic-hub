@@ -18,11 +18,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import com.islamichub.app.data.repo.DailyAyahWorker
 import com.islamichub.app.data.repo.UpdateChecker
 import com.islamichub.app.ui.navigation.IslamicHubNavGraph
+import com.islamichub.app.ui.components.PremiumDialogIcon
 import com.islamichub.app.ui.screens.applock.AppLockScreen
 import com.islamichub.app.ui.screens.onboarding.OnboardingScreen
 import com.islamichub.app.ui.theme.IslamicHubTheme
@@ -124,6 +126,12 @@ class MainActivity : ComponentActivity() {
                             updateAvailable?.let { upd ->
                                 AlertDialog(
                                     onDismissRequest = { updateAvailable = null },
+                                    icon = {
+                                        PremiumDialogIcon(
+                                            icon = androidx.compose.material.icons.Icons.Filled.SystemUpdate,
+                                            tint = Color(0xFF2E7D32)
+                                        )
+                                    },
                                     title = {
                                         Text(
                                             "নতুন ভার্সন পাওয়া গেছে",

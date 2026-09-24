@@ -132,6 +132,12 @@ fun FastingScreen(
     if (showResetDialog) {
         AlertDialog(
             onDismissRequest = { showResetDialog = false },
+            icon = {
+                com.islamichub.app.ui.components.PremiumDialogIcon(
+                    icon = androidx.compose.material.icons.Icons.Filled.Delete,
+                    tint = androidx.compose.ui.graphics.Color(0xFFC62828)
+                )
+            },
             title = { Text("সব ডেটা মুছবেন?") },
             text = { Text("এটি সমস্ত রোজার রেকর্ড মুছে ফেলবে। এটি পূর্বাবস্থায় ফেরানো যাবে না।") },
             confirmButton = {

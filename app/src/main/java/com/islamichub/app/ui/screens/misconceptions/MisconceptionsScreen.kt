@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -46,6 +47,7 @@ import com.islamichub.app.data.AppContainer
 import com.islamichub.app.data.local.MisconceptionCategory
 import com.islamichub.app.data.local.MisconceptionItem
 import com.islamichub.app.ui.theme.banglaSp
+import com.islamichub.app.ui.theme.staggerEntrance
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -108,8 +110,10 @@ fun MisconceptionsScreen(
                         title = category.icon + "  " + category.name
                     )
                 }
-                items(category.questions, key = { it.id }) { item ->
-                    MisconceptionCard(item, container)
+                itemsIndexed(category.questions, key = { _, item -> item.id }) { index, item ->
+                    Box(modifier = Modifier.staggerEntrance(index)) {
+                        MisconceptionCard(item, container)
+                    }
                 }
             }
         }

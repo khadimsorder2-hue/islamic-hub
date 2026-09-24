@@ -245,7 +245,9 @@ private fun QuestionScreen(
         // Progress
         LinearProgressIndicator(
             progress = { (state.currentQuestionIndex + 1) / total.toFloat() },
-            modifier = Modifier.fillMaxWidth().height(8.dp).clip(RoundedCornerShape(4.dp))
+            modifier = Modifier.fillMaxWidth().height(8.dp).clip(RoundedCornerShape(4.dp)),
+            color = MaterialTheme.colorScheme.primary,
+            trackColor = MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.35f)
         )
         Row(
             modifier = Modifier.fillMaxWidth(),

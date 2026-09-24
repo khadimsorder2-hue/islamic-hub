@@ -65,6 +65,7 @@ import com.islamichub.app.ui.components.PremiumSectionHeader
 import com.islamichub.app.ui.components.loadAssetImage
 import com.islamichub.app.ui.theme.arabicSp
 import com.islamichub.app.ui.theme.banglaSp
+import com.islamichub.app.ui.theme.staggerEntrance
 import androidx.compose.ui.graphics.asImageBitmap
 import kotlinx.coroutines.launch
 
@@ -204,8 +205,10 @@ fun NamazShikkhaScreen(
                 }
                 items(dailyCategories.size, key = { idx -> dailyCategories[idx].id ?: idx }) { idx ->
                     val category = dailyCategories[idx]
-                    NamazCategoryCard(category, context) { prayer ->
-                        selectedPrayer = prayer
+                    Box(modifier = Modifier.staggerEntrance(idx)) {
+                        NamazCategoryCard(category, context) { prayer ->
+                            selectedPrayer = prayer
+                        }
                     }
                 }
             }
@@ -217,8 +220,10 @@ fun NamazShikkhaScreen(
                 }
                 items(state.extendedNamaz.size) { idx ->
                     val item = state.extendedNamaz[idx]
-                    ExtendedNamazCard(item, context) {
-                        selectedExtended = item
+                    Box(modifier = Modifier.staggerEntrance(idx)) {
+                        ExtendedNamazCard(item, context) {
+                            selectedExtended = item
+                        }
                     }
                 }
             }

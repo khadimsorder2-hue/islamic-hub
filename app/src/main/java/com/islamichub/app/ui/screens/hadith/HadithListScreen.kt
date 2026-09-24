@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -41,6 +42,7 @@ import androidx.compose.ui.unit.dp
 import com.islamichub.app.R
 import com.islamichub.app.data.AppContainer
 import com.islamichub.app.data.local.HadithCollectionMeta
+import com.islamichub.app.ui.theme.staggerEntrance
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -103,8 +105,10 @@ fun HadithListScreen(
                 }
             }
 
-            items(state.collections, key = { it.id }) { coll ->
-                CollectionCard(coll) { onCollectionClick(coll.id) }
+            itemsIndexed(state.collections, key = { _, coll -> coll.id }) { index, coll ->
+                Box(modifier = Modifier.staggerEntrance(index)) {
+                    CollectionCard(coll) { onCollectionClick(coll.id) }
+                }
             }
         }
     }

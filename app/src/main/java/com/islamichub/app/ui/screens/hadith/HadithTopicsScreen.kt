@@ -52,6 +52,7 @@ import com.islamichub.app.data.local.TopicHadith
 import com.islamichub.app.ui.components.PremiumHeroCard
 import com.islamichub.app.ui.theme.arabicSp
 import com.islamichub.app.ui.theme.banglaSp
+import com.islamichub.app.ui.theme.staggerEntrance
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -112,7 +113,7 @@ fun HadithTopicsScreen(
 
             // Group by category
             val grouped = state.topics.groupBy { it.category ?: "other" }
-            grouped.forEach { (category, topics) ->
+            grouped.forEachIndexed { groupIdx, (category, topics) ->
                 val catName = when (category) {
                     "ibadah" -> "ইবাদত"
                     "muamalat" -> "লেনদেন"
@@ -127,7 +128,7 @@ fun HadithTopicsScreen(
                 }
                 item {
                     Card(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier.fillMaxWidth().staggerEntrance(groupIdx),
                         shape = RoundedCornerShape(20.dp),
                         colors = CardDefaults.cardColors(containerColor = Color.Transparent),
                         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
@@ -167,10 +168,10 @@ fun HadithTopicsScreen(
                 }
                 // 2-column grid of topic cards
                 val chunked = topics.chunked(2)
-                chunked.forEach { rowTopics ->
+                chunked.forEachIndexed { rowIdx, rowTopics ->
                     item {
                         Row(
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier.fillMaxWidth().staggerEntrance(groupIdx + rowIdx),
                             horizontalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
                             rowTopics.forEach { topic ->

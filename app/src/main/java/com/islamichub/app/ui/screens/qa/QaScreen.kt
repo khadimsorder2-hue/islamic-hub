@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -54,6 +55,7 @@ import com.islamichub.app.ui.components.PremiumHeroCard
 import com.islamichub.app.ui.components.PremiumSectionHeader
 import com.islamichub.app.ui.theme.arabicSp
 import com.islamichub.app.ui.theme.banglaSp
+import com.islamichub.app.ui.theme.staggerEntrance
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -117,22 +119,24 @@ fun QaScreen(
                 item {
                     PremiumSectionHeader(title = "${category.icon ?: "📖"}  ${category.name} (${category.items.size})")
                 }
-                items(category.items, key = { it.id }) { item ->
-                    QaCard(
-                        item = item,
-                        onCopy = {
-                            val text = "প্রশ্ন: ${item.question}\n\nউত্তর: ${item.answer}\n\n${item.reference?.let { "সূত্র: $it" } ?: ""}"
-                            val shareIntent = Intent(Intent.ACTION_SEND).apply {
-                                type = "text/plain"
-                                putExtra(Intent.EXTRA_TEXT, text)
-                            }
-                            context.startActivity(Intent.createChooser(shareIntent, "Copy / Share"))
-                        },
-                        onVerify = if (state.apiKeyConfigured) {
-                            { vm.verifyWithAi(item) }
-                        } else null,
-                        isVerifying = state.verifyingId == item.id
-                    )
+                itemsIndexed(category.items, key = { _, item -> item.id }) { index, item ->
+                    Box(modifier = Modifier.staggerEntrance(index)) {
+                        QaCard(
+                            item = item,
+                            onCopy = {
+                                val text = "প্রশ্ন: ${item.question}\n\nউত্তর: ${item.answer}\n\n${item.reference?.let { "সূত্র: $it" } ?: ""}"
+                                val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                                    type = "text/plain"
+                                    putExtra(Intent.EXTRA_TEXT, text)
+                                }
+                                context.startActivity(Intent.createChooser(shareIntent, "Copy / Share"))
+                            },
+                            onVerify = if (state.apiKeyConfigured) {
+                                { vm.verifyWithAi(item) }
+                            } else null,
+                            isVerifying = state.verifyingId == item.id
+                        )
+                    }
                 }
             }
         }

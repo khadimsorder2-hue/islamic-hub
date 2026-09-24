@@ -499,6 +499,12 @@ private fun JamatTimeDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
+        icon = {
+            com.islamichub.app.ui.components.PremiumDialogIcon(
+                icon = androidx.compose.material.icons.Icons.Filled.Groups,
+                tint = androidx.compose.ui.graphics.Color(0xFF1565C0)
+            )
+        },
         title = { Text(if (existing != null) "জামাতের সময় পরিবর্তন" else "জামাতের সময় যোগ করুন") },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
