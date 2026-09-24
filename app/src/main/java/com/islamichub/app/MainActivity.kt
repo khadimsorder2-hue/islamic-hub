@@ -39,8 +39,20 @@ class MainActivity : ComponentActivity() {
             // Collect theme mode reactively
             val themeMode by container.settingsRepository.themeMode
                 .collectAsState(initial = "auto")
+            // v5.5 — per-script reading text sizes (Arabic / Bangla / English)
+            val arabicScale by container.settingsRepository.arabicFontScale
+                .collectAsState(initial = 1f)
+            val banglaScale by container.settingsRepository.banglaFontScale
+                .collectAsState(initial = 1f)
+            val englishScale by container.settingsRepository.englishFontScale
+                .collectAsState(initial = 1f)
 
-            IslamicHubTheme(themeMode = themeMode) {
+            androidx.compose.runtime.CompositionLocalProvider(
+                com.islamichub.app.ui.theme.LocalArabicFontScale provides arabicScale,
+                com.islamichub.app.ui.theme.LocalBanglaFontScale provides banglaScale,
+                com.islamichub.app.ui.theme.LocalEnglishFontScale provides englishScale
+            ) {
+                IslamicHubTheme(themeMode = themeMode) {
                 Surface(modifier = Modifier.fillMaxSize()) {
                     // Check onboarding status
                     var showOnboarding by remember { mutableStateOf(false) }
@@ -77,6 +89,7 @@ class MainActivity : ComponentActivity() {
                             )
                         }
                     }
+                }
                 }
             }
         }

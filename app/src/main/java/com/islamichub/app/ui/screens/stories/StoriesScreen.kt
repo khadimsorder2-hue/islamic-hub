@@ -55,6 +55,7 @@ import com.islamichub.app.data.local.FullStoryChapter
 import com.islamichub.app.ui.components.PremiumHeroCard
 import com.islamichub.app.ui.components.PremiumSectionHeader
 import com.islamichub.app.ui.components.loadAssetImage
+import com.islamichub.app.ui.theme.banglaSp
 import androidx.compose.ui.graphics.asImageBitmap
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -174,11 +175,11 @@ fun StoriesScreen(
                             color = MaterialTheme.colorScheme.primary)
                     }
                     prophet.summary?.takeIf { it.isNotBlank() }?.let {
-                        Text(it, style = MaterialTheme.typography.bodyMedium,
+                        Text(it, style = MaterialTheme.typography.bodyMedium.copy(fontSize = banglaSp(MaterialTheme.typography.bodyMedium.fontSize)),
                             modifier = Modifier.padding(top = 8.dp))
                     }
                     prophet.details?.takeIf { it.isNotBlank() }?.let {
-                        Text(it, style = MaterialTheme.typography.bodyMedium,
+                        Text(it, style = MaterialTheme.typography.bodyMedium.copy(fontSize = banglaSp(MaterialTheme.typography.bodyMedium.fontSize)),
                             modifier = Modifier.padding(top = 12.dp))
                     }
                     prophet.ref?.takeIf { it.isNotBlank() }?.let {
@@ -204,11 +205,11 @@ fun StoriesScreen(
                             color = MaterialTheme.colorScheme.primary)
                     }
                     khalifa.summary?.takeIf { it.isNotBlank() }?.let {
-                        Text(it, style = MaterialTheme.typography.bodyMedium,
+                        Text(it, style = MaterialTheme.typography.bodyMedium.copy(fontSize = banglaSp(MaterialTheme.typography.bodyMedium.fontSize)),
                             modifier = Modifier.padding(top = 8.dp))
                     }
                     khalifa.details?.takeIf { it.isNotBlank() }?.let {
-                        Text(it, style = MaterialTheme.typography.bodyMedium,
+                        Text(it, style = MaterialTheme.typography.bodyMedium.copy(fontSize = banglaSp(MaterialTheme.typography.bodyMedium.fontSize)),
                             modifier = Modifier.padding(top = 12.dp))
                     }
                 }
@@ -225,10 +226,10 @@ fun StoriesScreen(
             text = {
                 Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
                     chapter.content?.takeIf { it.isNotBlank() }?.let {
-                        Text(it, style = MaterialTheme.typography.bodyMedium)
+                        Text(it, style = MaterialTheme.typography.bodyMedium.copy(fontSize = banglaSp(MaterialTheme.typography.bodyMedium.fontSize)))
                     }
                     chapter.highlight?.takeIf { it.isNotBlank() }?.let {
-                        Text(it, style = MaterialTheme.typography.bodySmall,
+                        Text(it, style = MaterialTheme.typography.bodySmall.copy(fontSize = banglaSp(MaterialTheme.typography.bodySmall.fontSize)),
                             color = MaterialTheme.colorScheme.secondary,
                             modifier = Modifier.padding(top = 12.dp))
                     }
@@ -326,7 +327,7 @@ private fun StoryCardBase(
                     Text(title, style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold, color = Color.White)
                     if (subtitle.isNotBlank()) {
-                        Text(subtitle, style = MaterialTheme.typography.bodySmall,
+                        Text(subtitle, style = MaterialTheme.typography.bodySmall.copy(fontSize = banglaSp(MaterialTheme.typography.bodySmall.fontSize)),
                             color = Color.White.copy(alpha = 0.85f), maxLines = 2)
                     }
                 }

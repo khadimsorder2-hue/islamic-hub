@@ -26,6 +26,9 @@ data class QuranReaderUiState(
     val showArabic: Boolean = true,
     val showBangla: Boolean = true,
     val showEnglish: Boolean = true,
+    // v5.5 — Bangla transliteration (uccaron) line under each Arabic ayah
+    val showUccaron: Boolean = true,
+    val uccaronMap: Map<Int, String> = emptyMap(),
     val selectedReciterId: String = "ar.alafasy",
     val selectedReciterName: String = "Mishary Rashid Alafasy",
     val banglaAudioEnabled: Boolean = false,
@@ -53,6 +56,7 @@ class QuranReaderViewModel(
         observeSettings()
         observeBookmarks()
         loadOnlineTranslations()
+        loadUccaron()
     }
 
     private fun load() {
@@ -116,6 +120,11 @@ class QuranReaderViewModel(
         viewModelScope.launch {
             container.settingsRepository.showEnglish.collect { show ->
                 _state.value = _state.value.copy(showEnglish = show)
+            }
+        }
+        viewModelScope.launch {
+            container.settingsRepository.showTransliteration.collect { show ->
+                _state.value = _state.value.copy(showUccaron = show)
             }
         }
         viewModelScope.launch {
@@ -191,6 +200,19 @@ class QuranReaderViewModel(
         val newScale = (_state.value.quranFontScale - 0.1f).coerceAtLeast(0.7f)
         viewModelScope.launch {
             container.settingsRepository.setQuranFontScale(newScale)
+        }
+    }
+
+    /** v5.5 — bundled Bangla uccaron for this surah (ayah → text). */
+    private fun loadUccaron() {
+        viewModelScope.launch {
+            try {
+                _state.value = _state.value.copy(
+                    uccaronMap = container.quranRepository.banglaUccaronMap(surahNumber)
+                )
+            } catch (_: Exception) {
+                // uccaron is a display enhancement — never break the reader
+            }
         }
     }
 

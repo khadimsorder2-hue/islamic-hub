@@ -59,6 +59,9 @@ import com.islamichub.app.data.repo.AudioController
 import com.islamichub.app.data.repo.AutoPauseOption
 import com.islamichub.app.data.repo.BackgroundMode
 import com.islamichub.app.data.repo.TafsirSource
+import com.islamichub.app.ui.theme.arabicSp
+import com.islamichub.app.ui.theme.banglaSp
+import com.islamichub.app.ui.theme.englishSp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -216,6 +219,141 @@ fun SettingsScreen(
                         checked = state.showEnglish,
                         onCheckedChange = vm::setShowEnglish
                     )
+                }
+            }
+
+            // ─── Text Size (all pages) — v5.5 ─────────────────────────
+            item {
+                SettingsSection(title = "লেখার সাইজ (সব পেজ)") {
+                    Text(
+                        text = "বাংলা, ইংরেজি ও আরবি লেখার সাইজ কমিয়ে/বাড়িয়ে নিন — পরিবর্তন সব পেজে সাথে সাথে প্রয়োগ হবে।",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(8.dp)
+
+                    // Arabic size
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "🕌 আরবি",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = "%.0f%%".format(state.arabicFontScale * 100),
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                    Slider(
+                        value = state.arabicFontScale,
+                        onValueChange = vm::setArabicFontScale,
+                        valueRange = 0.7f..1.8f,
+                        steps = 10
+                    )
+
+                    // Bangla size
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "বাংলা",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = "%.0f%%".format(state.banglaFontScale * 100),
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                    Slider(
+                        value = state.banglaFontScale,
+                        onValueChange = vm::setBanglaFontScale,
+                        valueRange = 0.7f..1.8f,
+                        steps = 10
+                    )
+
+                    // English size
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "English",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = "%.0f%%".format(state.englishFontScale * 100),
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                    Slider(
+                        value = state.englishFontScale,
+                        onValueChange = vm::setEnglishFontScale,
+                        valueRange = 0.7f..1.8f,
+                        steps = 10
+                    )
+                    Spacer(8.dp)
+
+                    // Bangla uccaron visibility toggle
+                    ToggleRow(
+                        label = "বাংলা উচ্চারণ দেখাও (কুরআনের আয়াতের নিচে)",
+                        checked = state.showTransliteration,
+                        onCheckedChange = vm::setShowTransliteration
+                    )
+                    Spacer(8.dp)
+
+                    // Live preview
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)
+                    ) {
+                        Column(modifier = Modifier.padding(14.dp)) {
+                            Text(
+                                text = "প্রিভিউ:",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Spacer(6.dp)
+                            Text(
+                                text = "بِسْمِ ٱللَّهِ",
+                                style = MaterialTheme.typography.titleLarge.copy(
+                                    fontSize = arabicSp(MaterialTheme.typography.titleLarge.fontSize)
+                                ),
+                                color = MaterialTheme.colorScheme.onSurface,
+                                modifier = Modifier.fillMaxWidth(),
+                                textAlign = androidx.compose.ui.text.style.TextAlign.End
+                            )
+                            Text(
+                                text = "বিসমিল্লাহির রাহমানির রাহীম",
+                                style = MaterialTheme.typography.bodyMedium.copy(
+                                    fontSize = banglaSp(MaterialTheme.typography.bodyMedium.fontSize)
+                                ),
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Text(
+                                text = "In the name of Allah.",
+                                style = MaterialTheme.typography.bodySmall.copy(
+                                    fontSize = englishSp(MaterialTheme.typography.bodySmall.fontSize)
+                                ),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
                 }
             }
 

@@ -80,9 +80,35 @@ class QuranAssetSource(private val context: Context) {
         cache.surahs.map { it.toDomain() }
     }
 
+    /**
+     * Bangla transliteration (uccaron) for every ayah — loaded once from
+     * quran/quran_bn_transliteration.json (surah → ayah → text).
+     * Returns an empty map if the asset is missing (feature silently off).
+     */
+    suspend fun loadBanglaUccaron(): Map<Int, Map<Int, String>> = withContext(Dispatchers.IO) {
+        bnUccaronCache?.let { return@withContext it }
+        val parsed: Map<String, Map<String, String>>? = try {
+            gson.fromJson(readAsset("quran/quran_bn_transliteration.json"), uccaronType)
+        } catch (_: Exception) {
+            null
+        }
+        val mapped = parsed?.mapKeys { (k, _) -> k.toIntOrNull() ?: 0 }
+            ?.mapValues { (_, v) ->
+                v.mapKeys { (k, _) -> k.toIntOrNull() ?: 0 }
+            } ?: emptyMap()
+        bnUccaronCache = mapped
+        mapped
+    }
+
     private fun readAsset(path: String): String {
         return context.assets.open(path).bufferedReader(Charsets.UTF_8).use { it.readText() }
     }
+
+    private val uccaronType by lazy {
+        object : com.google.gson.reflect.TypeToken<Map<String, Map<String, String>>>() {}.type
+    }
+
+    @Volatile private var bnUccaronCache: Map<Int, Map<Int, String>>? = null
 }
 
 // ─── JSON DTOs ──────────────────────────────────────────────────────────────

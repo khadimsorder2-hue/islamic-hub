@@ -63,6 +63,8 @@ import com.islamichub.app.data.local.FullNamazStep
 import com.islamichub.app.ui.components.PremiumHeroCard
 import com.islamichub.app.ui.components.PremiumSectionHeader
 import com.islamichub.app.ui.components.loadAssetImage
+import com.islamichub.app.ui.theme.arabicSp
+import com.islamichub.app.ui.theme.banglaSp
 import androidx.compose.ui.graphics.asImageBitmap
 import kotlinx.coroutines.launch
 
@@ -285,7 +287,7 @@ fun NamazShikkhaScreen(
                         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
                     ) {
                         Column(modifier = Modifier.padding(16.dp)) {
-                            Text(answer, style = MaterialTheme.typography.bodyMedium,
+                            Text(answer, style = MaterialTheme.typography.bodyMedium.copy(fontSize = banglaSp(MaterialTheme.typography.bodyMedium.fontSize)),
                                 color = MaterialTheme.colorScheme.onSecondaryContainer)
                         }
                     }
@@ -356,13 +358,13 @@ fun NamazShikkhaScreen(
             title = { Text(item.name) },
             text = {
                 Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
-                    item.description?.let { Text(it, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(bottom = 12.dp)) }
-                    item.importance?.let { Text("গুরুত্ব: $it", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(bottom = 12.dp)) }
+                    item.description?.let { Text(it, style = MaterialTheme.typography.bodyMedium.copy(fontSize = banglaSp(MaterialTheme.typography.bodyMedium.fontSize)), modifier = Modifier.padding(bottom = 12.dp)) }
+                    item.importance?.let { Text("গুরুত্ব: $it", style = MaterialTheme.typography.bodySmall.copy(fontSize = banglaSp(MaterialTheme.typography.bodySmall.fontSize)), color = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(bottom = 12.dp)) }
                     item.steps?.forEach { step ->
                         Text("${step.step}. ${step.name}", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(top = 8.dp))
-                        step.arabic?.let { Text(it, style = MaterialTheme.typography.titleMedium, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.End) }
-                        step.pronunciation?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
-                        step.meaning?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
+                        step.arabic?.let { Text(it, style = MaterialTheme.typography.titleMedium.copy(fontSize = arabicSp(MaterialTheme.typography.titleMedium.fontSize)), modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.End) }
+                        step.pronunciation?.let { Text(it, style = MaterialTheme.typography.bodySmall.copy(fontSize = banglaSp(MaterialTheme.typography.bodySmall.fontSize)), color = MaterialTheme.colorScheme.onSurfaceVariant) }
+                        step.meaning?.let { Text(it, style = MaterialTheme.typography.bodyMedium.copy(fontSize = banglaSp(MaterialTheme.typography.bodyMedium.fontSize))) }
                     }
                 }
             },
@@ -378,7 +380,7 @@ fun NamazShikkhaScreen(
             text = {
                 Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
                     NamazStepsData.commonMistakes.forEachIndexed { idx, mistake ->
-                        Text("${idx + 1}. $mistake", style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(vertical = 4.dp))
+                        Text("${idx + 1}. $mistake", style = MaterialTheme.typography.bodySmall.copy(fontSize = banglaSp(MaterialTheme.typography.bodySmall.fontSize)), modifier = Modifier.padding(vertical = 4.dp))
                     }
                 }
             },
@@ -578,27 +580,27 @@ private fun NamazStepRow(
         }
         step.content?.arabic?.let {
             if (it.isNotBlank()) {
-                Text(it, style = MaterialTheme.typography.titleMedium,
+                Text(it, style = MaterialTheme.typography.titleMedium.copy(fontSize = arabicSp(MaterialTheme.typography.titleMedium.fontSize)),
                     color = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.End)
             }
         }
         step.content?.transliteration?.let {
             if (it.isNotBlank()) {
-                Text(it, style = MaterialTheme.typography.bodySmall,
+                Text(it, style = MaterialTheme.typography.bodySmall.copy(fontSize = banglaSp(MaterialTheme.typography.bodySmall.fontSize)),
                     color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
         step.content?.translation?.let {
             if (it.isNotBlank()) {
-                Text(it, style = MaterialTheme.typography.bodyMedium,
+                Text(it, style = MaterialTheme.typography.bodyMedium.copy(fontSize = banglaSp(MaterialTheme.typography.bodyMedium.fontSize)),
                     color = MaterialTheme.colorScheme.onSurface)
             }
         }
         // Gender-specific notes
         step.genderNotes?.get(gender)?.let { note ->
             if (note.isNotBlank()) {
-                Text("📋 $note", style = MaterialTheme.typography.labelSmall,
+                Text("📋 $note", style = MaterialTheme.typography.labelSmall.copy(fontSize = banglaSp(MaterialTheme.typography.labelSmall.fontSize)),
                     color = MaterialTheme.colorScheme.secondary)
             }
         }

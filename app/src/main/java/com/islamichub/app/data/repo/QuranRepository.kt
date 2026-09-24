@@ -62,6 +62,34 @@ class QuranRepository(
         data.fullSurahs.firstOrNull { it.number == number }
     }
 
+    /**
+     * Bangla transliteration (uccaron) text for one ayah, or null when the
+     * bundled uccaron asset does not cover it. Backed by an in-memory cache.
+     */
+    suspend fun banglaUccaron(surah: Int, ayah: Int): String? = withContext(Dispatchers.IO) {
+        if (assetSource == null) return@withContext null
+        try {
+            assetSource.loadBanglaUccaron()[surah]?.get(ayah)
+                ?.takeIf { it.isNotBlank() }
+        } catch (_: Exception) {
+            null
+        }
+    }
+
+    /** Whole-surah Bangla uccaron map (ayah number → text). Empty if unavailable. */
+    suspend fun banglaUccaronMap(surah: Int): Map<Int, String> = withContext(Dispatchers.IO) {
+        if (assetSource == null) return@withContext emptyMap()
+        try {
+            assetSource.loadBanglaUccaron()[surah]
+                ?.mapKeys { (k, _) -> k }
+                ?.filterKeys { it > 0 }
+                ?.filterValues { it.isNotBlank() }
+                ?: emptyMap()
+        } catch (_: Exception) {
+            emptyMap()
+        }
+    }
+
     suspend fun searchSurahs(query: String): List<SurahSummary> = withContext(Dispatchers.IO) {
         if (query.isBlank()) return@withContext listSurahs()
         val q = query.trim().lowercase()

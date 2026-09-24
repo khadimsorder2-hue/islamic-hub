@@ -50,6 +50,8 @@ import com.islamichub.app.data.AppContainer
 import com.islamichub.app.data.local.HadithTopic
 import com.islamichub.app.data.local.TopicHadith
 import com.islamichub.app.ui.components.PremiumHeroCard
+import com.islamichub.app.ui.theme.arabicSp
+import com.islamichub.app.ui.theme.banglaSp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -211,16 +213,16 @@ fun HadithTopicsScreen(
                             Column(modifier = Modifier.padding(12.dp),
                                 verticalArrangement = Arrangement.spacedBy(6.dp)) {
                                 hadith.arabic?.let {
-                                    Text(it, style = MaterialTheme.typography.titleMedium,
+                                    Text(it, style = MaterialTheme.typography.titleMedium.copy(fontSize = arabicSp(MaterialTheme.typography.titleMedium.fontSize)),
                                         modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.End,
                                         color = MaterialTheme.colorScheme.onSurface)
                                 }
                                 hadith.bangla?.let {
-                                    Text(it, style = MaterialTheme.typography.bodyMedium,
+                                    Text(it, style = MaterialTheme.typography.bodyMedium.copy(fontSize = banglaSp(MaterialTheme.typography.bodyMedium.fontSize)),
                                         color = MaterialTheme.colorScheme.onSurface)
                                 }
                                 hadith.explanation?.let {
-                                    Text("📌 $it", style = MaterialTheme.typography.bodySmall,
+                                    Text("📌 $it", style = MaterialTheme.typography.bodySmall.copy(fontSize = banglaSp(MaterialTheme.typography.bodySmall.fontSize)),
                                         color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 }
                                 hadith.reference?.let {
@@ -296,7 +298,7 @@ private fun HadithTopicCard(topic: HadithTopic, accent: Color = Color(0xFF6D45C7
                 // Description
                 if (!topic.description.isNullOrBlank()) {
                     Text(topic.description ?: "",
-                        style = MaterialTheme.typography.bodySmall,
+                        style = MaterialTheme.typography.bodySmall.copy(fontSize = banglaSp(MaterialTheme.typography.bodySmall.fontSize)),
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 2)
                 }

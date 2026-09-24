@@ -45,6 +45,7 @@ import com.islamichub.app.R
 import com.islamichub.app.data.AppContainer
 import com.islamichub.app.data.local.MisconceptionCategory
 import com.islamichub.app.data.local.MisconceptionItem
+import com.islamichub.app.ui.theme.banglaSp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -133,14 +134,14 @@ private fun MisconceptionCard(item: MisconceptionItem, container: com.islamichub
         ) {
             Text(
                 text = item.question,
-                style = MaterialTheme.typography.titleMedium,
+                style = MaterialTheme.typography.titleMedium.copy(fontSize = banglaSp(MaterialTheme.typography.titleMedium.fontSize)),
                 fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.onSurface
             )
             if (expanded) {
                 Text(
                     text = item.answer ?: "",
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = MaterialTheme.typography.bodyMedium.copy(fontSize = banglaSp(MaterialTheme.typography.bodyMedium.fontSize)),
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 // AI explanation button

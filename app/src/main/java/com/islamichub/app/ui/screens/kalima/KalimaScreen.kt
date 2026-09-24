@@ -54,6 +54,9 @@ import androidx.compose.ui.unit.dp
 import com.islamichub.app.data.AppContainer
 import com.islamichub.app.data.local.Kalima
 import com.islamichub.app.ui.components.PremiumHeroCard
+import com.islamichub.app.ui.theme.arabicSp
+import com.islamichub.app.ui.theme.banglaSp
+import com.islamichub.app.ui.theme.englishSp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -223,7 +226,7 @@ private fun KalimaPremiumCard(
                     if (ar.isNotBlank()) {
                         Text(
                             text = ar,
-                            style = MaterialTheme.typography.headlineSmall,
+                            style = MaterialTheme.typography.headlineSmall.copy(fontSize = arabicSp(MaterialTheme.typography.headlineSmall.fontSize)),
                             color = MaterialTheme.colorScheme.onSurface,
                             modifier = Modifier.fillMaxWidth(),
                             textAlign = TextAlign.End
@@ -240,7 +243,7 @@ private fun KalimaPremiumCard(
                                 fontWeight = FontWeight.Bold,
                                 color = accent)
                             Text(pron,
-                                style = MaterialTheme.typography.bodyMedium,
+                                style = MaterialTheme.typography.bodyMedium.copy(fontSize = banglaSp(MaterialTheme.typography.bodyMedium.fontSize)),
                                 color = MaterialTheme.colorScheme.onSurface)
                         }
                     }
@@ -251,7 +254,7 @@ private fun KalimaPremiumCard(
                     if (bn.isNotBlank()) {
                         Text(
                             text = bn,
-                            style = MaterialTheme.typography.bodyMedium,
+                            style = MaterialTheme.typography.bodyMedium.copy(fontSize = banglaSp(MaterialTheme.typography.bodyMedium.fontSize)),
                             color = MaterialTheme.colorScheme.onSurface
                         )
                     }
@@ -290,7 +293,7 @@ private fun KalimaPremiumCard(
                         // Transliteration (English)
                         kalima.transliteration?.let { tr ->
                             if (tr.isNotBlank()) {
-                                KalimaDetailRow(label = "🔤 ইংরেজি উচ্চারণ", value = tr, accent = accent)
+                                KalimaDetailRow(label = "🔤 ইংরেজি উচ্চারণ", value = tr, accent = accent, valueIsEnglish = true)
                             }
                         }
 
@@ -322,7 +325,7 @@ private fun KalimaPremiumCard(
 }
 
 @Composable
-private fun KalimaDetailRow(label: String, value: String, accent: Color) {
+private fun KalimaDetailRow(label: String, value: String, accent: Color, valueIsEnglish: Boolean = false) {
     Column(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
         Text(
             text = label,
@@ -332,7 +335,10 @@ private fun KalimaDetailRow(label: String, value: String, accent: Color) {
         )
         Text(
             text = value,
-            style = MaterialTheme.typography.bodySmall,
+            style = MaterialTheme.typography.bodySmall.copy(
+                fontSize = if (valueIsEnglish) englishSp(MaterialTheme.typography.bodySmall.fontSize)
+                else banglaSp(MaterialTheme.typography.bodySmall.fontSize)
+            ),
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }

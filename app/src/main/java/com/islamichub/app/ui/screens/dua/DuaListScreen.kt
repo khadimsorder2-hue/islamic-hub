@@ -46,6 +46,7 @@ import com.islamichub.app.data.AppContainer
 import com.islamichub.app.data.local.ExtendedDua
 import com.islamichub.app.ui.components.PremiumHeroCard
 import com.islamichub.app.ui.components.PremiumSectionHeader
+import com.islamichub.app.ui.theme.banglaSp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -170,7 +171,7 @@ private fun ExtendedDuaRow(dua: ExtendedDua, onClick: () -> Unit) {
                 Text(dua.title ?: "", style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
                 Text(dua.bangla?.take(80) + if ((dua.bangla?.length ?: 0) > 80) "…" else "",
-                    style = MaterialTheme.typography.bodySmall,
+                    style = MaterialTheme.typography.bodySmall.copy(fontSize = banglaSp(MaterialTheme.typography.bodySmall.fontSize)),
                     color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2)
             }
             Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null,

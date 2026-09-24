@@ -52,6 +52,8 @@ import androidx.compose.ui.unit.dp
 import com.islamichub.app.data.AppContainer
 import com.islamichub.app.ui.components.PremiumHeroCard
 import com.islamichub.app.ui.components.PremiumSectionHeader
+import com.islamichub.app.ui.theme.arabicSp
+import com.islamichub.app.ui.theme.banglaSp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -143,7 +145,7 @@ fun QaScreen(
             title = { Text("AI যাচাই") },
             text = {
                 Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
-                    Text(result, style = MaterialTheme.typography.bodyMedium)
+                    Text(result, style = MaterialTheme.typography.bodyMedium.copy(fontSize = banglaSp(MaterialTheme.typography.bodyMedium.fontSize)))
                 }
             },
             confirmButton = { TextButton(onClick = vm::clearVerification) { Text("বন্ধ করুন") } }
@@ -175,7 +177,7 @@ private fun QaCard(
             ) {
                 Text(
                     text = item.question,
-                    style = MaterialTheme.typography.titleSmall,
+                    style = MaterialTheme.typography.titleSmall.copy(fontSize = banglaSp(MaterialTheme.typography.titleSmall.fontSize)),
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.weight(1f)
@@ -189,12 +191,12 @@ private fun QaCard(
                 // Arabic if available
                 item.arabic?.let { ar ->
                     if (ar.isNotBlank()) {
-                        Text(ar, style = MaterialTheme.typography.titleMedium,
+                        Text(ar, style = MaterialTheme.typography.titleMedium.copy(fontSize = arabicSp(MaterialTheme.typography.titleMedium.fontSize)),
                             modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.End,
                             color = MaterialTheme.colorScheme.onSurface)
                     }
                 }
-                Text(item.answer, style = MaterialTheme.typography.bodyMedium,
+                Text(item.answer, style = MaterialTheme.typography.bodyMedium.copy(fontSize = banglaSp(MaterialTheme.typography.bodyMedium.fontSize)),
                     color = MaterialTheme.colorScheme.onSurface)
                 item.reference?.let { ref ->
                     if (ref.isNotBlank()) {
@@ -229,7 +231,7 @@ private fun QaCard(
                 }
             } else {
                 Text(item.answer.take(100) + if (item.answer.length > 100) "…" else "",
-                    style = MaterialTheme.typography.bodySmall,
+                    style = MaterialTheme.typography.bodySmall.copy(fontSize = banglaSp(MaterialTheme.typography.bodySmall.fontSize)),
                     color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2)
             }
         }

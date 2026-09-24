@@ -2,6 +2,28 @@
 
 All notable changes to the Islamic Hub project.
 
+## [v5.5.0] - 2026-09-24
+
+### 🔤 Bangla Uccaron (Transliteration) — NEW
+- **Full-Quran Bangla pronunciation** bundled offline: all 6,236 ayahs now carry a Bangla-script transliteration (`বিসমিল্লাহির রাহমানির রাহীম`), generated from the Latin `en.transliteration` edition via a digraph-aware converter with gemination conjuncts (ল্ল, ম্ম, ত্ত…), madd-run collapsing (`Laaam` → লাম) and hand-written authentic overrides for Al-Fatiha, Ayatul Kursi (2:255) and the 4 Quls (112–114).
+- Shown as a tagged "উচ্চারণ" line directly under the Arabic ayah in the Quran reader, in the tafsir full screen, and inside Thematic Topic study cards.
+- New setting toggle: Settings → "বাংলা উচ্চারণ দেখাও".
+
+### 🔠 Per-Script Text Size Controls (every page) — NEW
+- Settings → **"লেখার সাইজ (সব পেজ)"**: independent sliders for **আরবি / বাংলা / English** (70%–180%) with a live preview card.
+- Wired app-wide via `CompositionLocal` (`ReadingScale`): Arabic, Bangla and English reading text now scales on **18 screens** — Quran reader, tafsir (full + sheet), word-by-word, thematic topic study, hadith (detail/list/topics/search/topic-study), duas (list/detail), kalima, namaz shikkha + surah fullscreen, misconceptions, Q&A, stories, 99 names — on top of the existing reader A−/A+ master scale.
+
+### 🐛 Thematic Quran expand bug — FIXED
+- The whole ayah card used to be tap-to-toggle, so touching the tafsir text or any chip instantly collapsed it ("ক্লিক করলেই minimise হয়ে যায়"). Expand/collapse now triggers **only** on the header row and the chevron row.
+- The decorative শোনো/সংরক্ষণ/শেয়ার chips are now **fully functional**: শোনো plays the ayah with the selected reciter, সংরক্ষণ toggles a real bookmark (filled icon + tinted state), শেয়ার shares the ayah with Arabic + Bangla + English.
+- Expanded tafsir content now sits in a premium accent-tinted panel.
+
+### 🎨 Quran AI button — REDESIGNED
+- The unlabeled Psychology icon crammed in the ayah header is gone. Each ayah now has a labeled **gradient "AI তাফসীর" pill** (with tap-scale + haptics) plus a "শব্দে শব্দ" chip in a dedicated quick-action row — discoverable and thumb-friendly.
+
+### ✨ Tafsir screen — premium pass
+- Gradient ayah hero (Arabic in primary color + uccaron + translations), premium section headers for অনুবাদ/তাফসীর/AI sections, per-script font scaling across all content.
+
 ## [v5.4.0] - 2026-09-24
 
 ### 🐛 Critical Build Fixes (APK was failing to compile)

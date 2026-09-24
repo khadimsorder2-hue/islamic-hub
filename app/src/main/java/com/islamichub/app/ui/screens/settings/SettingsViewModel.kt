@@ -25,6 +25,11 @@ data class SettingsUiState(
     val showArabic: Boolean = true,
     val showBangla: Boolean = true,
     val showEnglish: Boolean = true,
+    // v5.5 — per-script reading text sizes + Bangla uccaron toggle
+    val arabicFontScale: Float = 1.0f,
+    val banglaFontScale: Float = 1.0f,
+    val englishFontScale: Float = 1.0f,
+    val showTransliteration: Boolean = true,
     val cacheSizeBytes: Long = 0L,
     val aiApiKey: String = "",
     val aiBaseUrl: String = "https://generativelanguage.googleapis.com/v1beta",
@@ -65,6 +70,10 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
             val showAr = container.settingsRepository.showArabic.first()
             val showBn = container.settingsRepository.showBangla.first()
             val showEn = container.settingsRepository.showEnglish.first()
+            val arabicScale = container.settingsRepository.arabicFontScale.first()
+            val banglaScale = container.settingsRepository.banglaFontScale.first()
+            val englishScale = container.settingsRepository.englishFontScale.first()
+            val showTranslit = container.settingsRepository.showTransliteration.first()
             val cacheSize = container.tafsirRepository.cacheSizeBytes()
             val aiKey = container.settingsRepository.aiApiKey.first()
             val aiUrl = container.settingsRepository.aiBaseUrl.first()
@@ -84,6 +93,10 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
                 showArabic = showAr,
                 showBangla = showBn,
                 showEnglish = showEn,
+                arabicFontScale = arabicScale,
+                banglaFontScale = banglaScale,
+                englishFontScale = englishScale,
+                showTransliteration = showTranslit,
                 cacheSizeBytes = cacheSize,
                 aiApiKey = aiKey,
                 aiBaseUrl = aiUrl,
@@ -229,6 +242,32 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
         viewModelScope.launch {
             container.settingsRepository.setShowEnglish(show)
             _state.value = _state.value.copy(showEnglish = show)
+        }
+    }
+
+    // v5.5 — per-script text sizes (applied on every reading screen)
+    fun setArabicFontScale(scale: Float) {
+        viewModelScope.launch {
+            container.settingsRepository.setArabicFontScale(scale)
+            _state.value = _state.value.copy(arabicFontScale = scale)
+        }
+    }
+    fun setBanglaFontScale(scale: Float) {
+        viewModelScope.launch {
+            container.settingsRepository.setBanglaFontScale(scale)
+            _state.value = _state.value.copy(banglaFontScale = scale)
+        }
+    }
+    fun setEnglishFontScale(scale: Float) {
+        viewModelScope.launch {
+            container.settingsRepository.setEnglishFontScale(scale)
+            _state.value = _state.value.copy(englishFontScale = scale)
+        }
+    }
+    fun setShowTransliteration(show: Boolean) {
+        viewModelScope.launch {
+            container.settingsRepository.setShowTransliteration(show)
+            _state.value = _state.value.copy(showTransliteration = show)
         }
     }
     fun clearCache() {

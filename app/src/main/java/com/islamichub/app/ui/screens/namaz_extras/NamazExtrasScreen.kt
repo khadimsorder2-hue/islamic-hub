@@ -49,6 +49,8 @@ import androidx.compose.ui.unit.dp
 import com.islamichub.app.R
 import com.islamichub.app.data.AppContainer
 import com.islamichub.app.ui.components.PremiumSectionHeader
+import com.islamichub.app.ui.theme.arabicSp
+import com.islamichub.app.ui.theme.banglaSp
 import com.islamichub.app.ui.theme.premiumTap
 import com.islamichub.app.ui.theme.staggerEntrance
 
@@ -315,7 +317,7 @@ private fun NamazSurahFullScreen(
                             )
                             Text(
                                 text = arabic,
-                                style = MaterialTheme.typography.displaySmall,
+                                style = MaterialTheme.typography.displaySmall.copy(fontSize = arabicSp(MaterialTheme.typography.displaySmall.fontSize)),
                                 color = MaterialTheme.colorScheme.onPrimaryContainer,
                                 modifier = Modifier.fillMaxWidth(),
                                 textAlign = TextAlign.End
@@ -342,7 +344,7 @@ private fun NamazSurahFullScreen(
                                 color = MaterialTheme.colorScheme.primary)
                             Spacer(Modifier.height(4.dp))
                             Text(pron,
-                                style = MaterialTheme.typography.bodyMedium,
+                                style = MaterialTheme.typography.bodyMedium.copy(fontSize = banglaSp(MaterialTheme.typography.bodyMedium.fontSize)),
                                 color = MaterialTheme.colorScheme.onSurface)
                         }
                     }
@@ -366,7 +368,7 @@ private fun NamazSurahFullScreen(
                                 color = MaterialTheme.colorScheme.primary)
                             Spacer(Modifier.height(4.dp))
                             Text(tr,
-                                style = MaterialTheme.typography.bodyMedium,
+                                style = MaterialTheme.typography.bodyMedium.copy(fontSize = banglaSp(MaterialTheme.typography.bodyMedium.fontSize)),
                                 color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
@@ -392,7 +394,7 @@ private fun NamazSurahFullScreen(
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.8f))
                             Text(bn,
-                                style = MaterialTheme.typography.bodyLarge,
+                                style = MaterialTheme.typography.bodyLarge.copy(fontSize = banglaSp(MaterialTheme.typography.bodyLarge.fontSize)),
                                 color = MaterialTheme.colorScheme.onSecondaryContainer)
                         }
                     }

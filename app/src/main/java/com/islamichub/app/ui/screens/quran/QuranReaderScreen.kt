@@ -8,10 +8,12 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -70,8 +72,12 @@ import com.islamichub.app.ui.theme.AppColors
 import com.islamichub.app.ui.theme.AppSpacing
 import com.islamichub.app.ui.theme.AppRadius
 import com.islamichub.app.ui.theme.AppIconSizes
+import com.islamichub.app.ui.theme.arabicSp
+import com.islamichub.app.ui.theme.banglaSp
+import com.islamichub.app.ui.theme.englishSp
 import com.islamichub.app.ui.theme.premiumGlow
 import com.islamichub.app.ui.theme.premiumPulseHighlight
+import com.islamichub.app.ui.theme.premiumTap
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -416,6 +422,8 @@ fun QuranReaderScreen(
                             showBangla = state.showBangla,
                             showEnglish = state.showEnglish,
                             overrideBangla = overrideBangla,
+                            uccaron = state.uccaronMap[ayah.numberInSurah],
+                            showUccaron = state.showUccaron,
                             isPlayingAyah = state.currentPlayingAyah == ayah.numberInSurah,
                             isBookmarked = ayah.numberInSurah in state.bookmarkedAyahs,
                             onPlayAyah = { vm.playAyah(ayah.numberInSurah) },
@@ -543,6 +551,8 @@ private fun AyahCard(
     showBangla: Boolean,
     showEnglish: Boolean,
     overrideBangla: String = "",
+    uccaron: String? = null,
+    showUccaron: Boolean = true,
     isPlayingAyah: Boolean,
     isBookmarked: Boolean,
     onPlayAyah: () -> Unit,
@@ -612,15 +622,7 @@ private fun AyahCard(
                                    else MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
-                    // ─── AI button (3rd) — opens Tafsir bottom sheet directly ───
-                    IconButton(onClick = onShowTafsir, modifier = Modifier.size(36.dp)) {
-                        Icon(
-                            imageVector = Icons.Filled.Psychology,
-                            contentDescription = "AI তাফসীর",
-                            tint = MaterialTheme.colorScheme.secondary
-                        )
-                    }
-                    // ─── More menu (4th) ───
+                    // ─── More menu ───
                     Box {
                         IconButton(onClick = { showMenu = true }, modifier = Modifier.size(36.dp)) {
                             Icon(
@@ -662,18 +664,46 @@ private fun AyahCard(
                 Text(
                     text = ayah.arabic,
                     style = MaterialTheme.typography.displaySmall.copy(
-                        fontSize = MaterialTheme.typography.displaySmall.fontSize * fontScale
+                        fontSize = arabicSp(MaterialTheme.typography.displaySmall.fontSize * fontScale)
                     ),
                     color = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.fillMaxWidth(),
                     textAlign = TextAlign.End
                 )
             }
+            // ─── v5.5 Bangla uccaron (transliteration) — right under Arabic ───
+            if (showUccaron && !uccaron.isNullOrBlank()) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Surface(
+                        shape = RoundedCornerShape(50),
+                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
+                    ) {
+                        Text(
+                            text = "উচ্চারণ",
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = uccaron,
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            fontSize = banglaSp(MaterialTheme.typography.bodyMedium.fontSize)
+                        ),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
             if (showBangla) {
                 Text(
                     text = overrideBangla.ifBlank { ayah.bengali },
                     style = MaterialTheme.typography.bodyMedium.copy(
-                        fontSize = MaterialTheme.typography.bodyMedium.fontSize * fontScale
+                        fontSize = banglaSp(MaterialTheme.typography.bodyMedium.fontSize * fontScale)
                     ),
                     color = MaterialTheme.colorScheme.onSurface
                 )
@@ -682,10 +712,62 @@ private fun AyahCard(
                 Text(
                     text = ayah.english,
                     style = MaterialTheme.typography.bodySmall.copy(
-                        fontSize = MaterialTheme.typography.bodySmall.fontSize * fontScale
+                        fontSize = englishSp(MaterialTheme.typography.bodySmall.fontSize * fontScale)
                     ),
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+            }
+
+            // ─── v5.5 AI quick-action row: labeled gradient AI pill + word-by-word ───
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Surface(
+                    shape = RoundedCornerShape(50),
+                    modifier = Modifier.premiumTap(onClick = onShowTafsir)
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .background(
+                                Brush.horizontalGradient(
+                                    listOf(
+                                        MaterialTheme.colorScheme.primary,
+                                        MaterialTheme.colorScheme.secondary
+                                    )
+                                )
+                            )
+                            .padding(horizontal = 14.dp, vertical = 7.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Psychology,
+                            contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Text(
+                            text = "AI তাফসীর",
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+                    }
+                }
+                Surface(
+                    shape = RoundedCornerShape(50),
+                    color = MaterialTheme.colorScheme.tertiaryContainer,
+                    modifier = Modifier.premiumTap(onClick = onShowWordByWord)
+                ) {
+                    Text(
+                        text = "🔤 শব্দে শব্দ",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onTertiaryContainer,
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 7.dp)
+                    )
+                }
             }
         }
     }

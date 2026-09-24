@@ -37,6 +37,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.islamichub.app.data.AppContainer
 import com.islamichub.app.data.model.Dua
+import com.islamichub.app.ui.theme.arabicSp
+import com.islamichub.app.ui.theme.banglaSp
+import com.islamichub.app.ui.theme.englishSp
 import com.islamichub.app.ui.theme.premiumTap
 import com.islamichub.app.ui.theme.staggerEntrance
 
@@ -117,14 +120,14 @@ fun DuaDetailScreen(
                         )
                         Text(
                             text = d.arabic,
-                            style = MaterialTheme.typography.displaySmall,
+                            style = MaterialTheme.typography.displaySmall.copy(fontSize = arabicSp(MaterialTheme.typography.displaySmall.fontSize)),
                             color = MaterialTheme.colorScheme.onSurface,
                             modifier = Modifier.fillMaxWidth(),
                             textAlign = TextAlign.Center
                         )
                         Text(
                             text = d.transliteration,
-                            style = MaterialTheme.typography.bodyMedium,
+                            style = MaterialTheme.typography.bodyMedium.copy(fontSize = banglaSp(MaterialTheme.typography.bodyMedium.fontSize)),
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             fontStyle = androidx.compose.ui.text.font.FontStyle.Italic
                         )
@@ -147,7 +150,7 @@ fun DuaDetailScreen(
                         )
                         Text(
                             text = d.translationBengali,
-                            style = MaterialTheme.typography.bodyMedium,
+                            style = MaterialTheme.typography.bodyMedium.copy(fontSize = banglaSp(MaterialTheme.typography.bodyMedium.fontSize)),
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
@@ -158,7 +161,7 @@ fun DuaDetailScreen(
                         )
                         Text(
                             text = d.translationEnglish,
-                            style = MaterialTheme.typography.bodyMedium,
+                            style = MaterialTheme.typography.bodyMedium.copy(fontSize = englishSp(MaterialTheme.typography.bodyMedium.fontSize)),
                             color = MaterialTheme.colorScheme.onSurface
                         )
                     }

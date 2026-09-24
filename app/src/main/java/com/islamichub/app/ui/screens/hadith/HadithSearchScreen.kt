@@ -35,6 +35,8 @@ import androidx.compose.ui.unit.dp
 import com.islamichub.app.R
 import com.islamichub.app.data.AppContainer
 import com.islamichub.app.data.repo.HadithSearchResult
+import com.islamichub.app.ui.theme.arabicSp
+import com.islamichub.app.ui.theme.banglaSp
 import com.islamichub.app.ui.theme.premiumTap
 import com.islamichub.app.ui.theme.staggerEntrance
 
@@ -143,7 +145,7 @@ private fun HadithSearchResultCard(
             )
             Text(
                 text = result.arabic,
-                style = MaterialTheme.typography.titleMedium,
+                style = MaterialTheme.typography.titleMedium.copy(fontSize = arabicSp(MaterialTheme.typography.titleMedium.fontSize)),
                 color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.fillMaxWidth(),
                 textAlign = TextAlign.End,
@@ -151,7 +153,7 @@ private fun HadithSearchResultCard(
             )
             Text(
                 text = result.bangla.take(160) + if (result.bangla.length > 160) "…" else "",
-                style = MaterialTheme.typography.bodySmall,
+                style = MaterialTheme.typography.bodySmall.copy(fontSize = banglaSp(MaterialTheme.typography.bodySmall.fontSize)),
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 3
             )

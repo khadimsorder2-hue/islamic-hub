@@ -41,6 +41,8 @@ data class TafsirUiState(
     val allTranslations: List<TranslationOption> = emptyList(),
     val allTafsirs: List<TafsirOption> = emptyList(),
     val transliteration: String? = null,
+    // v5.5 — bundled Bangla transliteration (uccaron)
+    val banglaUccaron: String? = null,
     val isOnlineDataLoaded: Boolean = false,
     val selectedTranslationIndex: Int = 0,
     val selectedTafsirIndex: Int = 0,
@@ -64,6 +66,20 @@ class TafsirViewModel(
         loadOnlineVerseData()
         loadAIExplanation()
         loadNote()
+        loadBanglaUccaron()
+    }
+
+    /** v5.5 — bundled Bangla uccaron for this ayah. */
+    private fun loadBanglaUccaron() {
+        viewModelScope.launch {
+            try {
+                _state.value = _state.value.copy(
+                    banglaUccaron = container.quranRepository.banglaUccaron(surah, ayah)
+                )
+            } catch (_: Exception) {
+                // display enhancement only
+            }
+        }
     }
 
     private fun loadAyahInfo() {

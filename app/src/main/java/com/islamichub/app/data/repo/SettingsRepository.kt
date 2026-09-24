@@ -49,6 +49,14 @@ class SettingsRepository(private val context: Context) {
     // Quran font scale (1.0 = default, 0.85 = small, 1.3 = large, 1.6 = extra large)
     val quranFontScale: Flow<Float> = context.settingsStore.data.map { it[FONT_SCALE] ?: 1.0f }
 
+    // v5.5 — per-script reading text scales (apply to every reading screen)
+    val arabicFontScale: Flow<Float> = context.settingsStore.data.map { it[ARABIC_FONT_SCALE] ?: 1.0f }
+    val banglaFontScale: Flow<Float> = context.settingsStore.data.map { it[BANGLA_FONT_SCALE] ?: 1.0f }
+    val englishFontScale: Flow<Float> = context.settingsStore.data.map { it[ENGLISH_FONT_SCALE] ?: 1.0f }
+
+    // v5.5 — show Bangla transliteration (uccaron) line under Arabic ayahs
+    val showTransliteration: Flow<Boolean> = context.settingsStore.data.map { it[SHOW_TRANSLITERATION] ?: true }
+
     // App-wide background mode (for Quran reader)
     val backgroundMode: Flow<BackgroundMode> = context.settingsStore.data.map {
         val name = it[BACKGROUND_MODE] ?: BackgroundMode.CREAM.name
@@ -119,6 +127,22 @@ class SettingsRepository(private val context: Context) {
 
     suspend fun setQuranFontScale(scale: Float) = withContext(Dispatchers.IO) {
         context.settingsStore.edit { it[FONT_SCALE] = scale.coerceIn(0.7f, 2.0f) }
+    }
+
+    suspend fun setArabicFontScale(scale: Float) = withContext(Dispatchers.IO) {
+        context.settingsStore.edit { it[ARABIC_FONT_SCALE] = scale.coerceIn(0.7f, 1.8f) }
+    }
+
+    suspend fun setBanglaFontScale(scale: Float) = withContext(Dispatchers.IO) {
+        context.settingsStore.edit { it[BANGLA_FONT_SCALE] = scale.coerceIn(0.7f, 1.8f) }
+    }
+
+    suspend fun setEnglishFontScale(scale: Float) = withContext(Dispatchers.IO) {
+        context.settingsStore.edit { it[ENGLISH_FONT_SCALE] = scale.coerceIn(0.7f, 1.8f) }
+    }
+
+    suspend fun setShowTransliteration(show: Boolean) = withContext(Dispatchers.IO) {
+        context.settingsStore.edit { it[SHOW_TRANSLITERATION] = show }
     }
 
     suspend fun setBackgroundMode(mode: BackgroundMode) = withContext(Dispatchers.IO) {
@@ -211,6 +235,10 @@ class SettingsRepository(private val context: Context) {
 
     companion object {
         private val FONT_SCALE = floatPreferencesKey("quran_font_scale")
+        private val ARABIC_FONT_SCALE = floatPreferencesKey("arabic_font_scale")
+        private val BANGLA_FONT_SCALE = floatPreferencesKey("bangla_font_scale")
+        private val ENGLISH_FONT_SCALE = floatPreferencesKey("english_font_scale")
+        private val SHOW_TRANSLITERATION = booleanPreferencesKey("show_transliteration")
         private val BACKGROUND_MODE = stringPreferencesKey("background_mode")
         private val THEME_MODE = stringPreferencesKey("theme_mode")
         private val RECITER = stringPreferencesKey("selected_reciter")

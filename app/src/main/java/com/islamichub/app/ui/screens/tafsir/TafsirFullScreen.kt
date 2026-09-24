@@ -58,6 +58,10 @@ import com.islamichub.app.data.AppContainer
 import androidx.compose.ui.text.input.TextFieldValue
 import android.widget.Toast
 import android.content.Intent
+import com.islamichub.app.ui.components.PremiumSectionHeader
+import com.islamichub.app.ui.theme.arabicSp
+import com.islamichub.app.ui.theme.banglaSp
+import com.islamichub.app.ui.theme.englishSp
 import com.islamichub.app.ui.theme.premiumTap
 import com.islamichub.app.ui.theme.staggerEntrance
 
@@ -133,29 +137,68 @@ fun TafsirFullScreen(
             modifier = Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState()).padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // ─── Ayah Preview ───
+            // ─── Ayah Preview (premium gradient hero) ───
             if (state.arabicText.isNotBlank()) {
                 Surface(
                     modifier = Modifier.fillMaxWidth().staggerEntrance(0), shape = RoundedCornerShape(20.dp),
-                    color = MaterialTheme.colorScheme.primaryContainer
+                    color = Color.Transparent
                 ) {
-                    Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text(state.arabicText, style = MaterialTheme.typography.displaySmall,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    Column(
+                        modifier = Modifier
+                            .background(
+                                Brush.linearGradient(
+                                    listOf(
+                                        MaterialTheme.colorScheme.primary.copy(alpha = 0.16f),
+                                        MaterialTheme.colorScheme.tertiary.copy(alpha = 0.12f)
+                                    )
+                                )
+                            )
+                            .padding(20.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text(state.arabicText,
+                            style = MaterialTheme.typography.displaySmall.copy(
+                                fontSize = arabicSp(MaterialTheme.typography.displaySmall.fontSize)
+                            ),
+                            color = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.End)
+                        val bnUcc = state.banglaUccaron
+                        if (!bnUcc.isNullOrBlank()) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    "উচ্চারণ",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.tertiary
+                                )
+                                Text(
+                                    "  $bnUcc",
+                                    style = MaterialTheme.typography.bodyMedium.copy(
+                                        fontSize = banglaSp(MaterialTheme.typography.bodyMedium.fontSize)
+                                    ),
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                            }
+                        }
                         if (state.banglaText.isNotBlank()) {
-                            Text("বাংলা: ${state.banglaText}", style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.85f))
+                            Text("বাংলা: ${state.banglaText}",
+                                style = MaterialTheme.typography.bodyMedium.copy(
+                                    fontSize = banglaSp(MaterialTheme.typography.bodyMedium.fontSize)
+                                ),
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.9f))
                         }
                         if (state.englishText.isNotBlank()) {
-                            Text("English: ${state.englishText}", style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f))
+                            Text("English: ${state.englishText}",
+                                style = MaterialTheme.typography.bodySmall.copy(
+                                    fontSize = englishSp(MaterialTheme.typography.bodySmall.fontSize)
+                                ),
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f))
                         }
                     }
                 }
             }
 
-            // ─── Transliteration ───
+            // ─── Transliteration (Latin, online) ───
             state.transliteration?.let { translit ->
                 if (translit.isNotBlank()) {
                     Surface(
@@ -165,7 +208,9 @@ fun TafsirFullScreen(
                         Column(modifier = Modifier.padding(16.dp)) {
                             Text("🔊 উচ্চারণ (Transliteration)", style = MaterialTheme.typography.labelMedium,
                                 fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
-                            Text(translit, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface)
+                            Text(translit, style = MaterialTheme.typography.bodyMedium.copy(
+                                fontSize = englishSp(MaterialTheme.typography.bodyMedium.fontSize)
+                            ), color = MaterialTheme.colorScheme.onSurface)
                         }
                     }
                 }
@@ -173,8 +218,7 @@ fun TafsirFullScreen(
 
             // ─── All Translations (Bangla + English) ───
             if (state.allTranslations.isNotEmpty()) {
-                Text("📖 অনুবাদ (${state.allTranslations.count { it.language == "bn" }} বাংলা + ${state.allTranslations.count { it.language == "en" }} ইংরেজি)",
-                    style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                PremiumSectionHeader("📖 অনুবাদ (${state.allTranslations.count { it.language == "bn" }} বাংলা + ${state.allTranslations.count { it.language == "en" }} ইংরেজি)")
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     items(state.allTranslations.size) { idx ->
                         val t = state.allTranslations[idx]
@@ -195,7 +239,10 @@ fun TafsirFullScreen(
                         Column(modifier = Modifier.padding(16.dp)) {
                             Text(sel.name, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold,
                                 color = txtColor.copy(alpha = 0.8f))
-                            Text(stripHtml(sel.text), style = MaterialTheme.typography.bodyLarge, color = txtColor)
+                            Text(stripHtml(sel.text), style = MaterialTheme.typography.bodyLarge.copy(
+                                fontSize = if (sel.language == "en") englishSp(MaterialTheme.typography.bodyLarge.fontSize)
+                                           else banglaSp(MaterialTheme.typography.bodyLarge.fontSize)
+                            ), color = txtColor)
                         }
                     }
                 }
@@ -203,8 +250,7 @@ fun TafsirFullScreen(
 
             // ─── All Tafsirs (Bangla + English) ───
             if (state.allTafsirs.isNotEmpty()) {
-                Text("📚 তাফসীর (${state.allTafsirs.count { it.language == "bn" }} বাংলা + ${state.allTafsirs.count { it.language == "en" }} ইংরেজি)",
-                    style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                PremiumSectionHeader("📚 তাফসীর (${state.allTafsirs.count { it.language == "bn" }} বাংলা + ${state.allTafsirs.count { it.language == "en" }} ইংরেজি)")
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     items(state.allTafsirs.size) { idx ->
                         val t = state.allTafsirs[idx]
@@ -237,7 +283,10 @@ fun TafsirFullScreen(
                                     }
                                     Text("  ${sel.name}", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, color = txtColor)
                                 }
-                                Text(stripHtml(sel.text), style = MaterialTheme.typography.bodyMedium, color = txtColor)
+                                Text(stripHtml(sel.text), style = MaterialTheme.typography.bodyMedium.copy(
+                                    fontSize = if (sel.language == "en") englishSp(MaterialTheme.typography.bodyMedium.fontSize)
+                                               else banglaSp(MaterialTheme.typography.bodyMedium.fontSize)
+                                ), color = txtColor)
                             }
                         }
                     } else if (sel.language == "en") {
@@ -254,7 +303,7 @@ fun TafsirFullScreen(
 
             // ─── Offline Tafsir ───
             if (state.tafsirText != null) {
-                Text("তাফসীর উৎস (অফলাইন)", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                PremiumSectionHeader("তাফসীর উৎস (অফলাইন)")
                 Surface(
                     modifier = Modifier.fillMaxWidth().staggerEntrance(4), shape = RoundedCornerShape(16.dp),
                     color = MaterialTheme.colorScheme.surfaceVariant
@@ -263,13 +312,15 @@ fun TafsirFullScreen(
                         if (state.isCached) {
                             Text("✓ অফলাইনে সংরক্ষিত", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
                         }
-                        Text(state.tafsirText!!, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
+                        Text(state.tafsirText!!, style = MaterialTheme.typography.bodyLarge.copy(
+                            fontSize = banglaSp(MaterialTheme.typography.bodyLarge.fontSize)
+                        ), color = MaterialTheme.colorScheme.onSurface)
                     }
                 }
             }
 
             // ─── AI Explanation ───
-            Text("🤲 AI তাফসীর (খতিবের ভাষায়)", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+            PremiumSectionHeader("🤲 AI তাফসীর (খতিবের ভাষায়)")
             if (state.isAILoading) {
                 Surface(
                     modifier = Modifier.fillMaxWidth().staggerEntrance(5), shape = RoundedCornerShape(16.dp),
@@ -294,7 +345,9 @@ fun TafsirFullScreen(
                             Text("  AI স্কলার", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold,
                                 color = MaterialTheme.colorScheme.onSecondaryContainer)
                         }
-                        Text(explanation, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSecondaryContainer)
+                        Text(explanation, style = MaterialTheme.typography.bodyMedium.copy(
+                            fontSize = banglaSp(MaterialTheme.typography.bodyMedium.fontSize)
+                        ), color = MaterialTheme.colorScheme.onSecondaryContainer)
                     }
                 }
             }

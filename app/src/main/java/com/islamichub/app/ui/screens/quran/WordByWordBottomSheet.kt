@@ -31,6 +31,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.islamichub.app.data.model.Ayah
+import com.islamichub.app.ui.theme.arabicSp
+import com.islamichub.app.ui.theme.banglaSp
 
 /**
  * Word-by-word bottom sheet for an ayah.
@@ -122,14 +124,14 @@ fun WordByWordBottomSheet(
                 ) {
                     Text(
                         text = ayah.arabic,
-                        style = MaterialTheme.typography.titleLarge,
+                        style = MaterialTheme.typography.titleLarge.copy(fontSize = arabicSp(MaterialTheme.typography.titleLarge.fontSize)),
                         color = MaterialTheme.colorScheme.onPrimaryContainer,
                         modifier = Modifier.fillMaxWidth(),
                         textAlign = TextAlign.End
                     )
                     Text(
                         text = ayah.bengali,
-                        style = MaterialTheme.typography.bodySmall,
+                        style = MaterialTheme.typography.bodySmall.copy(fontSize = banglaSp(MaterialTheme.typography.bodySmall.fontSize)),
                         color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.85f)
                     )
                 }
@@ -201,7 +203,7 @@ private fun WordRow(
             // Arabic word
             Text(
                 text = arabicWord,
-                style = MaterialTheme.typography.titleLarge,
+                style = MaterialTheme.typography.titleLarge.copy(fontSize = arabicSp(MaterialTheme.typography.titleLarge.fontSize)),
                 color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.weight(1f),
                 textAlign = TextAlign.End
@@ -210,12 +212,12 @@ private fun WordRow(
             Column(modifier = Modifier.weight(1.5f)) {
                 Text(
                     text = transliteration,
-                    style = MaterialTheme.typography.bodySmall,
+                    style = MaterialTheme.typography.bodySmall.copy(fontSize = banglaSp(MaterialTheme.typography.bodySmall.fontSize)),
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Text(
                     text = meaning,
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = MaterialTheme.typography.bodyMedium.copy(fontSize = banglaSp(MaterialTheme.typography.bodyMedium.fontSize)),
                     fontWeight = FontWeight.Medium,
                     color = MaterialTheme.colorScheme.primary
                 )

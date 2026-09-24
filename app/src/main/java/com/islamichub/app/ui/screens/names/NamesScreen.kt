@@ -32,6 +32,9 @@ import androidx.compose.ui.unit.dp
 import com.islamichub.app.R
 import com.islamichub.app.data.AppContainer
 import com.islamichub.app.data.model.NameOfAllah
+import com.islamichub.app.ui.theme.arabicSp
+import com.islamichub.app.ui.theme.banglaSp
+import com.islamichub.app.ui.theme.englishSp
 
 @Composable
 fun NamesScreen(container: AppContainer) {
@@ -106,24 +109,24 @@ private fun NameRow(name: NameOfAllah) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = name.transliteration,
-                    style = MaterialTheme.typography.titleMedium,
+                    style = MaterialTheme.typography.titleMedium.copy(fontSize = englishSp(MaterialTheme.typography.titleMedium.fontSize)),
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
                     text = name.englishMeaning,
-                    style = MaterialTheme.typography.bodySmall,
+                    style = MaterialTheme.typography.bodySmall.copy(fontSize = englishSp(MaterialTheme.typography.bodySmall.fontSize)),
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Text(
                     text = name.bengaliMeaning,
-                    style = MaterialTheme.typography.bodySmall,
+                    style = MaterialTheme.typography.bodySmall.copy(fontSize = banglaSp(MaterialTheme.typography.bodySmall.fontSize)),
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
             Text(
                 text = name.arabic,
-                style = MaterialTheme.typography.headlineSmall,
+                style = MaterialTheme.typography.headlineSmall.copy(fontSize = arabicSp(MaterialTheme.typography.headlineSmall.fontSize)),
                 color = MaterialTheme.colorScheme.primary,
                 textAlign = TextAlign.End
             )

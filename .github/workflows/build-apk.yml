@@ -107,9 +107,11 @@ jobs:
             - Tap to install (allow "Install from unknown sources" if prompted)
 
             ## What's new (${{ github.ref_name }})
-            - 🛠 **All compile bugs fixed** — 10 broken files repaired; the project now builds cleanly end-to-end
-            - 🎨 **Premium UI on every remaining screen** — staggered entrances, springy tap feedback, animated progress bars & premium section headers across More, App Lock, Tracker, Calendar, Juz list, Quran search, Scanner, Tajweed, Dua detail, Hadith search, Namaz extras & Tafsir screens
-            - ✅ Bug sweep: syntax + cross-file verification on all modified sources
+            - 🔤 **বাংলা উচ্চারণ (Bangla transliteration) for the whole Quran** — all 6,236 ayahs bundled offline, shown under each Arabic ayah in the reader, tafsir & thematic study (toggle in Settings)
+            - 🔠 **Text size controls on every page** — independent আরবি / বাংলা / English sliders (70%–180%) with live preview, applied across 18 reading screens
+            - 🐛 **Thematic Quran fix** — tapping the expanded tafsir no longer collapses it; শোনো / সংরক্ষণ / শেয়ার chips are now fully functional (play with selected reciter, real bookmark, share)
+            - 🎨 **Quran AI button redesigned** — labeled gradient "AI তাফসীর" pill + "শব্দে শব্দ" chip per ayah
+            - ✨ **Premium tafsir screen** — gradient ayah hero, premium section headers, per-script font scaling
 
             ## Features (cumulative)
             - **Al-Quran**: 114 surahs, 6236 ayahs, full Arabic + Bengali + English (offline bundle + AlQuran.cloud)

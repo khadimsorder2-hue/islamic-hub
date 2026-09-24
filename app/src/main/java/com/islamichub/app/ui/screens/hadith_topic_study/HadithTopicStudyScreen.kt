@@ -72,6 +72,8 @@ import com.islamichub.app.data.repo.HadithTopic
 import com.islamichub.app.data.repo.HadithTopicEntry
 import com.islamichub.app.ui.components.PremiumHeroCard
 import com.islamichub.app.ui.components.loadAssetImage
+import com.islamichub.app.ui.theme.arabicSp
+import com.islamichub.app.ui.theme.banglaSp
 
 // ─── LIST SCREEN ─────────────────────────────────────────────────────────────
 
@@ -420,7 +422,7 @@ fun HadithTopicStudyDetailScreen(
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
                 ) {
                     Text(topic.overviewBn,
-                        style = MaterialTheme.typography.bodyMedium,
+                        style = MaterialTheme.typography.bodyMedium.copy(fontSize = banglaSp(MaterialTheme.typography.bodyMedium.fontSize)),
                         color = MaterialTheme.colorScheme.onSecondaryContainer,
                         modifier = Modifier.padding(20.dp))
                 }
@@ -608,7 +610,7 @@ private fun HadithCard(
             // Arabic text
             if (hadith.arabic.isNotBlank()) {
                 Text(hadith.arabic,
-                    style = MaterialTheme.typography.headlineSmall,
+                    style = MaterialTheme.typography.headlineSmall.copy(fontSize = arabicSp(MaterialTheme.typography.headlineSmall.fontSize)),
                     color = MaterialTheme.colorScheme.onSurface,
                     textAlign = TextAlign.End,
                     modifier = Modifier.fillMaxWidth())
@@ -620,7 +622,7 @@ private fun HadithCard(
                 text = if (isExpanded) hadith.bangla
                        else if (hadith.bangla.length > 180) hadith.bangla.take(180) + "…"
                        else hadith.bangla,
-                style = MaterialTheme.typography.bodyMedium,
+                style = MaterialTheme.typography.bodyMedium.copy(fontSize = banglaSp(MaterialTheme.typography.bodyMedium.fontSize)),
                 color = MaterialTheme.colorScheme.onSurface
             )
 

@@ -72,6 +72,8 @@ import com.islamichub.app.R
 import com.islamichub.app.data.AppContainer
 import com.islamichub.app.data.local.HadithJson
 import com.islamichub.app.ui.components.PremiumHeroCard
+import com.islamichub.app.ui.theme.arabicSp
+import com.islamichub.app.ui.theme.banglaSp
 import kotlinx.coroutines.launch
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -370,7 +372,7 @@ private fun HadithRow(hadith: HadithJson, onClick: () -> Unit) {
             if (arabicText.isNotBlank() && arabicText != "—") {
                 Text(
                     text = arabicText.take(200) + if (arabicText.length > 200) "…" else "",
-                    style = MaterialTheme.typography.titleMedium,
+                    style = MaterialTheme.typography.titleMedium.copy(fontSize = arabicSp(MaterialTheme.typography.titleMedium.fontSize)),
                     color = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.fillMaxWidth(),
                     textAlign = TextAlign.End,
@@ -381,7 +383,7 @@ private fun HadithRow(hadith: HadithJson, onClick: () -> Unit) {
             val banglaText = hadith.banglaOrFallback()
             Text(
                 text = banglaText.take(180) + if (banglaText.length > 180) "…" else "",
-                style = MaterialTheme.typography.bodySmall,
+                style = MaterialTheme.typography.bodySmall.copy(fontSize = banglaSp(MaterialTheme.typography.bodySmall.fontSize)),
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 3
             )
@@ -617,7 +619,7 @@ fun HadithDetailScreen(
                         )
                         Text(
                             text = h.arabicOrFallback(),
-                            style = MaterialTheme.typography.displaySmall,
+                            style = MaterialTheme.typography.displaySmall.copy(fontSize = arabicSp(MaterialTheme.typography.displaySmall.fontSize)),
                             color = MaterialTheme.colorScheme.onPrimaryContainer,
                             modifier = Modifier.fillMaxWidth(),
                             textAlign = TextAlign.End
@@ -646,7 +648,7 @@ fun HadithDetailScreen(
                         )
                         Text(
                             text = h.banglaOrFallback(),
-                            style = MaterialTheme.typography.bodyLarge,
+                            style = MaterialTheme.typography.bodyLarge.copy(fontSize = banglaSp(MaterialTheme.typography.bodyLarge.fontSize)),
                             color = MaterialTheme.colorScheme.onSecondaryContainer
                         )
                     }
@@ -749,7 +751,7 @@ fun HadithDetailScreen(
                             )
                             Text(
                                 text = result,
-                                style = MaterialTheme.typography.bodyMedium,
+                                style = MaterialTheme.typography.bodyMedium.copy(fontSize = banglaSp(MaterialTheme.typography.bodyMedium.fontSize)),
                                 color = MaterialTheme.colorScheme.onSurface
                             )
                         }

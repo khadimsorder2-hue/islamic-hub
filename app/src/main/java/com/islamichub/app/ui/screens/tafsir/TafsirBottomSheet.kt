@@ -42,6 +42,8 @@ import com.islamichub.app.data.AppContainer
 import com.islamichub.app.data.repo.TafsirSource
 import com.islamichub.app.ui.components.PremiumHeroCard
 import com.islamichub.app.ui.components.PremiumSectionHeader
+import com.islamichub.app.ui.theme.arabicSp
+import com.islamichub.app.ui.theme.banglaSp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -124,14 +126,14 @@ fun TafsirBottomSheet(
                     ) {
                         Text(
                             text = state.arabicText,
-                            style = MaterialTheme.typography.displaySmall,
+                            style = MaterialTheme.typography.displaySmall.copy(fontSize = arabicSp(MaterialTheme.typography.displaySmall.fontSize)),
                             color = MaterialTheme.colorScheme.onPrimaryContainer,
                             modifier = Modifier.fillMaxWidth(),
                             textAlign = TextAlign.End
                         )
                         Text(
                             text = state.banglaText,
-                            style = MaterialTheme.typography.bodyMedium,
+                            style = MaterialTheme.typography.bodyMedium.copy(fontSize = banglaSp(MaterialTheme.typography.bodyMedium.fontSize)),
                             color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.85f)
                         )
                     }
@@ -181,7 +183,7 @@ fun TafsirBottomSheet(
                         }
                         Text(
                             text = state.tafsirText!!,
-                            style = MaterialTheme.typography.bodyLarge,
+                            style = MaterialTheme.typography.bodyLarge.copy(fontSize = banglaSp(MaterialTheme.typography.bodyLarge.fontSize)),
                             color = MaterialTheme.colorScheme.onSurface
                         )
                     }
@@ -266,7 +268,7 @@ fun TafsirBottomSheet(
                         }
                         Text(
                             text = explanation,
-                            style = MaterialTheme.typography.bodyMedium,
+                            style = MaterialTheme.typography.bodyMedium.copy(fontSize = banglaSp(MaterialTheme.typography.bodyMedium.fontSize)),
                             color = MaterialTheme.colorScheme.onSecondaryContainer
                         )
                     }

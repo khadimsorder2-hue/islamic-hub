@@ -5,6 +5,7 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
+import android.content.Intent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -31,6 +32,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.AutoStories
 import androidx.compose.material.icons.filled.Book
 import androidx.compose.material.icons.filled.Bookmark
+import androidx.compose.material.icons.filled.BookmarkBorder
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Info
@@ -54,7 +56,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -68,10 +73,18 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.islamichub.app.data.AppContainer
+import com.islamichub.app.data.repo.AudioController
+import com.islamichub.app.data.repo.Bookmark
 import com.islamichub.app.data.repo.QuranTopicCatalog
 import com.islamichub.app.data.repo.toShellThematicTopic
 import com.islamichub.app.ui.components.loadAssetImage
+import com.islamichub.app.ui.theme.arabicSp
+import com.islamichub.app.ui.theme.banglaSp
+import com.islamichub.app.ui.theme.englishSp
+import com.islamichub.app.ui.theme.premiumTap
 import com.islamichub.app.ui.theme.staggerEntrance
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -84,6 +97,51 @@ fun TopicStudyDetailScreen(
     val vm = remember { TopicDetailViewModel(container) }
     val state by vm.uiState.collectAsState()
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+
+    // v5.5 — bookmarked ayah references ("2:255") for the action chips
+    val bookmarks by container.bookmarkRepository.bookmarks.collectAsState(initial = emptyList())
+    val bookmarkedRefs = remember(bookmarks) {
+        bookmarks.map { "${it.surahNumber}:${it.ayahNumber}" }.toSet()
+    }
+
+    // v5.5 — functional action-chip handlers
+    val playAyahAudio: (Int, Int) -> Unit = { s, a ->
+        scope.launch {
+            val reciterId = container.settingsRepository.selectedReciter.first()
+            val reciter = AudioController.availableRecitersStatic.firstOrNull {
+                it.editionId == reciterId
+            } ?: AudioController.availableRecitersStatic.first()
+            container.audioController.playAyah(s, a, reciter)
+        }
+    }
+    val toggleTopicBookmark: (com.islamichub.app.ui.screens.topic_study.ResolvedAyah) -> Unit = { a ->
+        scope.launch {
+            container.bookmarkRepository.toggle(
+                Bookmark(
+                    surahNumber = a.surahNumber,
+                    ayahNumber = a.ayahNumber,
+                    surahName = a.surahNameEn,
+                    surahNameBn = a.surahNameBn,
+                    arabicSnippet = a.arabic.take(120)
+                )
+            )
+        }
+    }
+    val shareTopicAyah: (com.islamichub.app.ui.screens.topic_study.ResolvedAyah) -> Unit = { a ->
+        val shareIntent = Intent(Intent.ACTION_SEND).apply {
+            type = "text/plain"
+            putExtra(
+                Intent.EXTRA_TEXT,
+                "${a.surahNameEn} (${a.surahNameBn}) — আয়াত ${a.ayahNumber}:\n\n" +
+                    "${a.arabic}\n\n" +
+                    "বাংলা: ${a.bengali}\n\n" +
+                    "English: ${a.english}\n\n" +
+                    "— Islamic Hub থেকে শেয়ার করা হয়েছে"
+            )
+        }
+        context.startActivity(Intent.createChooser(shareIntent, "আয়াত শেয়ার করুন"))
+    }
 
     // Trigger load on first composition
     LaunchedEffect(topicSlug) {
@@ -233,6 +291,11 @@ fun TopicStudyDetailScreen(
                 AyahCard(
                     ayah = ayah,
                     accent = accent,
+                    container = container,
+                    isBookmarked = ayah.reference in bookmarkedRefs,
+                    onPlay = { playAyahAudio(ayah.surahNumber, ayah.ayahNumber) },
+                    onBookmark = { toggleTopicBookmark(ayah) },
+                    onShare = { shareTopicAyah(ayah) },
                     isExpanded = state.expandedAyahRef == ayah.reference,
                     onToggle = { vm.toggleAyahExpand(ayah.reference) },
                     modifier = Modifier.staggerEntrance(idx, enabled = state.resolvedKeyAyahs.size <= 20)
@@ -263,6 +326,11 @@ fun TopicStudyDetailScreen(
                     AyahCard(
                         ayah = ayah,
                         accent = accent,
+                        container = container,
+                        isBookmarked = ayah.reference in bookmarkedRefs,
+                        onPlay = { playAyahAudio(ayah.surahNumber, ayah.ayahNumber) },
+                        onBookmark = { toggleTopicBookmark(ayah) },
+                        onShare = { shareTopicAyah(ayah) },
                         isExpanded = state.expandedAyahRef == ayah.reference,
                         onToggle = { vm.toggleAyahExpand(ayah.reference) }
                     )
@@ -513,15 +581,28 @@ private fun SectionHeader(label: String, titleBn: String, accent: Color, modifie
 private fun AyahCard(
     ayah: ResolvedAyah,
     accent: Color,
+    container: AppContainer,
+    isBookmarked: Boolean,
+    onPlay: () -> Unit,
+    onBookmark: () -> Unit,
+    onShare: () -> Unit,
     isExpanded: Boolean,
     onToggle: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    // v5.5 — bundled Bangla uccaron, resolved lazily per card
+    var uccaron by remember(ayah.reference) { mutableStateOf<String?>(null) }
+    LaunchedEffect(ayah.reference) {
+        try {
+            uccaron = container.quranRepository.banglaUccaron(ayah.surahNumber, ayah.ayahNumber)
+        } catch (_: Exception) {
+            uccaron = null
+        }
+    }
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(20.dp))
-            .clickable(onClick = onToggle),
+            .clip(RoundedCornerShape(20.dp)),
         shape = RoundedCornerShape(20.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
@@ -538,9 +619,14 @@ private fun AyahCard(
                 )
                 .padding(20.dp)
         ) {
-            // Header: reference + relation badge
+            // Header: reference + relation badge — ONLY the header toggles expand
+            // (v5.5 bugfix: the whole card used to be clickable, so tapping the
+            // tafsir content or the action chips collapsed it immediately)
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(12.dp))
+                    .clickable(onClick = onToggle),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
@@ -557,16 +643,24 @@ private fun AyahCard(
                             color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(10.dp))
-                        .background(accent.copy(alpha = 0.12f))
-                        .padding(horizontal = 8.dp, vertical = 4.dp)
-                ) {
-                    Text(ayah.relation.bangla,
-                        style = MaterialTheme.typography.labelSmall,
-                        color = accent,
-                        fontWeight = FontWeight.Bold)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(accent.copy(alpha = 0.12f))
+                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                    ) {
+                        Text(ayah.relation.bangla,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = accent,
+                            fontWeight = FontWeight.Bold)
+                    }
+                    Icon(
+                        imageVector = if (isExpanded) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
+                        contentDescription = if (isExpanded) "সংকুচিত করুন" else "তাফসির দেখুন",
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(start = 6.dp).size(20.dp)
+                    )
                 }
             }
 
@@ -575,21 +669,50 @@ private fun AyahCard(
             // Arabic text
             if (ayah.arabic.isNotBlank()) {
                 Text(ayah.arabic,
-                    style = MaterialTheme.typography.headlineSmall,
+                    style = MaterialTheme.typography.headlineSmall.copy(
+                        fontSize = arabicSp(MaterialTheme.typography.headlineSmall.fontSize)
+                    ),
                     color = MaterialTheme.colorScheme.onSurface,
                     textAlign = TextAlign.End,
                     modifier = Modifier.fillMaxWidth())
                 Spacer(Modifier.height(12.dp))
             }
 
+            // v5.5 — Bangla uccaron under the Arabic
+            val uccaronText = uccaron
+            if (!uccaronText.isNullOrBlank()) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(50))
+                            .background(accent.copy(alpha = 0.10f))
+                            .padding(horizontal = 8.dp, vertical = 2.dp)
+                    ) {
+                        Text("উচ্চারণ",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = accent,
+                            fontWeight = FontWeight.SemiBold)
+                    }
+                    Spacer(Modifier.width(8.dp))
+                    Text(uccaronText,
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            fontSize = banglaSp(MaterialTheme.typography.bodyMedium.fontSize)
+                        ),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                Spacer(Modifier.height(10.dp))
+            }
+
             // Bengali translation
             if (ayah.bengali.isNotBlank()) {
                 Text(ayah.bengali,
-                    style = MaterialTheme.typography.bodyLarge,
+                    style = MaterialTheme.typography.bodyLarge.copy(
+                        fontSize = banglaSp(MaterialTheme.typography.bodyLarge.fontSize)
+                    ),
                     color = MaterialTheme.colorScheme.onSurface)
             }
 
-            // Expandable: Tafsir
+            // Expandable: Tafsir + actions
             AnimatedVisibility(
                 visible = isExpanded,
                 enter = expandVertically() + fadeIn(),
@@ -614,9 +737,20 @@ private fun AyahCard(
                             color = accent)
                     }
                     Spacer(Modifier.height(8.dp))
-                    Text(ayah.tafsirBn,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurface)
+                    // v5.5 — premium tafsir panel (was: plain text with a
+                    // card-wide tap-to-collapse behind it)
+                    Surface(
+                        shape = RoundedCornerShape(16.dp),
+                        color = accent.copy(alpha = 0.07f),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(ayah.tafsirBn,
+                            style = MaterialTheme.typography.bodyMedium.copy(
+                                fontSize = banglaSp(MaterialTheme.typography.bodyMedium.fontSize)
+                            ),
+                            color = MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier.padding(16.dp))
+                    }
 
                     Spacer(Modifier.height(12.dp))
 
@@ -627,28 +761,41 @@ private fun AyahCard(
                                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.size(14.dp))
                             Text("  Reference: ${ayah.surahNameEn} ${ayah.reference}",
-                                style = MaterialTheme.typography.labelSmall,
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    fontSize = englishSp(MaterialTheme.typography.labelSmall.fontSize)
+                                ),
                                 color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
 
-                    // Action row
-                    Spacer(Modifier.height(8.dp))
+                    // Action row — v5.5: chips are now fully functional
+                    Spacer(Modifier.height(10.dp))
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        ActionChip(Icons.Filled.PlayArrow, "শোনো", accent)
-                        ActionChip(Icons.Filled.Bookmark, "সংরক্ষণ", accent)
-                        ActionChip(Icons.Filled.Share, "শেয়ার", accent)
+                        ActionChip(Icons.Filled.PlayArrow, "শোনো", accent,
+                            onClick = onPlay)
+                        ActionChip(
+                            if (isBookmarked) Icons.Filled.Bookmark else Icons.Filled.BookmarkBorder,
+                            "সংরক্ষণ", accent,
+                            active = isBookmarked,
+                            onClick = onBookmark)
+                        ActionChip(Icons.Filled.Share, "শেয়ার", accent,
+                            onClick = onShare)
                     }
                 }
             }
 
-            // Toggle indicator
+            // Toggle indicator row — clickable, centered, mirrors the header
             Row(
-                modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-                horizontalArrangement = Arrangement.Center
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(12.dp))
+                    .clickable(onClick = onToggle)
+                    .padding(top = 4.dp),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
                     imageVector = if (isExpanded) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
@@ -661,11 +808,18 @@ private fun AyahCard(
 }
 
 @Composable
-private fun ActionChip(icon: androidx.compose.ui.graphics.vector.ImageVector, label: String, accent: Color) {
+private fun ActionChip(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    label: String,
+    accent: Color,
+    active: Boolean = false,
+    onClick: (() -> Unit)? = null
+) {
     Box(
         modifier = Modifier
             .clip(RoundedCornerShape(12.dp))
-            .background(accent.copy(alpha = 0.1f))
+            .background(if (active) accent.copy(alpha = 0.28f) else accent.copy(alpha = 0.1f))
+            .premiumTap(enabled = onClick != null) { onClick?.invoke() }
             .padding(horizontal = 12.dp, vertical = 6.dp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
