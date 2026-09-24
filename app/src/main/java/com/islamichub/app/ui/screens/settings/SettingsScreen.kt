@@ -18,8 +18,16 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.AutoStories
 import androidx.compose.material.icons.filled.Cached
+import androidx.compose.material.icons.filled.CleaningServices
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.FormatSize
+import androidx.compose.material.icons.filled.Headphones
+import androidx.compose.material.icons.filled.MenuBook
+import androidx.compose.material.icons.filled.Palette
+import androidx.compose.material.icons.filled.SystemUpdate
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Card
@@ -116,7 +124,7 @@ fun SettingsScreen(
 
             // ─── Theme Mode ───────────────────────────────────────────
             item {
-                SettingsSection(title = "থিম মোড") {
+                SettingsSection(title = "থিম মোড", icon = Icons.Filled.Palette, accent = Color(0xFF607D8B)) {
                     Text("অ্যাপের রঙ নির্বাচন করুন",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -170,7 +178,11 @@ fun SettingsScreen(
 
             // ─── Quran Appearance ─────────────────────────────────────
             item {
-                SettingsSection(title = stringResource(R.string.settings_quran_appearance)) {
+                SettingsSection(
+                    title = stringResource(R.string.settings_quran_appearance),
+                    icon = Icons.Filled.MenuBook,
+                    accent = Color(0xFF2E7D32)
+                ) {
                     // Font size slider
                     Text(
                         text = stringResource(R.string.settings_font_size) + ": ${"%.0f%%".format(state.quranFontScale * 100)}",
@@ -226,7 +238,7 @@ fun SettingsScreen(
 
             // ─── Text Size (all pages) — v5.5 ─────────────────────────
             item {
-                SettingsSection(title = "লেখার সাইজ (সব পেজ)") {
+                SettingsSection(title = "লেখার সাইজ (সব পেজ)", icon = Icons.Filled.FormatSize, accent = Color(0xFF1565C0)) {
                     Text(
                         text = "বাংলা, ইংরেজি ও আরবি লেখার সাইজ কমিয়ে/বাড়িয়ে নিন — পরিবর্তন সব পেজে সাথে সাথে প্রয়োগ হবে।",
                         style = MaterialTheme.typography.labelSmall,
@@ -361,7 +373,7 @@ fun SettingsScreen(
 
             // ─── Audio ────────────────────────────────────────────────
             item {
-                SettingsSection(title = stringResource(R.string.settings_audio)) {
+                SettingsSection(title = stringResource(R.string.settings_audio), icon = Icons.Filled.Headphones, accent = Color(0xFFEF6C00)) {
                     // Reciter selector
                     Card(
                         modifier = Modifier
@@ -448,7 +460,7 @@ fun SettingsScreen(
 
             // ─── Tafsir ───────────────────────────────────────────────
             item {
-                SettingsSection(title = stringResource(R.string.settings_tafsir)) {
+                SettingsSection(title = stringResource(R.string.settings_tafsir), icon = Icons.Filled.AutoStories, accent = Color(0xFF00695C)) {
                     Text(
                         text = stringResource(R.string.settings_tafsir_source),
                         style = MaterialTheme.typography.bodyMedium,
@@ -468,7 +480,7 @@ fun SettingsScreen(
 
             // ─── AI Scholar ───────────────────────────────────────────
             item {
-                SettingsSection(title = stringResource(R.string.settings_ai_scholar)) {
+                SettingsSection(title = stringResource(R.string.settings_ai_scholar), icon = Icons.Filled.AutoAwesome, accent = Color(0xFF6D45C7)) {
                     // Provider selector
                     Text(
                         text = "AI Provider নির্বাচন করুন",
@@ -674,7 +686,7 @@ fun SettingsScreen(
 
             // ─── App Update (v5.6.0) ──────────────────────────────────
             item {
-                SettingsSection(title = stringResource(R.string.settings_update)) {
+                SettingsSection(title = stringResource(R.string.settings_update), icon = Icons.Filled.SystemUpdate, accent = Color(0xFF2E7D32)) {
                     // Current version + manual check button
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -805,7 +817,7 @@ fun SettingsScreen(
 
             // ─── Cache ────────────────────────────────────────────────
             item {
-                SettingsSection(title = stringResource(R.string.settings_cache)) {
+                SettingsSection(title = stringResource(R.string.settings_cache), icon = Icons.Filled.CleaningServices, accent = Color(0xFF5D4037)) {
                     Text(
                         text = formatCacheSize(state.cacheSizeBytes),
                         style = MaterialTheme.typography.bodyMedium,
@@ -828,25 +840,71 @@ fun SettingsScreen(
 @Composable
 private fun SettingsSection(
     title: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    accent: Color,
     body: @Composable () -> Unit
 ) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-    ) {
-        Column(
-            modifier = Modifier.padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp)
+    Column(modifier = Modifier.fillMaxWidth()) {
+        // v5.8.0 — More-section style header: circular gradient icon badge +
+        // title with accent underline, sitting on an invisible (borderless,
+        // shadowless) container so only the icon gives the section identity.
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                modifier = Modifier
+                    .size(44.dp)
+                    .clip(CircleShape)
+                    .background(
+                        brush = androidx.compose.ui.graphics.Brush.linearGradient(
+                            colors = listOf(accent, accent.copy(alpha = 0.65f))
+                        )
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier.size(22.dp)
+                )
+            }
+            Spacer(12.dp)
+            Column {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Box(
+                    modifier = Modifier
+                        .padding(top = 3.dp)
+                        .size(width = 36.dp, height = 3.dp)
+                        .clip(RoundedCornerShape(50))
+                        .background(
+                            brush = androidx.compose.ui.graphics.Brush.horizontalGradient(
+                                colors = listOf(
+                                    accent,
+                                    MaterialTheme.colorScheme.secondary
+                                )
+                            )
+                        )
+                )
+            }
+        }
+        Spacer(12.dp)
+        // Invisible container: same white as canvas, zero elevation, no border
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(20.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
         ) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            body()
+            Column(
+                modifier = Modifier.padding(20.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                body()
+            }
         }
     }
 }
