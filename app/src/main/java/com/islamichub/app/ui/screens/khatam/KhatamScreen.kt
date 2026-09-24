@@ -21,6 +21,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AutoStories
+import androidx.compose.material.icons.filled.DeleteForever
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.AlertDialog
@@ -536,7 +537,7 @@ fun KhatamScreen(
             onDismissRequest = { showClearHistoryDialog = false },
             icon = {
                 com.islamichub.app.ui.components.PremiumDialogIcon(
-                    icon = androidx.compose.material.icons.Icons.Filled.DeleteForever,
+                    icon = Icons.Filled.DeleteForever,
                     tint = androidx.compose.ui.graphics.Color(0xFFC62828)
                 )
             },

@@ -113,7 +113,7 @@ fun HadithTopicsScreen(
 
             // Group by category
             val grouped = state.topics.groupBy { it.category ?: "other" }
-            grouped.forEachIndexed { groupIdx, (category, topics) ->
+            grouped.entries.forEachIndexed { groupIdx, (category, topics) ->
                 val catName = when (category) {
                     "ibadah" -> "ইবাদত"
                     "muamalat" -> "লেনদেন"

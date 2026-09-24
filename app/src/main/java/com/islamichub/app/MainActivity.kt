@@ -18,6 +18,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.SystemUpdate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
@@ -128,7 +130,7 @@ class MainActivity : ComponentActivity() {
                                     onDismissRequest = { updateAvailable = null },
                                     icon = {
                                         PremiumDialogIcon(
-                                            icon = androidx.compose.material.icons.Icons.Filled.SystemUpdate,
+                                            icon = Icons.Filled.SystemUpdate,
                                             tint = Color(0xFF2E7D32)
                                         )
                                     },

@@ -25,6 +25,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.NotificationsActive
@@ -501,7 +502,7 @@ private fun JamatTimeDialog(
         onDismissRequest = onDismiss,
         icon = {
             com.islamichub.app.ui.components.PremiumDialogIcon(
-                icon = androidx.compose.material.icons.Icons.Filled.Groups,
+                icon = Icons.Filled.Groups,
                 tint = androidx.compose.ui.graphics.Color(0xFF1565C0)
             )
         },
