@@ -369,7 +369,7 @@ fun SettingsScreen(
                             .clickable(onClick = onShowQariSelector),
                         shape = RoundedCornerShape(12.dp),
                         colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)
+                            containerColor = MaterialTheme.colorScheme.surfaceContainerLow.copy(alpha = 0.6f)
                         )
                     ) {
                         Row(
@@ -545,7 +545,7 @@ fun SettingsScreen(
                             colors = CardDefaults.cardColors(
                                 containerColor = if (state.aiModel == preset.modelName)
                                     MaterialTheme.colorScheme.primary.copy(alpha = 0.08f)
-                                else MaterialTheme.colorScheme.surfaceVariant
+                                else MaterialTheme.colorScheme.surfaceContainerLow
                             )
                         ) {
                             Column(modifier = Modifier.padding(12.dp)) {
@@ -833,8 +833,8 @@ private fun SettingsSection(
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Column(
             modifier = Modifier.padding(20.dp),

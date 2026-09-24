@@ -397,7 +397,7 @@ fun AiScholarScreen(
                             .clip(RoundedCornerShape(14.dp))
                             .clickable { vm.sendQuickQuestion(q) },
                         colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceVariant
+                            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
                         )
                     ) {
                         Row(
@@ -579,9 +579,9 @@ private fun ChatMessageBubble(
             colors = CardDefaults.cardColors(
                 containerColor = if (isUser)
                     MaterialTheme.colorScheme.primary
-                else MaterialTheme.colorScheme.surfaceVariant
+                else MaterialTheme.colorScheme.surfaceContainerLow
             ),
-            elevation = CardDefaults.cardElevation(defaultElevation = if (isUser) 0.dp else 2.dp)
+            elevation = CardDefaults.cardElevation(defaultElevation = if (isUser) 0.dp else 0.dp)
         ) {
             Column(
                 modifier = Modifier.padding(16.dp),

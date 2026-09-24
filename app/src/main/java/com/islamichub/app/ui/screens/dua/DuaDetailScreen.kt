@@ -107,7 +107,7 @@ fun DuaDetailScreen(
                 Card(
                     modifier = Modifier.fillMaxWidth().staggerEntrance(1),
                     shape = RoundedCornerShape(20.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)
                 ) {
                     Column(
                         modifier = Modifier.padding(24.dp),
@@ -137,7 +137,7 @@ fun DuaDetailScreen(
                 Card(
                     modifier = Modifier.fillMaxWidth().staggerEntrance(2),
                     shape = RoundedCornerShape(20.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)
                 ) {
                     Column(
                         modifier = Modifier.padding(24.dp),

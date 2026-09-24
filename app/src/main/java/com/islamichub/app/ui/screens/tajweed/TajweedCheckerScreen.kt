@@ -143,7 +143,7 @@ fun TajweedCheckerScreen(
                     modifier = Modifier.fillMaxWidth().staggerEntrance(4),
                     shape = RoundedCornerShape(16.dp),
                     colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant
+                        containerColor = MaterialTheme.colorScheme.surfaceContainerLow
                     )
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {

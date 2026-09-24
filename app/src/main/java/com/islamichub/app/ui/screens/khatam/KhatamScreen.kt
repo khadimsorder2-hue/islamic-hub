@@ -325,7 +325,7 @@ fun KhatamScreen(
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(20.dp),
                             colors = CardDefaults.cardColors(containerColor = Color.Transparent),
-                            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
                         ) {
                             Box(
                                 modifier = Modifier
@@ -575,7 +575,7 @@ private fun KhatamHistoryCard(entry: KhatamHistoryEntry, index: Int) {
             .staggerEntrance(index),
         shape = RoundedCornerShape(AppRadius.md),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.55f)
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow.copy(alpha = 0.55f)
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = AppElevation.low)
     ) {
@@ -637,7 +637,7 @@ private fun KhatamYearReviewCard(yearStats: List<KhatamPeriodStat>) {
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(AppRadius.md),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow.copy(alpha = 0.4f)
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = AppElevation.low)
     ) {

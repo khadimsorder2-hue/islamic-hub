@@ -125,8 +125,8 @@ fun NamazExtrasScreen(
                     Card(
                         modifier = Modifier.fillMaxWidth().staggerEntrance(idx + 1),
                         shape = RoundedCornerShape(16.dp),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
                     ) {
                         Column(
                             modifier = Modifier.padding(16.dp),
@@ -193,7 +193,7 @@ fun NamazExtrasScreen(
                             .clip(RoundedCornerShape(16.dp))
                             .premiumTap { selectedSurah = surah },
                         shape = RoundedCornerShape(16.dp),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)
                     ) {
                         Row(
                             modifier = Modifier.padding(16.dp),
@@ -334,7 +334,7 @@ private fun NamazSurahFullScreen(
                         modifier = Modifier.fillMaxWidth().staggerEntrance(1),
                         shape = RoundedCornerShape(16.dp),
                         colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceVariant
+                            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
                         )
                     ) {
                         Column(modifier = Modifier.padding(16.dp)) {
@@ -358,7 +358,7 @@ private fun NamazSurahFullScreen(
                         modifier = Modifier.fillMaxWidth().staggerEntrance(2),
                         shape = RoundedCornerShape(16.dp),
                         colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceVariant
+                            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
                         )
                     ) {
                         Column(modifier = Modifier.padding(16.dp)) {

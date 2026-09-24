@@ -277,7 +277,7 @@ fun FastingScreen(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(16.dp),
                         colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceVariant
+                            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
                         )
                     ) {
                         Text("এখনও কোনো রোজা যোগ করা হয়নি। + বোতাম চাপুন।",
@@ -337,9 +337,9 @@ private fun TodayFastCard(
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(24.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
         colors = CardDefaults.cardColors(
-            containerColor = if (todayFast != null) Color(0xFF1B5E20) else MaterialTheme.colorScheme.surfaceVariant
+            containerColor = if (todayFast != null) Color(0xFF1B5E20) else MaterialTheme.colorScheme.surfaceContainerLow
         )
     ) {
         Column(
@@ -499,7 +499,7 @@ private fun FastHistoryRow(stat: FastPeriodStat, modifier: Modifier = Modifier) 
     Card(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(AppRadius.md),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)
     ) {
         Column(
             modifier = Modifier.fillMaxWidth().padding(AppSpacing.md),
@@ -719,7 +719,7 @@ private fun AddFastSheet(
                 colors = CardDefaults.cardColors(
                     containerColor = if (isSelected)
                         MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
-                    else MaterialTheme.colorScheme.surfaceVariant
+                    else MaterialTheme.colorScheme.surfaceContainerLow
                 )
             ) {
                 Row(
