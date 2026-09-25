@@ -49,6 +49,14 @@ sealed class Screen(val route: String) {
     data object Bookmarks : Screen("bookmarks")
     data object Khatam : Screen("khatam")
 
+    // v5.12.0 — Notepad (ColorNote style)
+    data object Notepad : Screen("notepad")
+    data object NoteEdit : Screen("notepad_edit?noteId={noteId}") {
+        fun createRoute(noteId: String? = null) =
+            if (noteId != null) "notepad_edit?noteId=$noteId"
+            else "notepad_edit?noteId="
+    }
+
     // Trackers
     data object Qada : Screen("qada")
     data object Tracker : Screen("tracker")

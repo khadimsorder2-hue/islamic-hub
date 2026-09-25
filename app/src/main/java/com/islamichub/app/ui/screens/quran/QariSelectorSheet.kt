@@ -43,6 +43,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.islamichub.app.R
+import com.islamichub.app.ui.theme.premiumTap
+
 import com.islamichub.app.data.AppContainer
 import com.islamichub.app.data.repo.AudioController
 import kotlinx.coroutines.launch
@@ -91,7 +93,7 @@ fun QariSelectorSheet(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(12.dp))
-                        .clickable(enabled = downloadProgress == null && !isDownloaded) {
+                        .premiumTap(enabled = downloadProgress == null && !isDownloaded, onClick = {
                             val surahId = surahForDownload
                             if (surahId != null) {
                                 downloadProgress = 0 to surahAyahCount
@@ -103,7 +105,7 @@ fun QariSelectorSheet(
                                     downloadProgress = null
                                 }
                             }
-                        },
+                        }),
                     color = if (isDownloaded) MaterialTheme.colorScheme.primaryContainer
                             else MaterialTheme.colorScheme.secondaryContainer
                 ) {
@@ -142,12 +144,12 @@ fun QariSelectorSheet(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(16.dp))
-                            .clickable {
+                            .premiumTap(onClick = {
                                 scope.launch {
                                     container.settingsRepository.setSelectedReciter(reciter.editionId)
                                     onDismiss()
                                 }
-                            },
+                            }),
                         shape = RoundedCornerShape(16.dp),
                         colors = CardDefaults.cardColors(
                             containerColor = if (isSelected)

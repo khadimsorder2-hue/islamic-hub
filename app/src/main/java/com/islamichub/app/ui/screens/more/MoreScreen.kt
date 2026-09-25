@@ -24,6 +24,7 @@ import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.Calculate
 import androidx.compose.material.icons.filled.CompassCalibration
 import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.EditNote
 import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.History
@@ -77,6 +78,7 @@ fun MoreScreen(
         MoreItem(R.string.more_qada, Icons.Filled.History, Screen.Qada.route, Color(0xFFD84315)),
         MoreItem(R.string.more_tracker, Icons.Filled.MenuBook, Screen.Tracker.route, Color(0xFF00ACC1)),
         MoreItem(R.string.more_bookmarks, Icons.Filled.Bookmark, Screen.Bookmarks.route, Color(0xFF66BB6A)),
+        MoreItem(R.string.more_notepad, Icons.Filled.EditNote, Screen.Notepad.route, Color(0xFFF9A825)),
         MoreItem(R.string.more_khatam, Icons.Filled.MenuBook, Screen.Khatam.route, Color(0xFF26A69A)),
         MoreItem(R.string.more_profile, Icons.Filled.Person, Screen.Profile.route, Color(0xFF5E35B1)),
         MoreItem(R.string.more_settings, Icons.Filled.Settings, Screen.Settings.route, Color(0xFF607D8B)),

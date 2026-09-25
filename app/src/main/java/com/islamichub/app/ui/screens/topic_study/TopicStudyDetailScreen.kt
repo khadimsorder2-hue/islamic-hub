@@ -357,7 +357,7 @@ fun TopicStudyDetailScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clip(RoundedCornerShape(16.dp))
-                                .clickable { vm.loadMoreAyahs() },
+                                .premiumTap(onClick = { vm.loadMoreAyahs() }),
                             shape = RoundedCornerShape(16.dp),
                             colors = CardDefaults.cardColors(
                                 containerColor = accent.copy(alpha = 0.08f)
@@ -411,7 +411,7 @@ fun TopicStudyDetailScreen(
                                         modifier = Modifier
                                             .fillMaxWidth()
                                             .clip(RoundedCornerShape(12.dp))
-                                            .clickable { onRelatedTopicClick(slug) }
+                                            .premiumTap(onClick = { onRelatedTopicClick(slug) })
                                             .padding(8.dp),
                                         verticalAlignment = Alignment.CenterVertically,
                                         horizontalArrangement = Arrangement.SpaceBetween

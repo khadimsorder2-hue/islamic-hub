@@ -39,6 +39,7 @@ import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.CompassCalibration
 import androidx.compose.material.icons.filled.Dashboard
+import androidx.compose.material.icons.filled.EditNote
 import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.History
@@ -270,10 +271,10 @@ fun HomeScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(AppRadius.lg))
-                        .clickable {
+                        .premiumTap(onClick = {
                             // v5.11.0 — resume lands on the exact ayah, not surah-top
                             onNavigate(com.islamichub.app.ui.navigation.Screen.QuranReader.createRoute(lr.surahNumber, lr.ayahNumber))
-                        },
+                        }),
                     color = MaterialTheme.colorScheme.surfaceContainerLow
                 ) {
                     Row(
@@ -445,6 +446,7 @@ fun HomeScreen(
                 GridFeature("তসবিহ", "কাউন্টার", Icons.Filled.Spa, Screen.Tasbih.route, "tasbih-bg.webp", Color(0xFFB36283)),
                 GridFeature("৯৯ নাম", "আসমাউল হুসনা", Icons.Filled.Favorite, Screen.Names.route, "asmaul_husna_light_bg.webp", Color(0xFFE91E63)),
                 GridFeature("দোয়া", "২৮ টি", Icons.Filled.Bedtime, Screen.Duas.route, "dua-premium-bg.webp", Color(0xFF6B6E91)),
+                GridFeature("নোটপ্যাড", "নোট ও তথ্য", Icons.Filled.EditNote, Screen.Notepad.route, null, Color(0xFFF9A825)),
                 GridFeature("AI স্ক্যানার", "ছবি বিশ্লেষণ", Icons.Filled.CameraAlt, Screen.Scanner.route, null, Color(0xFF43A047))
             )
             features.chunked(2).forEach { rowFeatures ->
@@ -577,7 +579,7 @@ fun HomeScreen(
                                 modifier = Modifier
                                     .clip(RoundedCornerShape(12.dp))
                                     .background(Color.White.copy(alpha = 0.18f))
-                                    .clickable {
+                                    .premiumTap(onClick = {
                                         val text = buildString {
                                             ayah.arabic?.let { appendLine(it) }
                                             ayah.bengali?.let { appendLine(it) }
@@ -591,7 +593,7 @@ fun HomeScreen(
                                         context.startActivity(
                                             android.content.Intent.createChooser(sendIntent, "আয়াত শেয়ার করুন")
                                         )
-                                    }
+                                    })
                                     .padding(horizontal = 12.dp, vertical = 8.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {

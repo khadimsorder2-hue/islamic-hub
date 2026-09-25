@@ -20,7 +20,8 @@ class BackupRestoreService(
     private val qadaRepo: QadaRepository,
     private val trackerRepo: TrackerRepository,
     private val khatamRepo: KhatamRepository,
-    private val settingsRepo: SettingsRepository
+    private val settingsRepo: SettingsRepository,
+    private val noteRepo: NoteRepository
 ) {
 
     private val gson = Gson()
@@ -35,7 +36,10 @@ class BackupRestoreService(
         val qadaSummary: QadaSummary = QadaSummary(),
         val trackerDays: List<DayTracker> = emptyList(),
         val khatamProgress: KhatamProgress? = null,
-        val settings: Map<String, Any> = emptyMap()
+        val settings: Map<String, Any> = emptyMap(),
+        // v5.12.0 — notes travel with every backup. Nullable so old backup
+        // files (without the field) never crash Gson's null-unfriendly reads.
+        val notes: List<Note>? = null
     )
 
     /**
@@ -48,12 +52,14 @@ class BackupRestoreService(
             val qadaSummary = qadaRepo.summary.first()
             val trackerDays = trackerRepo.days.first()
             val khatamProgress = khatamRepo.currentKhatam.first()
+            val notes = noteRepo.notes.first()
 
             val backup = BackupData(
                 bookmarks = bookmarks,
                 qadaSummary = qadaSummary,
                 trackerDays = trackerDays,
-                khatamProgress = khatamProgress
+                khatamProgress = khatamProgress,
+                notes = notes
             )
 
             val json = gson.toJson(backup)
@@ -83,6 +89,13 @@ class BackupRestoreService(
 
             // Restore bookmarks
             // Note: DataStore will replace existing data
+
+            // v5.12.0 — restore notes (if the backup carries any). Safe against
+            // old backup files where the notes field is absent (null).
+            val restoredNotes = backup.notes
+            if (!restoredNotes.isNullOrEmpty()) {
+                noteRepo.replaceAll(restoredNotes)
+            }
 
             Result.success(Unit)
         } catch (e: Exception) {

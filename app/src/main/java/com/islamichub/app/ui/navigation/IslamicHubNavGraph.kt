@@ -367,6 +367,31 @@ fun IslamicHubNavGraph(container: AppContainer) {
                     }
                 )
             }
+
+            // v5.12.0 — Notepad (ColorNote style notes with categories)
+            composable(Screen.Notepad.route) {
+                com.islamichub.app.ui.screens.notepad.NotepadScreen(
+                    container = container,
+                    onBack = { navController.popBackStack() },
+                    onEditNote = { noteId ->
+                        navController.navigate(Screen.NoteEdit.createRoute(noteId))
+                    }
+                )
+            }
+            composable(
+                route = Screen.NoteEdit.route,
+                arguments = listOf(navArgument("noteId") {
+                    type = NavType.StringType
+                    defaultValue = ""
+                })
+            ) { backStackEntry ->
+                val noteId = backStackEntry.arguments?.getString("noteId").orEmpty()
+                com.islamichub.app.ui.screens.notepad.NoteEditScreen(
+                    container = container,
+                    noteId = noteId.ifBlank { null },
+                    onBack = { navController.popBackStack() }
+                )
+            }
             composable(Screen.Profile.route) {
                 ProfileScreen(container = container, onBack = { navController.popBackStack() })
             }

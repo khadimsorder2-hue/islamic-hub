@@ -236,7 +236,7 @@ fun NamazShikkhaScreen(
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clickable {
+                        .premiumTap(onClick = {
                             if (state.apiKeyConfigured) {
                                 aiLoading = true
                                 aiAnswer = null
@@ -258,7 +258,7 @@ fun NamazShikkhaScreen(
                                     else aiAnswer = "ত্রুটি: ${result.error}"
                                 }
                             }
-                        },
+                        }),
                     shape = RoundedCornerShape(16.dp),
                     colors = CardDefaults.cardColors(
                         containerColor = if (state.apiKeyConfigured)
@@ -540,7 +540,7 @@ private fun NamazCategoryCard(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(12.dp))
-                            .clickable { onPrayerClick(prayer) }
+                            .premiumTap(onClick = { onPrayerClick(prayer) })
                             .padding(10.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(8.dp)

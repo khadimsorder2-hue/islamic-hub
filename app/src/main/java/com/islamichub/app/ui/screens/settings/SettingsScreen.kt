@@ -550,10 +550,10 @@ fun SettingsScreen(
                                 .fillMaxWidth()
                                 .padding(vertical = 4.dp)
                                 .clip(RoundedCornerShape(12.dp))
-                                .clickable {
+                                .premiumTap(onClick = {
                                     vm.setAiModel(preset.modelName)
                                     vm.setAiBaseUrl(preset.baseUrl)
-                                }
+                                })
                                 .border(
                                     width = if (state.aiModel == preset.modelName) 2.dp else 0.dp,
                                     color = if (state.aiModel == preset.modelName)

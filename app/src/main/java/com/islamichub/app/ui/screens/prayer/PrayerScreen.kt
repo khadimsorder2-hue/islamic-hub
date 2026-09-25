@@ -191,14 +191,14 @@ fun PrayerScreen(container: AppContainer) {
         item {
             Card(
                 modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp))
-                    .clickable {
+                    .premiumTap(onClick = {
                         // Use shared AudioController so FloatingAudioPlayer shows
                         container.audioController.playAssetAudio(
                             assetPath = "namaz_audio/azan2.mp3",
                             title = "অযান (আজান)",
                             subtitle = "ট্যাপ করে অযান শুনুন"
                         )
-                    },
+                    }),
                 shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
             ) {

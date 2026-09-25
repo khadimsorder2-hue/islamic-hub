@@ -29,6 +29,7 @@ import com.islamichub.app.data.repo.JamatTimeRepository
 import com.islamichub.app.data.repo.KhatamRepository
 import com.islamichub.app.data.repo.LastReadRepository
 import com.islamichub.app.data.repo.NamesRepository
+import com.islamichub.app.data.repo.NoteRepository
 import com.islamichub.app.data.repo.PrayerRepository
 import com.islamichub.app.data.repo.PrayerScheduler
 import com.islamichub.app.data.repo.QadaRepository
@@ -140,6 +141,8 @@ class AppContainer(internal val context: Context) {
     val tafsirRepository: TafsirRepository by lazy { TafsirRepository(context) }
     val khatamRepository: KhatamRepository by lazy { KhatamRepository(context) }
     val jamatTimeRepository: JamatTimeRepository by lazy { JamatTimeRepository(context) }
+    // v5.12.0 — ColorNote-style notepad
+    val noteRepository: NoteRepository by lazy { NoteRepository(context) }
 
     // v1.9.0 new services
     val audioDownloadService: AudioDownloadService by lazy { AudioDownloadService(context) }
@@ -154,7 +157,8 @@ class AppContainer(internal val context: Context) {
             qadaRepo = qadaRepository,
             trackerRepo = trackerRepository,
             khatamRepo = khatamRepository,
-            settingsRepo = settingsRepository
+            settingsRepo = settingsRepository,
+            noteRepo = noteRepository
         )
     }
 
