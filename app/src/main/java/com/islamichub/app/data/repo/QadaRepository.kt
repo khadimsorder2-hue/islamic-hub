@@ -31,6 +31,39 @@ data class QadaSummary(
     val isha: Int = 0
 ) {
     val total: Int get() = fajr + dhuhr + asr + maghrib + isha
+}
+
+/** Grouping granularity for the Qada history dashboard. */
+enum class QadaPeriod { DAY, WEEK, MONTH, YEAR }
+
+/** One row of the Qada history dashboard — a time bucket with its missed/made-up counts. */
+data class QadaPeriodStat(
+    val periodKey: String,     // e.g. "2026-09-23", "2026-W38", "2026-09", "2026"
+    val label: String,         // human-readable label for the UI
+    val missed: Int,           // total qada logged in this period
+    val completed: Int         // total made up in this period
+) {
+    val outstanding: Int get() = (missed - completed).coerceAtLeast(0)
+}
+
+/**
+ * Persistent Qada (missed prayer) tracker.
+ * Single-writer: all writes go through [edit].
+ */
+class QadaRepository(private val context: Context) {
+
+    private val gson = Gson()
+    private val KEY_ENTRIES = stringPreferencesKey("qada_entries_json")
+
+    val entries: Flow<List<QadaEntry>> = context.qadaStore.data.map { prefs ->
+        prefs[KEY_ENTRIES]?.let { json ->
+            try {
+                val type = object : TypeToken<List<QadaEntry>>() {}.type
+                gson.fromJson<List<QadaEntry>>(json, type) ?: emptyList()
+            } catch (_: Exception) { emptyList() }
+        } ?: emptyList()
+    }
+
     val summary: Flow<QadaSummary> = entries.map { list ->
         val map = listOf("Fajr", "Dhuhr", "Asr", "Maghrib", "Isha").associateWith { p ->
             list.filter { it.prayer == p }.sumOf { (it.count - it.completed).coerceAtLeast(0) }

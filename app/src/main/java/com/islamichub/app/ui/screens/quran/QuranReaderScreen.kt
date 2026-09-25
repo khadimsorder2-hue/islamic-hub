@@ -83,6 +83,7 @@ import com.islamichub.app.ui.theme.premiumGlow
 import com.islamichub.app.ui.theme.premiumPulseHighlight
 import com.islamichub.app.ui.theme.premiumTap
 import com.islamichub.app.ui.theme.staggerEntrance
+import androidx.compose.foundation.layout.height
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)

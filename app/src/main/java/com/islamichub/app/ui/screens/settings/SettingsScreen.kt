@@ -886,11 +886,12 @@ fun SettingsScreen(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Spacer(8.dp)
+                    val clearCacheCtx = LocalContext.current
                     OutlinedButton(
                         onClick = {
                             vm.clearCache()
                             Toast.makeText(
-                                LocalContext.current,
+                                clearCacheCtx,
                                 "✓ ক্যাশ পরিষ্কার হয়েছে",
                                 Toast.LENGTH_SHORT
                             ).show()
