@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -50,7 +51,9 @@ import com.islamichub.app.ui.components.PremiumHeroCard
 import com.islamichub.app.ui.components.PremiumSectionHeader
 import com.islamichub.app.ui.components.loadAssetImage
 import com.islamichub.app.ui.theme.AppColors
+import com.islamichub.app.ui.theme.premiumShimmer
 import com.islamichub.app.ui.theme.staggerEntrance
+import androidx.compose.animation.with
 import androidx.compose.foundation.Image
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
@@ -128,7 +131,34 @@ fun CalendarScreen(container: AppContainer, onBack: () -> Unit = {}) {
                 }
             }
 
-            // Calendar grid
+            // Calendar grid — v5.11.0: month paging animates (was an instant swap)
+            // and first load shows a shimmer skeleton instead of a blank grid
+            androidx.compose.animation.AnimatedContent(
+                targetState = state.selectedMonthOffset,
+                transitionSpec = {
+                    val dir = if (targetState > initialState) 1 else -1
+                    (androidx.compose.animation.slideInHorizontally { dir * it / 3 } + androidx.compose.animation.fadeIn()) with
+                        (androidx.compose.animation.slideOutHorizontally { -dir * it / 3 } + androidx.compose.animation.fadeOut())
+                },
+                label = "monthGrid"
+            ) { _ ->
+                if (state.isLoading) {
+                    LazyVerticalGrid(
+                        columns = GridCells.Fixed(7),
+                        contentPadding = PaddingValues(4.dp),
+                        verticalArrangement = Arrangement.spacedBy(2.dp),
+                        horizontalArrangement = Arrangement.spacedBy(2.dp),
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        items(42) {
+                            Box(
+                                modifier = Modifier
+                                    .aspectRatio(1f)
+                                    .premiumShimmer(RoundedCornerShape(8.dp))
+                            )
+                        }
+                    }
+                } else {
             LazyVerticalGrid(
                 columns = GridCells.Fixed(7),
                 contentPadding = PaddingValues(4.dp),
@@ -153,6 +183,8 @@ fun CalendarScreen(container: AppContainer, onBack: () -> Unit = {}) {
                             modifier = Modifier.staggerEntrance(index)
                         )
                     }
+                }
+            }
                 }
             }
         }
@@ -205,8 +237,8 @@ private fun DayCell(
             )
             if (isEvent) {
                 Text(
-                    text = day.islamicEvent!!,
-                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 7.sp),
+                    text = day.islamicEvent!!, 
+                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp),
                     color = MaterialTheme.colorScheme.secondary,
                     textAlign = TextAlign.Center,
                     maxLines = 1

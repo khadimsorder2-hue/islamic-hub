@@ -151,12 +151,13 @@ fun QaScreen(
                         QaCard(
                             item = item,
                             onCopy = {
+                                // v5.11.0 — icon was ContentCopy but the action fired a
+                                // share chooser labeled "Copy / Share"; now it really
+                                // copies to the clipboard with a toast.
                                 val text = "প্রশ্ন: ${item.question}\n\nউত্তর: ${item.answer}\n\n${item.reference?.let { "সূত্র: $it" } ?: ""}"
-                                val shareIntent = Intent(Intent.ACTION_SEND).apply {
-                                    type = "text/plain"
-                                    putExtra(Intent.EXTRA_TEXT, text)
-                                }
-                                context.startActivity(Intent.createChooser(shareIntent, "Copy / Share"))
+                                val clipboard = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+                                clipboard.setPrimaryClip(android.content.ClipData.newPlainText("islamic-hub-qa", text))
+                                android.widget.Toast.makeText(context, "কপি হয়েছে ✅", android.widget.Toast.LENGTH_SHORT).show()
                             },
                             onVerify = if (state.apiKeyConfigured) {
                                 { vm.verifyWithAi(item) }
@@ -253,7 +254,7 @@ private fun QaCard(
                                 modifier = Modifier
                                     .clip(RoundedCornerShape(50))
                                     .background(MaterialTheme.colorScheme.primaryContainer)
-                                    .clickable(onClick = onVerify)
+                                    .premiumTap(onClick = onVerify)
                                     .padding(horizontal = 12.dp, vertical = 6.dp)
                             ) {
                                 Row(verticalAlignment = Alignment.CenterVertically) {

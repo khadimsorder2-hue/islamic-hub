@@ -18,8 +18,11 @@ sealed class Screen(val route: String) {
         /** v5.9.0 — carry the query so Home's smart search bar lands pre-filled + searching. */
         fun createRoute(query: String) = "quran/search?q=${android.net.Uri.encode(query)}"
     }
-    data object QuranReader : Screen("quran/{surahNumber}") {
-        fun createRoute(surahNumber: Int) = "quran/$surahNumber"
+    data object QuranReader : Screen("quran/{surahNumber}?ayah={ayah}") {
+        /** v5.11.0 — optional ayah param so bookmarks/last-read land on the exact ayah. */
+        fun createRoute(surahNumber: Int, ayahNumber: Int? = null) =
+            if (ayahNumber != null && ayahNumber >= 1) "quran/$surahNumber?ayah=$ayahNumber"
+            else "quran/$surahNumber"
     }
     data object Prayer : Screen("prayer")
     data object Qibla : Screen("qibla")

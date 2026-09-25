@@ -21,6 +21,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Bookmark
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.MenuBook
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -35,6 +36,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -51,16 +53,20 @@ import com.islamichub.app.data.repo.Bookmark
 import com.islamichub.app.ui.components.PremiumHeroCard
 import com.islamichub.app.ui.components.PremiumSectionHeader
 import com.islamichub.app.ui.theme.staggerEntrance
+import com.islamichub.app.ui.theme.premiumTap
+import com.islamichub.app.ui.theme.toBanglaDigits
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BookmarksScreen(
     container: AppContainer,
     onBack: () -> Unit,
-    onBookmarkClick: (Int) -> Unit
+    onBookmarkClick: (Int, Int) -> Unit
 ) {
     val bookmarks by remember { container.bookmarkRepository.bookmarks }.collectAsState(initial = emptyList())
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
 
     // Group bookmarks by surah for premium grid display
     val grouped = bookmarks.groupBy { it.surahNumber }
@@ -234,7 +240,14 @@ fun BookmarksScreen(
                                     bookmark = bm,
                                     accent = accent,
                                     modifier = Modifier.weight(1f),
-                                    onClick = { onBookmarkClick(bm.surahNumber) }
+                                    onClick = { onBookmarkClick(bm.surahNumber, bm.ayahNumber) },
+                                    onDelete = {
+                                        // v5.11.0 — remove(surah, ayah) existed but no UI called it;
+                                        // the only way to un-bookmark was reopening that exact ayah
+                                        scope.launch {
+                                            container.bookmarkRepository.remove(bm.surahNumber, bm.ayahNumber)
+                                        }
+                                    }
                                 )
                             }
                             if (rowBms.size == 1) {
@@ -255,12 +268,13 @@ private fun androidx.compose.foundation.layout.RowScope.BookmarkGridCard(
     bookmark: Bookmark,
     accent: Color,
     modifier: Modifier = Modifier,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    onDelete: () -> Unit
 ) {
     Card(
         modifier = modifier
             .clip(RoundedCornerShape(20.dp))
-            .clickable(onClick = onClick),
+            .premiumTap(onClick = onClick),
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(containerColor = Color.Transparent),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
@@ -281,7 +295,7 @@ private fun androidx.compose.foundation.layout.RowScope.BookmarkGridCard(
                 modifier = Modifier.fillMaxWidth().padding(14.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                // Top row: ayah number + bookmark icon
+                // Top row: ayah number + bookmark icon + delete (v5.11.0)
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -289,18 +303,27 @@ private fun androidx.compose.foundation.layout.RowScope.BookmarkGridCard(
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(36.dp)
+                            .size(44.dp)
                             .clip(CircleShape)
                             .background(accent),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text("আয়াত ${bookmark.ayahNumber}",
-                            style = MaterialTheme.typography.labelSmall,
+                        // v5.11.0 — “আয়াত ২৮৬” overflowed a 36dp circle; show just the
+                        // Bangla number at 44dp (the surah name row below gives context)
+                        Text(bookmark.ayahNumber.toBanglaDigits(),
+                            style = MaterialTheme.typography.labelMedium,
                             fontWeight = FontWeight.Bold,
                             color = Color.White)
                     }
-                    Icon(Icons.Filled.Bookmark, contentDescription = null,
-                        tint = accent, modifier = Modifier.size(20.dp))
+                    Row {
+                        Icon(Icons.Filled.Bookmark, contentDescription = null,
+                            tint = accent, modifier = Modifier.size(20.dp))
+                        IconButton(onClick = onDelete, modifier = Modifier.size(28.dp)) {
+                            Icon(Icons.Filled.Close, contentDescription = "বুকমার্ক মুছুন",
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.size(16.dp))
+                        }
+                    }
                 }
                 // Arabic snippet
                 Text(

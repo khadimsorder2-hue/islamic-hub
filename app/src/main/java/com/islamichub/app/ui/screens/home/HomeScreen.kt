@@ -7,6 +7,9 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -94,6 +97,7 @@ import com.islamichub.app.ui.theme.AppElevation
 import com.islamichub.app.ui.theme.AppFontSizes
 import com.islamichub.app.ui.theme.PremiumProgressBar
 import com.islamichub.app.ui.theme.staggerEntrance
+import com.islamichub.app.ui.theme.premiumTap
 
 @Composable
 fun HomeScreen(
@@ -107,8 +111,15 @@ fun HomeScreen(
     // v5.10.0 — resume reading: actual scroll position is recorded by the reader now
     val lastRead by container.lastReadRepository.lastRead.collectAsState(initial = null)
 
+    // v5.11.0 — hero content sat under the transparent status bar on notched devices
+    val statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
     LazyColumn(
-        contentPadding = PaddingValues(AppSpacing.screenPadding),
+        contentPadding = PaddingValues(
+            start = AppSpacing.screenPadding,
+            end = AppSpacing.screenPadding,
+            top = statusBarTop + AppSpacing.screenPadding,
+            bottom = AppSpacing.screenPadding
+        ),
         verticalArrangement = Arrangement.spacedBy(AppSpacing.sectionGap)
     ) {
         // ─── Premium Hero (splash-like) ───
@@ -260,7 +271,8 @@ fun HomeScreen(
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(AppRadius.lg))
                         .clickable {
-                            onNavigate(com.islamichub.app.ui.navigation.Screen.QuranReader.createRoute(lr.surahNumber))
+                            // v5.11.0 — resume lands on the exact ayah, not surah-top
+                            onNavigate(com.islamichub.app.ui.navigation.Screen.QuranReader.createRoute(lr.surahNumber, lr.ayahNumber))
                         },
                     color = MaterialTheme.colorScheme.surfaceContainerLow
                 ) {
@@ -713,7 +725,7 @@ private fun QuickChip(chip: ChipItem, onClick: () -> Unit) {
         modifier = Modifier
             .clip(RoundedCornerShape(20.dp))
             .background(MaterialTheme.colorScheme.surfaceVariant)
-            .clickable(onClick = onClick)
+            .premiumTap(onClick = onClick)
             .padding(horizontal = 14.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(6.dp)

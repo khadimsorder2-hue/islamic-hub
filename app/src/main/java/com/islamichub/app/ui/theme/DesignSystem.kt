@@ -141,3 +141,20 @@ object AppFontSizes {
     val display = 28.sp
     val displayLarge = 36.sp
 }
+
+// ─── Bangla Digit Conversion (v5.11.0) ─────────────────────────────────────
+//
+// The app is Bangla-first (heroes already render "১১৪ সূরা • ৬২৩৬ আয়াত"),
+// so counters/dates rendered with .toString() look inconsistent. Route every
+// user-facing number through these helpers for a uniform Bangla look.
+
+private const val BN_DIGITS = "০১২৩৪৫৬৭৮৯"
+
+/** 27 → "২৭", keeps non-digit chars (e.g. "12:30" → "১২:৩০"). */
+fun Int.toBanglaDigits(): String = toString().map { if (it.isDigit()) BN_DIGITS[it - '0'] else it }.joinToString("")
+
+/** Long variant for ms timestamps rendered as numbers. */
+fun Long.toBanglaDigits(): String = toString().map { if (it.isDigit()) BN_DIGITS[it - '0'] else it }.joinToString("")
+
+/** String variant — converts ASCII digits inside an existing string. */
+fun String.toBanglaDigits(): String = map { if (it.isDigit()) BN_DIGITS[it - '0'] else it }.joinToString("")

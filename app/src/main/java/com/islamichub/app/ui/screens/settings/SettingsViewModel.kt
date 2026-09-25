@@ -96,7 +96,10 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
             val banglaScale = container.settingsRepository.banglaFontScale.first()
             val englishScale = container.settingsRepository.englishFontScale.first()
             val showTranslit = container.settingsRepository.showTransliteration.first()
-            val cacheSize = container.tafsirRepository.cacheSizeBytes()
+            // v5.11.0 — cache meter now includes the translation cache (Settings
+            // "ক্যাশ মুছুন" already deletes it; the meter just never counted it)
+            val cacheSize = container.tafsirRepository.cacheSizeBytes() +
+                container.translationCache.getCacheSize()
             val aiKey = container.settingsRepository.aiApiKey.first()
             val aiUrl = container.settingsRepository.aiBaseUrl.first()
             val aiModel = container.settingsRepository.aiModel.first()

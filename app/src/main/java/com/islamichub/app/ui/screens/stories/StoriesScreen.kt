@@ -62,6 +62,7 @@ import com.islamichub.app.ui.theme.staggerEntrance
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.MenuBook
+import com.islamichub.app.ui.theme.premiumTap
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -346,7 +347,7 @@ private fun StoryCardBase(
     onClick: () -> Unit
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).clickable(onClick = onClick),
+        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).premiumTap(onClick = onClick),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)

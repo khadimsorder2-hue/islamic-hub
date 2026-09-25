@@ -48,6 +48,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.islamichub.app.data.AppContainer
 import com.islamichub.app.data.repo.AIService
+import com.islamichub.app.ui.theme.premiumShimmer
 import kotlinx.coroutines.launch
 
 /**
@@ -159,17 +160,25 @@ ${if (context.isNotBlank()) "কনটেক্সট: $context" else ""}
                     }
                 }
 
-                // Loading
+                // Loading — v5.11.0 shimmer skeleton (was a lone spinner + text;
+                // this matches the app's premium skeleton language)
                 if (isLoading) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth().padding(16.dp),
-                        horizontalArrangement = Arrangement.Center,
-                        verticalAlignment = Alignment.CenterVertically
+                    Column(
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-                        CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
-                        Text("  AI উত্তর তৈরি করছে…",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Row(verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
+                            Text("AI উত্তর তৈরি করছে…",
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                        Box(Modifier.fillMaxWidth().height(14.dp).premiumShimmer(RoundedCornerShape(7.dp)))
+                        Box(Modifier.fillMaxWidth(0.72f).height(14.dp).premiumShimmer(RoundedCornerShape(7.dp)))
+                        Box(Modifier.fillMaxWidth(0.9f).height(14.dp).premiumShimmer(RoundedCornerShape(7.dp)))
+                        Box(Modifier.fillMaxWidth(0.6f).height(14.dp).premiumShimmer(RoundedCornerShape(7.dp)))
+                        Box(Modifier.fillMaxWidth(0.8f).height(14.dp).premiumShimmer(RoundedCornerShape(7.dp)))
                     }
                 }
 
@@ -204,8 +213,57 @@ ${if (context.isNotBlank()) "কনটেক্সট: $context" else ""}
                                     fontWeight = FontWeight.SemiBold,
                                     color = MaterialTheme.colorScheme.onSecondaryContainer)
                             }
-                            Text(ans, style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSecondaryContainer)
+                            // v5.11.0 — render the emoji-headed sections the prompts ask
+                            // for (📖 🌟 🏡 …) as a real typographic hierarchy instead of
+                            // one flat text blob
+                            remember(ans) { parseAiSectionLines(ans) }.forEach { line ->
+                                if (line.isHeader) {
+                                    val t = line.text.trimStart()
+                                    val emoji = t.takeWhile { !it.isLetterOrDigit() }.trim()
+                                    val rest = if (emoji.isNotEmpty()) t.removePrefix(emoji).trim() else t
+                                    val colonIdx = rest.indexOf(':')
+                                    if (colonIdx in 1..40) {
+                                        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                                            Row(verticalAlignment = Alignment.CenterVertically,
+                                                horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                                if (emoji.isNotEmpty()) {
+                                                    Text(emoji, style = MaterialTheme.typography.titleSmall)
+                                                }
+                                                Text(
+                                                    rest.substring(0, colonIdx).trim(),
+                                                    style = MaterialTheme.typography.titleSmall,
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = MaterialTheme.colorScheme.primary
+                                                )
+                                            }
+                                            Text(
+                                                rest.substring(colonIdx + 1).trim(),
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                color = MaterialTheme.colorScheme.onSecondaryContainer
+                                            )
+                                        }
+                                    } else {
+                                        Row(verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                            if (emoji.isNotEmpty()) {
+                                                Text(emoji, style = MaterialTheme.typography.titleSmall)
+                                            }
+                                            Text(
+                                                rest,
+                                                style = MaterialTheme.typography.titleSmall,
+                                                fontWeight = FontWeight.Bold,
+                                                color = MaterialTheme.colorScheme.primary
+                                            )
+                                        }
+                                    }
+                                } else {
+                                    Text(
+                                        line.text,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.onSecondaryContainer
+                                    )
+                                }
+                            }
                         }
                     }
 
@@ -243,4 +301,21 @@ ${if (context.isNotBlank()) "কনটেক্সট: $context" else ""}
             TextButton(onClick = onDismiss) { Text("বন্ধ করুন") }
         }
     )
+}
+
+// ─── v5.11.0 — AI answer section parsing ────────────────────────────────
+
+private data class AiSectionLine(val text: String, val isHeader: Boolean)
+
+private val AI_SECTION_EMOJIS = listOf(
+    "📖", "🕰️", "🌟", "🏡", "🔗", "✅", "🎯", "🕌", "📚", "✨", "🤲", "🌙", "❓", "💡"
+)
+
+private fun parseAiSectionLines(answer: String): List<AiSectionLine> {
+    return answer.lines()
+        .filter { it.isNotBlank() }
+        .map { line ->
+            val trimmed = line.trimStart()
+            AiSectionLine(trimmed, AI_SECTION_EMOJIS.any { trimmed.startsWith(it) })
+        }
 }

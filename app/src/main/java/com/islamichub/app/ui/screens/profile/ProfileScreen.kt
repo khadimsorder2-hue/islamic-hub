@@ -75,6 +75,7 @@ import com.islamichub.app.R
 import com.islamichub.app.data.AppContainer
 import com.islamichub.app.ui.components.PremiumHeroCard
 import com.islamichub.app.ui.theme.staggerEntrance
+import com.islamichub.app.ui.theme.premiumTap
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -777,7 +778,7 @@ private fun androidx.compose.foundation.layout.RowScope.BackupActionCard(
     Card(
         modifier = modifier
             .clip(RoundedCornerShape(20.dp))
-            .clickable(onClick = onClick),
+            .premiumTap(onClick = onClick),
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(containerColor = color.copy(alpha = 0.1f)),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)

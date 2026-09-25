@@ -356,12 +356,24 @@ fun NamazShikkhaScreen(
             ) {
                 steps.forEachIndexed { idx, step ->
                     NamazStepRow(step, state.selectedGender, idx + 1) { audioFile ->
-                        // Use shared AudioController → FloatingAudioPlayer shows automatically
-                        container.audioController.playAssetAudio(
-                            assetPath = "namaz_audio/$audioFile",
-                            title = "${prayer.nameBn} — ধাপ ${idx + 1}",
-                            subtitle = "নামাজ শিক্ষা"
-                        )
+                        // v5.11.0 — CDN steps carry full https:// URLs (surah_fatiha/
+                        // kafirun/falaq/nas); the old path blindly prepended
+                        // "namaz_audio/" to them → guaranteed playback failure.
+                        // Route remote URLs through playUrl, bundled files through playAssetAudio.
+                        val stepTitle = "${prayer.nameBn} — ধাপ ${idx + 1}"
+                        if (audioFile.startsWith("http")) {
+                            container.audioController.playUrl(
+                                url = audioFile,
+                                title = stepTitle,
+                                subtitle = "নামাজ শিক্ষা"
+                            )
+                        } else {
+                            container.audioController.playAssetAudio(
+                                assetPath = "namaz_audio/$audioFile",
+                                title = stepTitle,
+                                subtitle = "নামাজ শিক্ষা"
+                            )
+                        }
                     }
                 }
                 Spacer(Modifier.height(32.dp))
@@ -575,7 +587,7 @@ private fun ExtendedNamazCard(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
-            .clickable(onClick = onClick),
+            .premiumTap(onClick = onClick),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)

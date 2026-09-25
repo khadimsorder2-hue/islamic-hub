@@ -143,6 +143,21 @@ fun Modifier.premiumTap(
         )
 }
 
+/**
+ * v5.11.0 — one-shot haptic performer for events that are NOT taps:
+ * tasbih round-complete, quiz answer reveal, milestone reached, etc.
+ *
+ * ```
+ * val haptic = rememberPremiumHaptic()
+ * LaunchedEffect(state.justCompletedRound) { if (state.justCompletedRound) haptic(HapticFeedbackType.LongPress) }
+ * ```
+ */
+@Composable
+fun rememberPremiumHaptic(): (HapticFeedbackType) -> Unit {
+    val haptics = LocalHapticFeedback.current
+    return remember(haptics) { { type -> haptics.performHapticFeedback(type) } }
+}
+
 // ─── 3. Count-up number text ─────────────────────────────────────────────────
 
 /**

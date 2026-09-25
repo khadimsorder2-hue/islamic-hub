@@ -4,6 +4,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -17,12 +20,20 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -37,15 +48,21 @@ import com.islamichub.app.ui.theme.staggerEntrance
 import com.islamichub.app.ui.theme.arabicSp
 import com.islamichub.app.ui.theme.banglaSp
 import com.islamichub.app.ui.theme.englishSp
+import com.islamichub.app.ui.theme.premiumTap
+import androidx.compose.material.icons.filled.ContentCopy
 
 @Composable
 fun NamesScreen(container: AppContainer) {
     val vm = remember { NamesViewModel(container) }
     val state by vm.state.collectAsState()
     val context = androidx.compose.ui.platform.LocalContext.current
+    // v5.11.0 — AI explain on any name (drop-in shared popup)
+    var aiName by remember { mutableStateOf<NameOfAllah?>(null) }
 
+    // v5.11.0 — status-bar-aware top padding (edge-to-edge fix)
+    val statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
     LazyColumn(
-        contentPadding = PaddingValues(16.dp),
+        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = statusBarTop + 16.dp, bottom = 16.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         // Premium hero
@@ -77,14 +94,54 @@ fun NamesScreen(container: AppContainer) {
         }
         itemsIndexed(state.names, key = { _, name -> name.number }) { index, name ->
             Box(modifier = Modifier.staggerEntrance(index)) {
-                NameRow(name)
+                NameRow(
+                    name = name,
+                    onCopy = {
+                        val text = "${name.number}. ${name.arabic}\n" +
+                            "${name.transliteration}\n" +
+                            "${name.englishMeaning}\n" +
+                            "${name.bengaliMeaning}"
+                        val clipboard = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+                        clipboard.setPrimaryClip(android.content.ClipData.newPlainText("islamic-hub-name", text))
+                        android.widget.Toast.makeText(context, "কপি হয়েছে ✅", android.widget.Toast.LENGTH_SHORT).show()
+                    },
+                    onShare = {
+                        val text = "${name.number}. ${name.arabic}\n" +
+                            "${name.transliteration} — ${name.englishMeaning}\n" +
+                            "${name.bengaliMeaning}\n\n" +
+                            "— Islamic Hub থেকে শেয়ার করা হয়েছে"
+                        val shareIntent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+                            type = "text/plain"
+                            putExtra(android.content.Intent.EXTRA_TEXT, text)
+                        }
+                        context.startActivity(android.content.Intent.createChooser(shareIntent, "শেয়ার করুন"))
+                    },
+                    onAskAi = { aiName = name }
+                )
             }
         }
+    }
+
+    // v5.11.0 — shared AI explanation popup
+    aiName?.let { n ->
+        com.islamichub.app.ui.components.AIExplanationPopup(
+            container = container,
+            title = "আসমাউল হুসনা",
+            question = "আল্লাহর নাম \"${n.transliteration}\" (${n.arabic}) সম্পর্কে বিস্তারিত বলুন — অর্থ: ${n.bengaliMeaning}",
+            context = "আল্লাহর ৯৯টি নামের মধ্যে ${n.number} নম্বর নাম",
+            show = true,
+            onDismiss = { aiName = null }
+        )
     }
 }
 
 @Composable
-private fun NameRow(name: NameOfAllah) {
+private fun NameRow(
+    name: NameOfAllah,
+    onCopy: () -> Unit,
+    onShare: () -> Unit,
+    onAskAi: () -> Unit
+) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
@@ -135,5 +192,39 @@ private fun NameRow(name: NameOfAllah) {
                 textAlign = TextAlign.End
             )
         }
+        // v5.11.0 — copy / share / AI actions (this screen had none of them)
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, bottom = 10.dp),
+            horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.End)
+        ) {
+            SmallActionChip(icon = Icons.Filled.AutoAwesome, label = "AI ব্যাখ্যা", onClick = onAskAi)
+            SmallActionChip(icon = Icons.Filled.Share, label = "শেয়ার", onClick = onShare)
+            SmallActionChip(
+                icon = Icons.Filled.ContentCopy,
+                label = "কপি",
+                onClick = onCopy
+            )
+        }
+    }
+}
+
+@Composable
+private fun SmallActionChip(icon: androidx.compose.ui.graphics.vector.ImageVector, label: String, onClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .clip(RoundedCornerShape(50))
+            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.08f))
+            .premiumTap(onClick = onClick)
+            .padding(horizontal = 10.dp, vertical = 5.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(14.dp))
+        Text(
+            label,
+            style = MaterialTheme.typography.labelSmall.copy(fontSize = banglaSp(MaterialTheme.typography.labelSmall.fontSize)),
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.primary
+        )
     }
 }

@@ -66,6 +66,7 @@ import com.islamichub.app.ui.theme.PremiumCountUpText
 import com.islamichub.app.ui.theme.PremiumProgressBar
 import com.islamichub.app.ui.theme.premiumPulseHighlight
 import com.islamichub.app.ui.theme.staggerEntrance
+import com.islamichub.app.ui.theme.premiumTap
 
 /** A khatam finished in ≤30 days is "Ramadan pace" (a full Quran in one month). */
 private const val RAMADAN_PACE_DAYS = 30
@@ -444,7 +445,7 @@ fun KhatamScreen(
                     colors = CardDefaults.cardColors(
                         containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.08f)
                     ),
-                    elevation = CardDefaults.cardElevation(defaultElevation = AppElevation.low)
+                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
                 ) {
                     Row(
                         modifier = Modifier.fillMaxWidth().padding(20.dp),
@@ -616,7 +617,7 @@ private fun KhatamHistoryCard(entry: KhatamHistoryEntry, index: Int) {
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerLow.copy(alpha = 0.55f)
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = AppElevation.low)
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp),
@@ -678,7 +679,7 @@ private fun KhatamYearReviewCard(yearStats: List<KhatamPeriodStat>) {
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerLow.copy(alpha = 0.4f)
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = AppElevation.low)
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Column(
             modifier = Modifier.fillMaxWidth().padding(16.dp),
@@ -773,7 +774,7 @@ private fun androidx.compose.foundation.layout.RowScope.KhatamSurahGridCard(
                 cornerRadius = 16.dp
             )
             .clip(RoundedCornerShape(16.dp))
-            .clickable(onClick = onClick),
+            .premiumTap(onClick = onClick),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = Color.Transparent),
         elevation = CardDefaults.cardElevation(defaultElevation = if (isCompleted) 2.dp else 0.dp)

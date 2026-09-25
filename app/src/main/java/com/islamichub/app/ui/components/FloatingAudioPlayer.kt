@@ -26,6 +26,8 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -40,9 +42,12 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.runtime.collectAsState
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import com.islamichub.app.data.AppContainer
 import com.islamichub.app.data.repo.AudioController
+import com.islamichub.app.ui.theme.toBanglaDigits
 import kotlinx.coroutines.delay
 
 /**
@@ -107,7 +112,8 @@ fun FloatingAudioPlayer(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                // Play/Pause button
+                // Play/Pause button (v5.11.0 — haptic tick on press)
+                val haptics = LocalHapticFeedback.current
                 Box(
                     modifier = Modifier
                         .size(40.dp)
@@ -121,6 +127,7 @@ fun FloatingAudioPlayer(
                             )
                         )
                         .clickable {
+                            haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                             if (audioState.isPlaying) {
                                 container.audioController.pause()
                             } else {
@@ -148,8 +155,8 @@ fun FloatingAudioPlayer(
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = if (audioState.currentAyah != null)
-                            "সূরা ${audioState.currentSurah} • আয়াত ${audioState.currentAyah}"
-                            else "সূরা ${audioState.currentSurah}",
+                            "সূরা ${audioState.currentSurah?.toBanglaDigits()} • আয়াত ${audioState.currentAyah?.toBanglaDigits()}"
+                            else "সূরা ${audioState.currentSurah?.toBanglaDigits()}",
                         style = MaterialTheme.typography.labelMedium,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSecondaryContainer,
@@ -215,6 +222,7 @@ fun FloatingAudioPlayer(
                         .size(32.dp)
                         .clip(CircleShape)
                         .clickable {
+                            haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                             container.audioController.stop()
                             elapsedSeconds = 0
                         },
@@ -229,15 +237,70 @@ fun FloatingAudioPlayer(
                 }
             }
 
-            // Progress bar
-            if (audioState.isPlaying || audioState.isLoading) {
-                LinearProgressIndicator(
+            // v5.11.0 — inline playback error row (AudioState.error existed but was
+            // never surfaced before; failures were completely silent)
+            audioState.error?.let { err ->
+                Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 12.dp, vertical = 2.dp),
-                    color = MaterialTheme.colorScheme.primary,
-                    trackColor = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.15f)
-                )
+                        .padding(horizontal = 12.dp, vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "⚠ $err",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.weight(1f),
+                        maxLines = 2
+                    )
+                    Text(
+                        text = "ঠিক আছে",
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(8.dp))
+                            .clickable { container.audioController.clearError() }
+                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                    )
+                }
+            }
+
+            // v5.11.0 — determinate SEEKABLE progress (was an endless-loop
+            // indeterminate bar; seekTo/getDuration existed but were never wired)
+            if (audioState.isPlaying || audioState.isLoading) {
+                val durMs = audioState.durationMs
+                if (durMs > 0 && !audioState.isLoading) {
+                    var dragProgress by remember { mutableStateOf<Float?>(null) }
+                    val sliderValue = dragProgress
+                        ?: (if (durMs > 0) (positionMs.toFloat() / durMs).coerceIn(0f, 1f) else 0f)
+                    Slider(
+                        value = sliderValue,
+                        onValueChange = { dragProgress = it },
+                        onValueChangeFinished = {
+                            dragProgress?.let { p ->
+                                container.audioController.seekTo((p * durMs).toLong())
+                            }
+                            dragProgress = null
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 4.dp),
+                        colors = SliderDefaults.colors(
+                            thumbColor = MaterialTheme.colorScheme.primary,
+                            activeTrackColor = MaterialTheme.colorScheme.primary,
+                            inactiveTrackColor = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.15f)
+                        )
+                    )
+                } else {
+                    LinearProgressIndicator(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 12.dp, vertical = 2.dp),
+                        color = MaterialTheme.colorScheme.primary,
+                        trackColor = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.15f)
+                    )
+                }
             }
         }
     }

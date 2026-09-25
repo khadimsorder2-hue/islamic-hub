@@ -55,6 +55,7 @@ import com.islamichub.app.ui.components.PremiumSectionHeader
 import com.islamichub.app.ui.theme.PremiumProgressBar
 import com.islamichub.app.ui.theme.premiumTap
 import com.islamichub.app.ui.theme.staggerEntrance
+import com.islamichub.app.ui.theme.toBanglaDigits
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -137,7 +138,7 @@ fun TrackerScreen(
                                     Text("নামাজ স্ট্রিক",
                                         style = MaterialTheme.typography.labelMedium,
                                         color = Color.White.copy(alpha = 0.9f))
-                                    Text("${state.streak} দিন",
+                                    Text("${state.streak.toBanglaDigits()} দিন",
                                         style = MaterialTheme.typography.displaySmall,
                                         fontWeight = FontWeight.Bold,
                                         color = Color.White)
@@ -147,7 +148,7 @@ fun TrackerScreen(
                                 Text("আজ",
                                     style = MaterialTheme.typography.labelMedium,
                                     color = Color.White.copy(alpha = 0.9f))
-                                Text("$doneCount/5",
+                                Text("${doneCount.toBanglaDigits()}/৫",
                                     style = MaterialTheme.typography.headlineMedium,
                                     fontWeight = FontWeight.Bold,
                                     color = Color.White)
@@ -223,14 +224,14 @@ fun TrackerScreen(
                 ) {
                     StatGridCard(
                         icon = Icons.Filled.Spa,
-                        value = state.totalZikr.toString(),
+                        value = state.totalZikr.toBanglaDigits(),
                         label = "মোট তসবিহ",
                         color = Color(0xFFB36283),
                         modifier = Modifier.weight(1f).staggerEntrance(0)
                     )
                     StatGridCard(
                         icon = Icons.Filled.AutoStories,
-                        value = state.totalAyahs.toString(),
+                        value = state.totalAyahs.toBanglaDigits(),
                         label = "আয়াত পঠিত",
                         color = Color(0xFF6D45C7),
                         modifier = Modifier.weight(1f).staggerEntrance(1)
@@ -244,14 +245,14 @@ fun TrackerScreen(
                 ) {
                     StatGridCard(
                         icon = Icons.Filled.MenuBook,
-                        value = state.totalHadiths.toString(),
+                        value = state.totalHadiths.toBanglaDigits(),
                         label = "হাদিস পঠিত",
                         color = Color(0xFF1B5E20),
                         modifier = Modifier.weight(1f).staggerEntrance(2)
                     )
                     StatGridCard(
                         icon = Icons.Filled.Bolt,
-                        value = "${(doneCount * 100) / 5}%",
+                        value = "${((doneCount * 100) / 5).toBanglaDigits()}%",
                         label = "আজকের প্রগ্রেস",
                         color = Color(0xFFFF6B35),
                         modifier = Modifier.weight(1f).staggerEntrance(3)
@@ -333,7 +334,7 @@ private fun PremiumPrayerCheckCard(
             .premiumTap(onClick = onToggle),
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(containerColor = Color.Transparent),
-        elevation = CardDefaults.cardElevation(defaultElevation = if (isDone) 2.dp else 1.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp) // v5.11.0 — invisible-box rule
     ) {
         Box(
             modifier = Modifier
@@ -371,15 +372,22 @@ private fun PremiumPrayerCheckCard(
                         ),
                     contentAlignment = Alignment.Center
                 ) {
-                    if (isDone) {
-                        Icon(
-                            imageVector = Icons.Filled.Check,
-                            contentDescription = null,
-                            tint = Color.White,
-                            modifier = Modifier.size(28.dp)
-                        )
-                    } else {
-                        Text(emoji, style = MaterialTheme.typography.titleLarge)
+                    // v5.11.0 — emoji ↔ check now crossfades (was an instant swap)
+                    androidx.compose.animation.Crossfade(
+                        targetState = isDone,
+                        animationSpec = androidx.compose.animation.core.tween(250),
+                        label = "prayerDoneSwap"
+                    ) { done ->
+                        if (done) {
+                            Icon(
+                                imageVector = Icons.Filled.Check,
+                                contentDescription = null,
+                                tint = Color.White,
+                                modifier = Modifier.size(28.dp)
+                            )
+                        } else {
+                            Text(emoji, style = MaterialTheme.typography.titleLarge)
+                        }
                     }
                 }
                 Column(modifier = Modifier.weight(1f)) {

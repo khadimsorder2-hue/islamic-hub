@@ -230,12 +230,21 @@ fun IslamicHubNavGraph(container: AppContainer) {
             }
             composable(
                 route = Screen.QuranReader.route,
-                arguments = listOf(navArgument("surahNumber") { type = NavType.IntType })
+                arguments = listOf(
+                    navArgument("surahNumber") { type = NavType.IntType },
+                    // v5.11.0 — optional ayah jump (bookmarks / resume reading)
+                    navArgument("ayah") {
+                        type = NavType.IntType
+                        defaultValue = -1
+                    }
+                )
             ) { backStackEntry ->
                 val num = backStackEntry.arguments?.getInt("surahNumber") ?: 1
+                val ayah = backStackEntry.arguments?.getInt("ayah") ?: -1
                 QuranReaderScreen(
                     container = container,
                     surahNumber = num,
+                    initialAyah = if (ayah >= 1) ayah else null,
                     onBack = { navController.popBackStack() }
                 )
             }
@@ -306,7 +315,11 @@ fun IslamicHubNavGraph(container: AppContainer) {
                     container = container,
                     collectionId = collectionId,
                     hadithNumber = hadithNumber,
-                    onBack = { navController.popBackStack() }
+                    onBack = { navController.popBackStack() },
+                    onNavigateHadith = { num ->
+                        // v5.11.0 — sequential reading without going back to the list
+                        navController.navigate(Screen.HadithDetail.createRoute(collectionId, num))
+                    }
                 )
             }
             composable(Screen.HadithSearch.route) {
@@ -339,8 +352,9 @@ fun IslamicHubNavGraph(container: AppContainer) {
                 BookmarksScreen(
                     container = container,
                     onBack = { navController.popBackStack() },
-                    onBookmarkClick = { num ->
-                        navController.navigate(Screen.QuranReader.createRoute(num))
+                    onBookmarkClick = { num, ayah ->
+                        // v5.11.0 — jump straight to the saved ayah (was surah-top only)
+                        navController.navigate(Screen.QuranReader.createRoute(num, ayah))
                     }
                 )
             }

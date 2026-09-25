@@ -127,7 +127,7 @@ fun ScannerScreen(
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text("AI স্ক্যানার" + " / Scanner") },
+                title = { Text("AI স্ক্যানার") }, // v5.11.0 — dropped mixed-language "/ Scanner"
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")

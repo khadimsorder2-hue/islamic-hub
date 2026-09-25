@@ -91,6 +91,7 @@ import kotlinx.coroutines.launch
 fun QuranReaderScreen(
     container: AppContainer,
     surahNumber: Int,
+    initialAyah: Int? = null,
     onBack: () -> Unit
 ) {
     val vm = remember { QuranReaderViewModel(container, surahNumber) }
@@ -133,6 +134,18 @@ fun QuranReaderScreen(
                     vm.updateLastRead(ayahNum)
                 }
             }
+        }
+    }
+
+    // v5.11.0 — land on a specific ayah when opened from a bookmark / resume card
+    androidx.compose.runtime.LaunchedEffect(state.surah, initialAyah) {
+        val target = initialAyah ?: return@LaunchedEffect
+        val surah = state.surah ?: return@LaunchedEffect
+        if (target in 1..surah.ayahCount && listState.layoutInfo.totalItemsCount > 0) {
+            val total = listState.layoutInfo.totalItemsCount
+            val nonAyah = (total - surah.ayahCount).coerceAtLeast(0)
+            val index = (nonAyah + target - 1).coerceIn(0, (total - 1).coerceAtLeast(0))
+            listState.scrollToItem(index)
         }
     }
 
@@ -470,6 +483,16 @@ fun QuranReaderScreen(
                                     )
                                 }
                                 context.startActivity(Intent.createChooser(shareIntent, "আয়াত শেয়ার করুন"))
+                            },
+                            onCopyAyah = {
+                                // v5.11.0 — copy full ayah (Arabic + Bangla + English) to clipboard
+                                val copyText = "${ayah.arabic}\n\n" +
+                                    "বাংলা: ${ayah.bengali}\n\n" +
+                                    "English: ${ayah.english}\n\n" +
+                                    "— ${surah.nameEnglish} ${surah.nameBengali} : আয়াত ${ayah.numberInSurah}"
+                                val clipboard = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+                                clipboard.setPrimaryClip(android.content.ClipData.newPlainText("islamic-hub-ayah", copyText))
+                                android.widget.Toast.makeText(context, "আয়াত কপি হয়েছে ✅", android.widget.Toast.LENGTH_SHORT).show()
                             }
                         )
                         }
@@ -581,7 +604,8 @@ private fun AyahCard(
     onToggleBookmark: () -> Unit,
     onShowTafsir: () -> Unit,
     onShowWordByWord: () -> Unit,
-    onShareAyah: () -> Unit
+    onShareAyah: () -> Unit,
+    onCopyAyah: () -> Unit = {}
 ) {
     var showMenu by remember { mutableStateOf(false) }
     Card(
@@ -657,6 +681,15 @@ private fun AyahCard(
                             expanded = showMenu,
                             onDismissRequest = { showMenu = false }
                         ) {
+                            // v5.11.0 — copy the full ayah (every sibling detail screen
+                            // has copy; the reader menu only had word-by-word/tafsir/share)
+                            DropdownMenuItem(
+                                text = { Text("কপি") },
+                                onClick = {
+                                    showMenu = false
+                                    onCopyAyah()
+                                }
+                            )
                             DropdownMenuItem(
                                 text = { Text(stringResource(R.string.action_word_by_word)) },
                                 onClick = {

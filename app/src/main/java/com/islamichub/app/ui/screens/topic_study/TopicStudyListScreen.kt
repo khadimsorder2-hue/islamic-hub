@@ -61,6 +61,7 @@ import com.islamichub.app.data.AppContainer
 import com.islamichub.app.ui.components.PremiumHeroCard
 import com.islamichub.app.ui.components.loadAssetImage
 import com.islamichub.app.ui.theme.staggerEntrance
+import com.islamichub.app.ui.theme.premiumTap
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -293,7 +294,7 @@ private fun DomainChip(label: String, isSelected: Boolean, color: Color, onClick
         modifier = Modifier
             .clip(RoundedCornerShape(20.dp))
             .background(if (isSelected) color else MaterialTheme.colorScheme.surfaceVariant)
-            .clickable(onClick = onClick)
+            .premiumTap(onClick = onClick)
             .padding(horizontal = 14.dp, vertical = 8.dp)
     ) {
         Text(label,
@@ -320,7 +321,7 @@ private fun TopicCard(
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(24.dp))
-            .clickable(onClick = onClick),
+            .premiumTap(onClick = onClick),
         shape = RoundedCornerShape(24.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {

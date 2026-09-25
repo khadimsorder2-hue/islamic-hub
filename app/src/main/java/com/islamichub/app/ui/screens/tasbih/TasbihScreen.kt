@@ -1,5 +1,6 @@
 package com.islamichub.app.ui.screens.tasbih
 
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -7,6 +8,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -50,8 +54,11 @@ import com.islamichub.app.R
 import com.islamichub.app.data.AppContainer
 import com.islamichub.app.data.model.DhikrOption
 import com.islamichub.app.ui.theme.premiumTap
+import com.islamichub.app.ui.theme.rememberPremiumHaptic
 import com.islamichub.app.ui.theme.staggerEntrance
+import com.islamichub.app.ui.theme.toBanglaDigits
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 
 @Composable
 fun TasbihScreen(container: AppContainer) {
@@ -59,10 +66,15 @@ fun TasbihScreen(container: AppContainer) {
     val state by vm.state.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     var showResetAllConfirm by remember { mutableStateOf(false) }
+    // v5.11.0 — single reset is destructive too; confirm it like Reset All
+    var showResetConfirm by remember { mutableStateOf(false) }
+    // v5.11.0 — the most tactile screen in the app had no haptics
+    val haptic = rememberPremiumHaptic()
 
     LaunchedEffect(state.justCompletedRound) {
         if (state.justCompletedRound) {
-            snackbarHostState.showSnackbar("Round complete! Alhamdulillah.")
+            haptic(HapticFeedbackType.LongPress)
+            snackbarHostState.showSnackbar("এক রাউন্ড সম্পূর্ণ! আলহামদুলিল্লাহ।")
             vm.clearRoundFlag()
         }
     }
@@ -71,6 +83,7 @@ fun TasbihScreen(container: AppContainer) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .statusBarsPadding() // v5.11.0 — edge-to-edge fix
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
@@ -135,12 +148,12 @@ fun TasbihScreen(container: AppContainer) {
             ) {
                 StatCard(
                     label = stringResource(R.string.tasbih_round),
-                    value = state.round.toString(),
+                    value = state.round.toBanglaDigits(),
                     modifier = Modifier.weight(1f)
                 )
                 StatCard(
                     label = stringResource(R.string.tasbih_total),
-                    value = state.total.toString(),
+                    value = state.total.toBanglaDigits(),
                     modifier = Modifier.weight(1f)
                 )
             }
@@ -167,7 +180,11 @@ fun TasbihScreen(container: AppContainer) {
                                 )
                             )
                         )
-                        .clickable { vm.onIncrement() },
+                        .clickable {
+                            // v5.11.0 — haptic tick on every dhikr
+                            haptic(HapticFeedbackType.TextHandleMove)
+                            vm.onIncrement()
+                        },
                     contentAlignment = Alignment.Center
                 ) {
                     Column(
@@ -175,13 +192,13 @@ fun TasbihScreen(container: AppContainer) {
                         verticalArrangement = Arrangement.Center
                     ) {
                         Text(
-                            text = state.count.toString(),
+                            text = state.count.toBanglaDigits(),
                             style = MaterialTheme.typography.displayLarge.copy(fontSize = 80.sp),
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onPrimary
                         )
                         Text(
-                            text = String.format(stringResource(R.string.tasbih_target), state.target),
+                            text = String.format(stringResource(R.string.tasbih_target), state.target).toBanglaDigits(),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.85f)
                         )
@@ -211,7 +228,10 @@ fun TasbihScreen(container: AppContainer) {
                             )
                             .padding(16.dp)
                     ) {
-                        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(6.dp),
+                            modifier = Modifier.animateContentSize() // v5.11.0 — expand/collapse animates (was snap)
+                        ) {
                             // Header: Arabic + Info icon
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
@@ -268,7 +288,7 @@ fun TasbihScreen(container: AppContainer) {
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 OutlinedButton(
-                    onClick = vm::onReset,
+                    onClick = { showResetConfirm = true },
                     modifier = Modifier.weight(1f)
                 ) { Text(stringResource(R.string.tasbih_reset)) }
                 Button(
@@ -277,8 +297,33 @@ fun TasbihScreen(container: AppContainer) {
                     onClick = { showResetAllConfirm = true },
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
                     modifier = Modifier.weight(1f)
-                ) { Text("Reset All") }
+                ) { Text("সব রিসেট") }
             }
+        }
+
+        if (showResetConfirm) {
+            androidx.compose.material3.AlertDialog(
+                onDismissRequest = { showResetConfirm = false },
+                icon = {
+                    com.islamichub.app.ui.components.PremiumDialogIcon(
+                        icon = androidx.compose.material.icons.Icons.Filled.Delete,
+                        tint = MaterialTheme.colorScheme.error
+                    )
+                },
+                title = { Text("বর্তমান জিকির রিসেট?") },
+                text = { Text("এই জিকিরের সংখ্যা শূন্য হয়ে যাবে। রিসেট করবেন?") },
+                confirmButton = {
+                    androidx.compose.material3.TextButton(onClick = {
+                        showResetConfirm = false
+                        vm.onReset()
+                    }) { Text("হ্যাঁ, রিসেট করুন", color = MaterialTheme.colorScheme.error) }
+                },
+                dismissButton = {
+                    androidx.compose.material3.TextButton(onClick = { showResetConfirm = false }) {
+                        Text("না")
+                    }
+                }
+            )
         }
 
         if (showResetAllConfirm) {

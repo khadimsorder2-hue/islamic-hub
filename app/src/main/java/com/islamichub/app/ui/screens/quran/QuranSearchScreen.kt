@@ -14,6 +14,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.SearchOff
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Search
@@ -120,10 +121,14 @@ fun QuranSearchScreen(
                         style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             } else if (state.hasSearched && state.results.isEmpty()) {
-                Text(stringResource(R.string.search_no_results),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(32.dp))
+                // v5.11.0 — premium empty state (was a plain one-line text)
+                com.islamichub.app.ui.components.PremiumEmptyState(
+                    icon = Icons.Filled.SearchOff,
+                    title = "কোনো আয়াত মেলেনি",
+                    subtitle = "বানান পরীক্ষা করুন বা অন্য শব্দ দিয়ে খুঁজুন",
+                    ctaText = "নতুন করে খুঁজুন",
+                    onCta = { vm.onQueryChange("") }
+                )
             } else if (state.results.isNotEmpty()) {
                 Row(
                     modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),

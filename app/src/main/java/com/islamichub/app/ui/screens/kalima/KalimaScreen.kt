@@ -24,9 +24,12 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -41,7 +44,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -71,6 +76,8 @@ fun KalimaScreen(
 
     // Track expanded state per kalima
     val expandedStates = remember { mutableStateMapOf<Int, Boolean>() }
+    // v5.11.0 — AI explain + copy/share (previously absent on this screen)
+    var aiKalima by remember { mutableStateOf<com.islamichub.app.data.local.Kalima?>(null) }
 
     Scaffold(
         topBar = {
@@ -147,10 +154,44 @@ fun KalimaScreen(
                     kalima = kalima,
                     index = idx,
                     isExpanded = isExpanded,
-                    onToggleExpand = { expandedStates[kalima.id] = !isExpanded }
+                    onToggleExpand = { expandedStates[kalima.id] = !isExpanded },
+                    onCopy = {
+                        val text = "${kalima.nameBn ?: kalima.name ?: "কালিমা ${kalima.id}"}\n\n" +
+                            "${kalima.arabic ?: ""}\n\n" +
+                            "উচ্চারণ: ${kalima.banglaPronunciation ?: ""}\n" +
+                            "${kalima.bangla ?: ""}"
+                        val clipboard = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+                        clipboard.setPrimaryClip(android.content.ClipData.newPlainText("islamic-hub-kalima", text))
+                        android.widget.Toast.makeText(context, "কপি হয়েছে ✅", android.widget.Toast.LENGTH_SHORT).show()
+                    },
+                    onShare = {
+                        val text = "${kalima.nameBn ?: kalima.name ?: "কালিমা ${kalima.id}"}\n\n" +
+                            "${kalima.arabic ?: ""}\n\n" +
+                            "উচ্চারণ: ${kalima.banglaPronunciation ?: ""}\n" +
+                            "${kalima.bangla ?: ""}\n\n" +
+                            "— Islamic Hub থেকে শেয়ার করা হয়েছে"
+                        val shareIntent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+                            type = "text/plain"
+                            putExtra(android.content.Intent.EXTRA_TEXT, text)
+                        }
+                        context.startActivity(android.content.Intent.createChooser(shareIntent, "শেয়ার করুন"))
+                    },
+                    onAskAi = { aiKalima = kalima }
                 )
             }
         }
+    }
+
+    // v5.11.0 — shared AI explanation popup
+    aiKalima?.let { k ->
+        com.islamichub.app.ui.components.AIExplanationPopup(
+            container = container,
+            title = "কালিমা",
+            question = "\"${k.nameBn ?: k.name ?: ""}\" কালিমা সম্পর্কে বিস্তারিত বলুন — অর্থ: ${k.bangla ?: ""}",
+            context = "৬ কালিমার মধ্যে ${k.id} নম্বর কালিমা",
+            show = true,
+            onDismiss = { aiKalima = null }
+        )
     }
 }
 
@@ -159,7 +200,10 @@ private fun KalimaPremiumCard(
     kalima: Kalima,
     index: Int,
     isExpanded: Boolean,
-    onToggleExpand: () -> Unit
+    onToggleExpand: () -> Unit,
+    onCopy: () -> Unit = {},
+    onShare: () -> Unit = {},
+    onAskAi: () -> Unit = {}
 ) {
     val kalimaColors = listOf(
         Color(0xFF6D45C7), Color(0xFF1B5E20), Color(0xFFC9A34E),
@@ -315,6 +359,28 @@ private fun KalimaPremiumCard(
                         // nothing. The screen already teaches correct recitation through
                         // the Bangla + English pronunciation rows above.
                     }
+                }
+
+                // v5.11.0 — copy / share / AI actions (this screen had none)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.End)
+                ) {
+                    com.islamichub.app.ui.components.PremiumMiniActionChip(
+                        icon = Icons.Filled.AutoAwesome,
+                        label = "AI ব্যাখ্যা",
+                        onClick = onAskAi
+                    )
+                    com.islamichub.app.ui.components.PremiumMiniActionChip(
+                        icon = Icons.Filled.Share,
+                        label = "শেয়ার",
+                        onClick = onShare
+                    )
+                    com.islamichub.app.ui.components.PremiumMiniActionChip(
+                        icon = Icons.Filled.ContentCopy,
+                        label = "কপি",
+                        onClick = onCopy
+                    )
                 }
             }
         }

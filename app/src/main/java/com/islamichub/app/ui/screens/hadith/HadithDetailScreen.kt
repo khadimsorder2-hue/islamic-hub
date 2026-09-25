@@ -46,6 +46,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextFieldDefaults
@@ -75,6 +76,7 @@ import com.islamichub.app.data.local.HadithJson
 import com.islamichub.app.ui.components.PremiumHeroCard
 import com.islamichub.app.ui.theme.arabicSp
 import com.islamichub.app.ui.theme.banglaSp
+import com.islamichub.app.ui.theme.premiumTap
 import com.islamichub.app.ui.theme.staggerEntrance
 import kotlinx.coroutines.launch
 import androidx.compose.material.icons.filled.SkipNext
@@ -322,7 +324,7 @@ private fun HadithRow(hadith: HadithJson, onClick: () -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(18.dp))
-            .clickable(onClick = onClick),
+            .premiumTap(onClick = onClick),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
@@ -412,13 +414,18 @@ fun HadithDetailScreen(
     container: AppContainer,
     collectionId: String,
     hadithNumber: Int,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    onNavigateHadith: (Int) -> Unit = {}
 ) {
     var hadith by remember { mutableStateOf<HadithJson?>(null) }
     var collectionName by remember { mutableStateOf("") }
     var collectionNameBn by remember { mutableStateOf("") }
     var loading by remember { mutableStateOf(true) }
     var error by remember { mutableStateOf<String?>(null) }
+    // v5.11.0 — sequential prev/next within the collection (was back-and-forth
+    // through the list for every next hadith)
+    var prevNumber by remember { mutableStateOf<Int?>(null) }
+    var nextNumber by remember { mutableStateOf<Int?>(null) }
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
@@ -434,7 +441,10 @@ fun HadithDetailScreen(
             val coll = container.hadithRepository.getCollection(collectionId)
             collectionName = coll.collectionName
             collectionNameBn = coll.collectionNameBn
-            hadith = coll.hadiths.firstOrNull { it.hadithNumber == hadithNumber }
+            val idx = coll.hadiths.indexOfFirst { it.hadithNumber == hadithNumber }
+            hadith = if (idx >= 0) coll.hadiths[idx] else null
+            prevNumber = if (idx > 0) coll.hadiths[idx - 1].hadithNumber else null
+            nextNumber = if (idx in 0 until (coll.hadiths.size - 1)) coll.hadiths[idx + 1].hadithNumber else null
             if (hadith == null) {
                 error = "হাদিস #${hadithNumber} পাওয়া যায়নি"
             } else {
@@ -804,6 +814,79 @@ fun HadithDetailScreen(
                             color = MaterialTheme.colorScheme.onErrorContainer,
                             modifier = Modifier.padding(16.dp)
                         )
+                    }
+                }
+            }
+
+            // ─── v5.11.0 — prev / next hadith navigation ───
+            if (prevNumber != null || nextNumber != null) {
+                item {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        if (prevNumber != null) {
+                            Surface(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clip(RoundedCornerShape(14.dp))
+                                    .premiumTap { onNavigateHadith(prevNumber!!) },
+                                color = MaterialTheme.colorScheme.surfaceContainerLow,
+                                shape = RoundedCornerShape(14.dp)
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(12.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                ) {
+                                    Icon(
+                                        Icons.AutoMirrored.Filled.ArrowBack,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                    Text(
+                                        "আগের হাদিস",
+                                        style = MaterialTheme.typography.labelMedium.copy(fontSize = banglaSp(MaterialTheme.typography.labelMedium.fontSize)),
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                }
+                            }
+                        } else {
+                            Spacer(Modifier.weight(1f))
+                        }
+                        if (nextNumber != null) {
+                            Surface(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clip(RoundedCornerShape(14.dp))
+                                    .premiumTap { onNavigateHadith(nextNumber!!) },
+                                color = MaterialTheme.colorScheme.surfaceContainerLow,
+                                shape = RoundedCornerShape(14.dp)
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(12.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.End
+                                ) {
+                                    Text(
+                                        "পরের হাদিস",
+                                        style = MaterialTheme.typography.labelMedium.copy(fontSize = banglaSp(MaterialTheme.typography.labelMedium.fontSize)),
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                    Icon(
+                                        Icons.AutoMirrored.Filled.ArrowForward,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                }
+                            }
+                        } else {
+                            Spacer(Modifier.weight(1f))
+                        }
                     }
                 }
             }

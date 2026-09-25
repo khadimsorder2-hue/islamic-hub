@@ -184,7 +184,7 @@ private fun ExtendedDuaRow(dua: ExtendedDua, onClick: () -> Unit) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(dua.title ?: "", style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
-                Text(dua.bangla?.take(80) + if ((dua.bangla?.length ?: 0) > 80) "…" else "",
+                Text((dua.bangla ?: "").take(80) + if ((dua.bangla?.length ?: 0) > 80) "…" else "",
                     style = MaterialTheme.typography.bodySmall.copy(fontSize = banglaSp(MaterialTheme.typography.bodySmall.fontSize)),
                     color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2)
             }

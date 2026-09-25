@@ -38,6 +38,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -55,6 +56,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.islamichub.app.data.AppContainer
+import com.islamichub.app.data.repo.TafsirSource
 import androidx.compose.ui.text.input.TextFieldValue
 import android.widget.Toast
 import android.content.Intent
@@ -82,6 +84,21 @@ fun TafsirFullScreen(
     val stripHtml = { s: String -> s.replace(Regex("<[^>]*>"), "").trim() }
 
     BackHandler { onClose() }
+
+    // v5.11.0 — the keep-screen-on setting promised "কুরআন/তাফসীর পড়ার সময়" but was
+    // only applied in the reader; honor it here too
+    val keepScreenOnTafsir by container.settingsRepository.keepScreenOnReading
+        .collectAsState(initial = true)
+    val tafsirView = androidx.compose.ui.platform.LocalView.current
+    DisposableEffect(keepScreenOnTafsir) {
+        val window = (tafsirView.context as? android.app.Activity)?.window
+        if (keepScreenOnTafsir && window != null) {
+            window.addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        }
+        onDispose {
+            window?.clearFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -254,6 +271,22 @@ fun TafsirFullScreen(
             // ─── All Tafsirs (Bangla + English) ───
             if (state.allTafsirs.isNotEmpty()) {
                 PremiumSectionHeader("📚 তাফসীর (${state.allTafsirs.count { it.language == "bn" }} বাংলা + ${state.allTafsirs.count { it.language == "en" }} ইংরেজি)")
+                // v5.11.0 — in-screen source switcher (changeSource existed but was
+                // unreachable; users had to leave the reader → Settings → back)
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    items(TafsirSource.values().size) { sIdx ->
+                        val src = TafsirSource.values()[sIdx]
+                        FilterChip(
+                            selected = state.source == src,
+                            onClick = { vm.changeSource(src) },
+                            label = { Text(src.displayNameBn, style = MaterialTheme.typography.labelSmall) },
+                            colors = if (src.name.startsWith("EN")) androidx.compose.material3.FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = MaterialTheme.colorScheme.tertiary,
+                                selectedLabelColor = Color.White
+                            ) else androidx.compose.material3.FilterChipDefaults.filterChipColors()
+                        )
+                    }
+                }
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     items(state.allTafsirs.size) { idx ->
                         val t = state.allTafsirs[idx]

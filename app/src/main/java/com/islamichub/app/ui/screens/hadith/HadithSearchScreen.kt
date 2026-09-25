@@ -9,6 +9,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.SearchOff
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Search
@@ -93,11 +94,13 @@ fun HadithSearchScreen(
                     horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally
                 ) { CircularProgressIndicator() }
             } else if (state.hasSearched && state.results.isEmpty()) {
-                Text(
-                    text = stringResource(R.string.search_no_results),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(32.dp)
+                // v5.11.0 — premium empty state (was a plain one-line text)
+                com.islamichub.app.ui.components.PremiumEmptyState(
+                    icon = Icons.Filled.SearchOff,
+                    title = "কোনো হাদিস মেলেনি",
+                    subtitle = "অন্য শব্দ দিয়ে খুঁজে দেখুন",
+                    ctaText = "নতুন করে খুঁজুন",
+                    onCta = { vm.onQueryChange("") }
                 )
             } else if (state.results.isNotEmpty()) {
                 Text(

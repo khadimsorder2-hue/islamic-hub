@@ -10,6 +10,9 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -69,6 +72,7 @@ import com.islamichub.app.ui.components.loadAssetImage
 import com.islamichub.app.ui.theme.PremiumProgressBar
 import com.islamichub.app.ui.theme.staggerEntrance
 import androidx.compose.ui.graphics.asImageBitmap
+import com.islamichub.app.ui.theme.premiumTap
 
 @Composable
 fun PrayerScreen(container: AppContainer) {
@@ -112,8 +116,10 @@ fun PrayerScreen(container: AppContainer) {
         computeNextPrayerProgress(it, fajrName, dhuhrName, asrName, maghribName, ishaName)
     }
 
+    // v5.11.0 — status-bar-aware top padding (edge-to-edge fix)
+    val statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
     LazyColumn(
-        contentPadding = PaddingValues(16.dp),
+        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = statusBarTop + 16.dp, bottom = 16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         // Premium hero with bg image (kept per user request)
@@ -461,7 +467,7 @@ private fun PrayerRowPremium(
 @Composable
 private fun JamatTimeCard(jamat: JamatTime, onEdit: () -> Unit) {
     Card(
-        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).clickable(onClick = onEdit),
+        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).premiumTap(onClick = onEdit),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)
     ) {

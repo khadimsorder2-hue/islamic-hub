@@ -4,6 +4,7 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.with
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -69,6 +70,7 @@ import androidx.compose.ui.unit.sp
 import com.islamichub.app.data.AppContainer
 import com.islamichub.app.ui.components.PremiumHeroCard
 import com.islamichub.app.ui.components.loadAssetImage
+import com.islamichub.app.ui.theme.toBanglaDigits
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -263,10 +265,10 @@ private fun QuestionScreen(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Text("প্রশ্ন ${state.currentQuestionIndex + 1}/$total",
+            Text("প্রশ্ন ${(state.currentQuestionIndex + 1).toBanglaDigits()}/${total.toBanglaDigits()}",
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Text("স্কোর: ${state.score}",
+            Text("স্কোর: ${state.score.toBanglaDigits()}",
                 style = MaterialTheme.typography.labelMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary)
@@ -287,18 +289,29 @@ private fun QuestionScreen(
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
         }
 
-        // Question
+        // Question — v5.11.0: N→N+1 now slides instead of hard-swapping
+        androidx.compose.animation.AnimatedContent(
+            targetState = state.currentQuestionIndex,
+            transitionSpec = {
+                val dir = if (targetState > initialState) 1 else -1
+                (androidx.compose.animation.slideInHorizontally { dir * it / 4 } + androidx.compose.animation.fadeIn()) with
+                    (androidx.compose.animation.slideOutHorizontally { -dir * it / 4 } + androidx.compose.animation.fadeOut())
+            },
+            label = "questionSwap"
+        ) { qIdx ->
+        val q = category.questions[qIdx.coerceIn(0, (total - 1).coerceAtLeast(0))]
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(20.dp),
             elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
         ) {
             Text(
-                text = question.question,
+                text = q.question,
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.SemiBold,
                 modifier = Modifier.padding(24.dp)
             )
+        }
         }
 
         // Options
@@ -501,10 +514,10 @@ private fun ResultScreen(
                         Text("আপনার স্কোর",
                             style = MaterialTheme.typography.bodyMedium,
                             color = Color.White.copy(alpha = 0.9f))
-                        Text("$score / $total",
+                        Text("${score.toBanglaDigits()} / ${total.toBanglaDigits()}",
                             style = MaterialTheme.typography.displayMedium,
                             fontWeight = FontWeight.Bold, color = Color.White)
-                        Text("$percentage%",
+                        Text("${percentage.toBanglaDigits()}%",
                             style = MaterialTheme.typography.headlineSmall,
                             fontWeight = FontWeight.SemiBold,
                             color = Color.White.copy(alpha = 0.95f))
@@ -519,7 +532,7 @@ private fun ResultScreen(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                StatCard(label = "সঠিক", value = "$score", color = AppColors.success)
+                StatCard(label = "সঠিক", value = score.toBanglaDigits(), color = AppColors.success)
                 StatCard(label = "ভুল", value = "${total - score}", color = AppColors.error)
                 StatCard(label = "মোট স্কোর", value = "${state.totalScore}", color = MaterialTheme.colorScheme.primary)
             }

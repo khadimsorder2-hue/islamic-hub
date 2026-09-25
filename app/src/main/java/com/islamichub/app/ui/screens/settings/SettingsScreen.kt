@@ -77,6 +77,7 @@ import com.islamichub.app.ui.theme.arabicSp
 import com.islamichub.app.ui.theme.banglaSp
 import com.islamichub.app.ui.theme.englishSp
 import com.islamichub.app.ui.theme.staggerEntrance
+import com.islamichub.app.ui.theme.premiumTap
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -383,7 +384,7 @@ fun SettingsScreen(
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clickable(onClick = onShowQariSelector),
+                            .premiumTap(onClick = onShowQariSelector),
                         shape = RoundedCornerShape(12.dp),
                         colors = CardDefaults.cardColors(
                             containerColor = MaterialTheme.colorScheme.surfaceContainerLow.copy(alpha = 0.6f)
@@ -1039,7 +1040,7 @@ private fun androidx.compose.foundation.layout.RowScope.ThemeModeChip(
     Card(
         modifier = modifier
             .clip(RoundedCornerShape(14.dp))
-            .clickable(onClick = onClick),
+            .premiumTap(onClick = onClick),
         shape = RoundedCornerShape(14.dp),
         colors = CardDefaults.cardColors(
             containerColor = if (selected) color.copy(alpha = 0.15f)
@@ -1056,7 +1057,7 @@ private fun androidx.compose.foundation.layout.RowScope.ThemeModeChip(
                 modifier = Modifier
                     .size(28.dp)
                     .clip(CircleShape)
-                    .background(if (selected) color else Color(0xFF9E9E9E)),
+                    .background(if (selected) color else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.45f)), // v5.11.0 — theme-aware gray
                 contentAlignment = Alignment.Center
             ) {
                 Text(

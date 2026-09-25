@@ -31,7 +31,10 @@ class NamazShikkhaViewModel(private val container: AppContainer) : ViewModel() {
     val state: StateFlow<NamazShikkhaUiState> = _state.asStateFlow()
 
     private val assetSource: FullNamazAssetSource by lazy {
-        FullNamazAssetSource(container.let { it.run { android.app.Application() } })
+        // v5.11.0 — was `FullNamazAssetSource(android.app.Application())`: a manually
+        // instantiated Application has a null base context → assets.open() crash.
+        // Use the real app context carried by AppContainer.
+        FullNamazAssetSource(container.context)
     }
 
     init { load() }
@@ -39,9 +42,9 @@ class NamazShikkhaViewModel(private val container: AppContainer) : ViewModel() {
     private fun load() {
         viewModelScope.launch {
             try {
-                val ctx = (container.javaClass.getDeclaredField("context").apply { isAccessible = true }
-                    .get(container) as android.content.Context)
-                val source = FullNamazAssetSource(ctx)
+                // v5.11.0 — was a reflection hack (getDeclaredField("context"));
+                // container.context is internal-visible, so read it directly.
+                val source = assetSource
                 val fullData = source.loadFullNamazData()
                 val extended = source.loadExtendedNamazData()
 

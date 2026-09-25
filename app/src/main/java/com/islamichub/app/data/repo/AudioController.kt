@@ -448,6 +448,16 @@ class AudioController(
         player?.seekTo(positionMs)
     }
 
+    /**
+     * v5.11.0 — clears the current playback error so the FloatingAudioPlayer
+     * inline error row can be dismissed by the user (was stuck forever before).
+     */
+    fun clearError() {
+        if (_state.value.error != null) {
+            _state.value = _state.value.copy(error = null)
+        }
+    }
+
     fun getCurrentPosition(): Long {
         return player?.currentPosition ?: 0L
     }

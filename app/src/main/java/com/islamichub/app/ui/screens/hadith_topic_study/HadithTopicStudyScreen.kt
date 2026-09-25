@@ -79,6 +79,7 @@ import com.islamichub.app.ui.theme.arabicSp
 import com.islamichub.app.ui.theme.banglaSp
 import androidx.compose.foundation.lazy.itemsIndexed
 import com.islamichub.app.ui.theme.staggerEntrance
+import com.islamichub.app.ui.theme.premiumTap
 
 // ─── LIST SCREEN ─────────────────────────────────────────────────────────────
 
@@ -222,7 +223,7 @@ private fun DomainChip(label: String, isSelected: Boolean, color: Color, onClick
         modifier = Modifier
             .clip(RoundedCornerShape(20.dp))
             .background(if (isSelected) color else MaterialTheme.colorScheme.surfaceVariant)
-            .clickable(onClick = onClick)
+            .premiumTap(onClick = onClick)
             .padding(horizontal = 14.dp, vertical = 8.dp)
     ) {
         Text(label,
@@ -241,7 +242,7 @@ private fun HadithTopicCard(topic: HadithTopic, context: android.content.Context
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(24.dp))
-            .clickable(onClick = onClick),
+            .premiumTap(onClick = onClick),
         shape = RoundedCornerShape(24.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
@@ -605,7 +606,7 @@ private fun HadithCard(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(20.dp))
-            .clickable(onClick = onToggle),
+            .premiumTap(onClick = onToggle),
         shape = RoundedCornerShape(20.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {

@@ -8,6 +8,9 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -20,6 +23,7 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.SearchOff
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Card
@@ -57,6 +61,7 @@ import com.islamichub.app.ui.theme.AppRadius
 import com.islamichub.app.ui.theme.AppSpacing
 import com.islamichub.app.ui.theme.AppElevation
 import com.islamichub.app.ui.theme.staggerEntrance
+import com.islamichub.app.ui.theme.premiumTap
 
 @Composable
 fun QuranListScreen(
@@ -72,6 +77,7 @@ fun QuranListScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
+            .statusBarsPadding() // v5.11.0 — edge-to-edge fix
     ) {
         // ─── Premium Hero Header ───
         com.islamichub.app.ui.components.PremiumHeroCard(
@@ -132,7 +138,18 @@ fun QuranListScreen(
             ),
             verticalArrangement = Arrangement.spacedBy(AppSpacing.sm)
         ) {
-            itemsIndexed(state.surahs, key = { _, surah -> surah.number }) { index, surah ->
+            if (state.surahs.isEmpty() && state.query.isNotBlank()) {
+                // v5.11.0 — typo in the filter box used to render a blank body
+                item {
+                    com.islamichub.app.ui.components.PremiumEmptyState(
+                        icon = Icons.Filled.SearchOff,
+                        title = "কোনো সূরা মেলেনি",
+                        subtitle = "বানান পরীক্ষা করুন বা অন্য নামে খুঁজুন",
+                        ctaText = "ফিল্টার মুছুন",
+                        onCta = { vm.onQueryChange("") }
+                    )
+                }
+            } else itemsIndexed(state.surahs, key = { _, surah -> surah.number }) { index, surah ->
                 Box(modifier = Modifier.staggerEntrance(index)) {
                     PremiumSurahCard(
                         surah = surah,
@@ -170,12 +187,12 @@ private fun PremiumSurahCard(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onOpen),
+            .premiumTap(onClick = onOpen),
         shape = RoundedCornerShape(AppRadius.lg),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = AppElevation.low)
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Column(
             modifier = Modifier.padding(AppSpacing.lg)
@@ -345,7 +362,7 @@ private fun PremiumSurahCard(
                 ) {
                     Row(
                         modifier = Modifier
-                            .clickable(onClick = onPlay)
+                            .premiumTap(onClick = onPlay)
                             .padding(horizontal = AppSpacing.md, vertical = AppSpacing.xs),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(6.dp)
@@ -372,7 +389,7 @@ private fun PremiumSurahCard(
                 ) {
                     Row(
                         modifier = Modifier
-                            .clickable(onClick = onOpen)
+                            .premiumTap(onClick = onOpen)
                             .padding(horizontal = AppSpacing.md, vertical = AppSpacing.xs),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(6.dp)
