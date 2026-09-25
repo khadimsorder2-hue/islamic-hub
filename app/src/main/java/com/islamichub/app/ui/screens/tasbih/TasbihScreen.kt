@@ -51,12 +51,14 @@ import com.islamichub.app.data.AppContainer
 import com.islamichub.app.data.model.DhikrOption
 import com.islamichub.app.ui.theme.premiumTap
 import com.islamichub.app.ui.theme.staggerEntrance
+import androidx.compose.material.icons.filled.Delete
 
 @Composable
 fun TasbihScreen(container: AppContainer) {
     val vm = remember { TasbihViewModel(container) }
     val state by vm.state.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
+    var showResetAllConfirm by remember { mutableStateOf(false) }
 
     LaunchedEffect(state.justCompletedRound) {
         if (state.justCompletedRound) {
@@ -261,7 +263,6 @@ fun TasbihScreen(container: AppContainer) {
             }
 
             // Reset buttons — at the very bottom
-            var showResetAllConfirm by remember { mutableStateOf(false) }
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -325,7 +326,7 @@ private fun DhikrChip(
                 if (selected) MaterialTheme.colorScheme.primary
                 else MaterialTheme.colorScheme.surfaceVariant
             )
-            .premiumTap(onClick)
+            .premiumTap(onClick = onClick)
             .padding(horizontal = 12.dp, vertical = 8.dp)
     ) {
         Text(

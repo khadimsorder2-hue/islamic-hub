@@ -160,7 +160,7 @@ private fun AyahResultCard(
     onClick: () -> Unit
 ) {
     Card(
-        modifier = modifier.fillMaxWidth().premiumTap(onClick),
+        modifier = modifier.fillMaxWidth().premiumTap(onClick = onClick),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)

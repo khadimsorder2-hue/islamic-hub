@@ -163,7 +163,7 @@ fun DuaListScreen(
 @Composable
 private fun ExtendedDuaRow(dua: ExtendedDua, onClick: () -> Unit) {
     Card(
-        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).premiumTap(onClick),
+        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).premiumTap(onClick = onClick),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
