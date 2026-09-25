@@ -170,7 +170,7 @@ fun PremiumAssetImage(
     )
     if (bitmap != null) {
         Image(
-            bitmap = bitmap,
+            bitmap = bitmap.asImageBitmap(),
             contentDescription = null,
             modifier = modifier.graphicsLayer {
                 alpha = shown
