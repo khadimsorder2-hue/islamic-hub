@@ -64,6 +64,8 @@ object NoteColors {
 
     fun onCard(isDark: Boolean): Color = if (isDark) darkOnCard else lightOnCard
 
-    fun colorAt(index: Int, isDark: Boolean): Color =
-        palette(isDark)[index.coerceIn(0, palette().size - 1)]
+    fun colorAt(index: Int, isDark: Boolean): Color {
+        val pal = palette(isDark)
+        return pal[index.coerceIn(0, pal.size - 1)]
+    }
 }
