@@ -1,5 +1,6 @@
 package com.islamichub.app
 
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
@@ -36,7 +37,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
-import com.islamichub.app.data.repo.DailyAyahWorker
 import com.islamichub.app.data.repo.UpdateChecker
 import com.islamichub.app.ui.navigation.IslamicHubNavGraph
 import com.islamichub.app.ui.components.PremiumDialogIcon
@@ -45,7 +45,6 @@ import com.islamichub.app.ui.screens.onboarding.OnboardingScreen
 import com.islamichub.app.ui.theme.AppColors
 import com.islamichub.app.ui.theme.IslamicHubTheme
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.runBlocking
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -56,15 +55,15 @@ class MainActivity : ComponentActivity() {
             navigationBarStyle = SystemBarStyle.auto(android.graphics.Color.TRANSPARENT, android.graphics.Color.TRANSPARENT)
         )
 
-        // Schedule daily ayah notification (only if the user hasn't disabled it)
-        val dailyAyahEnabled = kotlinx.coroutines.runBlocking {
-            (application as IslamicHubApp).container.settingsRepository.dailyAyahEnabled.first()
-        }
-        if (dailyAyahEnabled) {
-            DailyAyahWorker.schedule(this)
-        } else {
-            DailyAyahWorker.cancel(this)
-        }
+        // v5.13.0 — 120Hz/90Hz high refresh rate opt-in. Android silently caps
+        // many apps at 60Hz on high-refresh displays; requesting the device's
+        // fastest supported mode unlocks the full 120fps experience.
+        enableHighRefreshRate()
+
+        // v5.13.0 — daily-ayah scheduling moved off the main thread. The old
+        // runBlocking { ... .first() } read DataStore synchronously BEFORE the
+        // first frame — the single biggest cold-start stall.
+        (application as IslamicHubApp).scheduleDailyAyahIfEnabled(this)
 
         setContent {
             val container = (application as IslamicHubApp).container
@@ -92,11 +91,11 @@ class MainActivity : ComponentActivity() {
                     var checked by remember { mutableStateOf(false) }
                     val context = androidx.compose.ui.platform.LocalContext.current
 
-                    // Initial check
+                    // Initial check — LaunchedEffect is ALREADY a suspend
+                    // context (v5.13.0: the inner runBlocking blocks were
+                    // pure overhead, freezing the main thread at startup).
                     androidx.compose.runtime.LaunchedEffect(Unit) {
-                        val onboardingDone = runBlocking {
-                            container.settingsRepository.onboardingDone.first()
-                        }
+                        val onboardingDone = container.settingsRepository.onboardingDone.first()
                         showOnboarding = !onboardingDone
                         // v5.9.0 — App Lock is finally wired end-to-end: if the user
                         // enabled it in Settings AND the device actually has a lock
@@ -104,9 +103,7 @@ class MainActivity : ComponentActivity() {
                         // biometric prompt. Without the capability check a user could
                         // lock themselves out of the app entirely.
                         if (!showOnboarding) {
-                            val lockEnabled = runBlocking {
-                                container.settingsRepository.appLockEnabled.first()
-                            }
+                            val lockEnabled = container.settingsRepository.appLockEnabled.first()
                             if (lockEnabled) {
                                 val bm = androidx.biometric.BiometricManager.from(context)
                                 val canAuth = bm.canAuthenticate(
@@ -256,6 +253,47 @@ class MainActivity : ComponentActivity() {
                 }
                 }
             }
+        }
+    }
+
+    // v5.13.0 — re-apply on resume (some OEM skins reset the display mode
+    // when the activity is backgrounded and restored).
+    override fun onResume() {
+        super.onResume()
+        enableHighRefreshRate()
+    }
+
+    /**
+     * v5.13.0 — request the highest refresh rate the panel supports at the
+     * current resolution. Uses preferredDisplayModeId on R+ (strongest,
+     * mode-locked signal) and preferredRefreshRate as the pre-R fallback.
+     * Wrapped defensively — a display quirk must never crash launch.
+     */
+    private fun enableHighRefreshRate() {
+        try {
+            val display = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                this.display ?: windowManager.defaultDisplay
+            } else {
+                @Suppress("DEPRECATION")
+                windowManager.defaultDisplay
+            } ?: return
+            val current = display.mode
+            val best = display.supportedModes
+                .filter {
+                    it.physicalWidth == current.physicalWidth &&
+                        it.physicalHeight == current.physicalHeight
+                }
+                .maxByOrNull { it.refreshRate } ?: return
+            if (best.refreshRate <= current.refreshRate + 0.1f) return
+            val attrs = window.attributes
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                attrs.preferredDisplayModeId = best.modeId
+            } else {
+                attrs.preferredRefreshRate = best.refreshRate
+            }
+            window.attributes = attrs
+        } catch (_: Exception) {
+            // Display quirks on exotic OEM skins — never worth crashing for.
         }
     }
 

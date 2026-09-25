@@ -74,7 +74,7 @@ import com.islamichub.app.data.AppContainer
 import com.islamichub.app.data.repo.HadithTopic
 import com.islamichub.app.data.repo.HadithTopicEntry
 import com.islamichub.app.ui.components.PremiumHeroCard
-import com.islamichub.app.ui.components.loadAssetImage
+import com.islamichub.app.ui.components.rememberAssetBitmap
 import com.islamichub.app.ui.theme.arabicSp
 import com.islamichub.app.ui.theme.banglaSp
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -235,7 +235,7 @@ private fun DomainChip(label: String, isSelected: Boolean, color: Color, onClick
 
 @Composable
 private fun HadithTopicCard(topic: HadithTopic, context: android.content.Context, onClick: () -> Unit) {
-    val bgBitmap = remember(topic.slug) { loadAssetImage(context, "img/${topic.iconHint}") }
+    val bgBitmap = rememberAssetBitmap(context, "img/${topic.iconHint}")
     val accent = Color(topic.accentColor)
 
     Card(
@@ -389,7 +389,7 @@ fun HadithTopicStudyDetailScreen(
         ) {
             // Premium topic header
             item {
-                val bgBitmap = remember { loadAssetImage(context, "img/hadith-premium-bg.webp") }
+                val bgBitmap = rememberAssetBitmap(context, "img/hadith-premium-bg.webp")
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(28.dp),

@@ -68,7 +68,7 @@ import com.islamichub.app.data.AppContainer
 import com.islamichub.app.data.repo.JamatTime
 import com.islamichub.app.ui.components.PremiumHeroCard
 import com.islamichub.app.ui.components.PremiumSectionHeader
-import com.islamichub.app.ui.components.loadAssetImage
+import com.islamichub.app.ui.components.rememberAssetBitmap
 import com.islamichub.app.ui.theme.PremiumProgressBar
 import com.islamichub.app.ui.theme.staggerEntrance
 import androidx.compose.ui.graphics.asImageBitmap
@@ -124,7 +124,7 @@ fun PrayerScreen(container: AppContainer) {
     ) {
         // Premium hero with bg image (kept per user request)
         item {
-            val bgBitmap = remember { loadAssetImage(context, "img/prayer-premium-bg.webp") }
+            val bgBitmap = rememberAssetBitmap(context, "img/prayer-premium-bg.webp")
             Box(
                 modifier = Modifier
                     .fillMaxWidth()

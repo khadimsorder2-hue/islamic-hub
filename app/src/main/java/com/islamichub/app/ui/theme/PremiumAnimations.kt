@@ -94,8 +94,12 @@ fun Modifier.staggerEntrance(
             fraction.animateTo(1f, tween(durationMs, easing = EaseOutCubic))
         }
     }
-    val p = fraction.value
+    // v5.13.0 — read `fraction.value` INSIDE the graphicsLayer lambda so the
+    // animation runs on the DRAW phase only. Previously the value was read in
+    // composition, forcing every visible list item to RECOMPOSE on every frame
+    // of the entrance animation — the main source of scroll jank on long lists.
     this.graphicsLayer {
+        val p = fraction.value
         alpha = p
         translationY = (1f - p) * slideDp * density
     }

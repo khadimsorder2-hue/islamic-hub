@@ -42,10 +42,52 @@ class HomeViewModel(
     private val _uiState = MutableStateFlow(HomeUiState())
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
 
-    init { load() }
+    /** v5.13.0 — day-of-year the prayer times were loaded for (midnight rollover). */
+    private var loadedDayOfYear = -1
+
+    init {
+        load()
+        startCountdownTicker()
+    }
 
     fun load() {
+        viewModelScope.launch { loadInternal() }
+    }
+
+    /**
+     * v5.13.0 — the "next prayer" countdown used to be frozen at whatever was
+     * computed on first load (it even went stale/negative overnight). A light
+     * ticker now recomputes it every 30 seconds and fully reloads the home
+     * content once the calendar day rolls over.
+     */
+    private fun startCountdownTicker() {
         viewModelScope.launch {
+            while (true) {
+                kotlinx.coroutines.delay(30_000)
+                val today = java.util.Calendar.getInstance()
+                    .get(java.util.Calendar.DAY_OF_YEAR)
+                if (today != loadedDayOfYear && loadedDayOfYear != -1) {
+                    loadInternal()
+                    continue
+                }
+                val state = _uiState.value
+                val times = state.prayerTimes ?: continue
+                val next = computeNextPrayer(times) ?: continue
+                if (next.third != state.timeRemaining ||
+                    next.first != state.nextPrayerName
+                ) {
+                    _uiState.value = state.copy(
+                        nextPrayerName = next.first,
+                        nextPrayerTime = next.second,
+                        timeRemaining = next.third
+                    )
+                }
+            }
+        }
+    }
+
+    private suspend fun loadInternal() {
+        loadedDayOfYear = java.util.Calendar.getInstance().get(java.util.Calendar.DAY_OF_YEAR)
             _uiState.value = _uiState.value.copy(isLoading = true)
             val ayah = container.quranRepository.ayahOfDay()
             val (hadith, ref) = container.quranRepository.hadithOfDay()
@@ -87,7 +129,6 @@ class HomeViewModel(
                 todayTasbihCount = tasbihTotal,
                 streakDays = streak
             )
-        }
     }
 
     private fun computeNextPrayer(times: PrayerTimes): Triple<String, String, String>? {
@@ -112,6 +153,9 @@ class HomeViewModel(
         )
         val upcoming = list.firstOrNull { it.third > now } ?: list.first()
         val diff = upcoming.third - now
+        // v5.13.0 — right after midnight (before today's Fajr) the diff goes
+        // negative; show a neutral placeholder instead of "-3h -12m".
+        if (diff < 0) return Triple(upcoming.first, upcoming.second, "—")
         val hours = diff / 3_600_000
         val mins = (diff % 3_600_000) / 60_000
         val remaining = if (hours > 0) "${hours}h ${mins}m" else "${mins}m"

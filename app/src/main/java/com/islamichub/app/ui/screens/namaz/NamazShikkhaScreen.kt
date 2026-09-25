@@ -64,7 +64,7 @@ import com.islamichub.app.data.local.FullNamazPrayer
 import com.islamichub.app.data.local.FullNamazStep
 import com.islamichub.app.ui.components.PremiumHeroCard
 import com.islamichub.app.ui.components.PremiumSectionHeader
-import com.islamichub.app.ui.components.loadAssetImage
+import com.islamichub.app.ui.components.rememberAssetBitmap
 import com.islamichub.app.ui.theme.arabicSp
 import com.islamichub.app.ui.theme.banglaSp
 import com.islamichub.app.ui.theme.premiumTap
@@ -479,7 +479,7 @@ private fun NamazCategoryCard(
         "isha" -> "namaz-isha-bg.webp"
         else -> "namaz-premium-bg.webp"
     }
-    val bgBitmap = remember(category.id) { loadAssetImage(context, "img/$bgImage") }
+    val bgBitmap = rememberAssetBitmap(context, "img/$bgImage")
 
     Card(
         modifier = Modifier
@@ -581,7 +581,7 @@ private fun ExtendedNamazCard(
     context: android.content.Context,
     onClick: () -> Unit
 ) {
-    val bgBitmap = remember(item.id) { loadAssetImage(context, "img/namaz-premium-bg.webp") }
+    val bgBitmap = rememberAssetBitmap(context, "img/namaz-premium-bg.webp")
 
     Card(
         modifier = Modifier

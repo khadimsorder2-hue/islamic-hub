@@ -56,7 +56,7 @@ import com.islamichub.app.data.local.FullKhalifa
 import com.islamichub.app.data.local.FullStoryChapter
 import com.islamichub.app.ui.components.PremiumHeroCard
 import com.islamichub.app.ui.components.PremiumSectionHeader
-import com.islamichub.app.ui.components.loadAssetImage
+import com.islamichub.app.ui.components.rememberAssetBitmap
 import com.islamichub.app.ui.theme.banglaSp
 import com.islamichub.app.ui.theme.staggerEntrance
 import androidx.compose.ui.graphics.asImageBitmap
@@ -296,7 +296,7 @@ private fun StoryCardProphet(
     context: android.content.Context,
     onClick: () -> Unit
 ) {
-    val bgBitmap = remember(prophet.id) { loadAssetImage(context, "img/prophets-premium-bg.webp") }
+    val bgBitmap = rememberAssetBitmap(context, "img/prophets-premium-bg.webp")
     StoryCardBase(
         title = prophet.name ?: "",
         subtitle = prophet.title ?: "",
@@ -312,7 +312,7 @@ private fun StoryCardKhalifa(
     context: android.content.Context,
     onClick: () -> Unit
 ) {
-    val bgBitmap = remember(khalifa.id) { loadAssetImage(context, "img/khalifas-premium-bg.webp") }
+    val bgBitmap = rememberAssetBitmap(context, "img/khalifas-premium-bg.webp")
     StoryCardBase(
         title = khalifa.name ?: "",
         subtitle = khalifa.title ?: "",
@@ -328,7 +328,7 @@ private fun ChapterCard(
     context: android.content.Context,
     onClick: () -> Unit
 ) {
-    val bgBitmap = remember(chapter.id) { loadAssetImage(context, "img/stories-premium-bg.webp") }
+    val bgBitmap = rememberAssetBitmap(context, "img/stories-premium-bg.webp")
     StoryCardBase(
         title = chapter.title ?: "",
         subtitle = chapter.content?.take(80) + if ((chapter.content?.length ?: 0) > 80) "…" else "",

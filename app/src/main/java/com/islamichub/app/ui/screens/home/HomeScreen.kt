@@ -1,6 +1,12 @@
 package com.islamichub.app.ui.screens.home
 
 import android.graphics.BitmapFactory
+import androidx.compose.animation.core.EaseInOut
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -76,6 +82,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -89,7 +96,7 @@ import com.islamichub.app.ui.components.PremiumCard
 import com.islamichub.app.ui.components.PremiumHeroCard
 import com.islamichub.app.ui.components.PremiumIconBadge
 import com.islamichub.app.ui.components.PremiumSectionHeader
-import com.islamichub.app.ui.components.loadAssetImage
+import com.islamichub.app.ui.components.rememberAssetBitmap
 import com.islamichub.app.ui.navigation.Screen
 import com.islamichub.app.ui.theme.AppColors
 import com.islamichub.app.ui.theme.AppSpacing
@@ -125,7 +132,7 @@ fun HomeScreen(
     ) {
         // ─── Premium Hero (splash-like) ───
         item {
-            val heroBitmap = remember { loadAssetImage(context, "img/hero-premium-masjid.webp") }
+            val heroBitmap = rememberAssetBitmap(context, "img/hero-premium-masjid.webp")
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -133,10 +140,28 @@ fun HomeScreen(
                     .clip(RoundedCornerShape(AppRadius.xxl))
             ) {
                 if (heroBitmap != null) {
+                    // v5.13.0 — Ken Burns-style slow breathing zoom. The scale is
+                    // read inside graphicsLayer (draw phase only) so the hero
+                    // animates at 120fps with ZERO recompositions.
+                    val kenBurns = rememberInfiniteTransition(label = "heroKenBurns")
+                    val heroScale by kenBurns.animateFloat(
+                        initialValue = 1f,
+                        targetValue = 1.07f,
+                        animationSpec = infiniteRepeatable(
+                            animation = tween(durationMillis = 14000, easing = EaseInOut),
+                            repeatMode = RepeatMode.Reverse
+                        ),
+                        label = "heroZoom"
+                    )
                     Image(
                         bitmap = heroBitmap.asImageBitmap(),
                         contentDescription = null,
-                        modifier = Modifier.fillMaxSize(),
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .graphicsLayer {
+                                scaleX = heroScale
+                                scaleY = heroScale
+                            },
                         contentScale = ContentScale.Crop
                     )
                     Box(

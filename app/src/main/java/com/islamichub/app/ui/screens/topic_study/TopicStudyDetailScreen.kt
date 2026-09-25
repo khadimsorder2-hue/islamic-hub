@@ -79,7 +79,7 @@ import com.islamichub.app.data.repo.AudioController
 import com.islamichub.app.data.repo.Bookmark
 import com.islamichub.app.data.repo.QuranTopicCatalog
 import com.islamichub.app.data.repo.toShellThematicTopic
-import com.islamichub.app.ui.components.loadAssetImage
+import com.islamichub.app.ui.components.rememberAssetBitmap
 import com.islamichub.app.ui.theme.arabicSp
 import com.islamichub.app.ui.theme.banglaSp
 import com.islamichub.app.ui.theme.englishSp
@@ -216,7 +216,7 @@ fun TopicStudyDetailScreen(
         ) {
             // ─── Premium topic header ────────────────────────
             item {
-                val bgBitmap = remember { loadAssetImage(context, "img/premium-quran-bg.webp") }
+                val bgBitmap = rememberAssetBitmap(context, "img/premium-quran-bg.webp")
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(28.dp),

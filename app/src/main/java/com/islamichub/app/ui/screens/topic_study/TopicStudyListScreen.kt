@@ -59,7 +59,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.islamichub.app.data.AppContainer
 import com.islamichub.app.ui.components.PremiumHeroCard
-import com.islamichub.app.ui.components.loadAssetImage
+import com.islamichub.app.ui.components.rememberAssetBitmap
 import com.islamichub.app.ui.theme.staggerEntrance
 import com.islamichub.app.ui.theme.premiumTap
 
@@ -312,7 +312,7 @@ private fun TopicCard(
     modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
-    val bgBitmap = remember(topic.slug) { loadAssetImage(context, "img/premium-quran-bg.webp") }
+    val bgBitmap = rememberAssetBitmap(context, "img/premium-quran-bg.webp")
     val accent = Color(topic.accentColor)
     // Get domain color (more colorful variety)
     val domainAccent = domainColor(topic.domain)

@@ -2,6 +2,24 @@
 
 All notable changes to the Islamic Hub project.
 
+## [v5.13.0] - 2026-09-25
+
+### ⚡ 120fps + performance engine (major)
+- **High refresh rate unlocked (90/120Hz)**: the app now explicitly requests the device's fastest supported display mode (`preferredDisplayModeId` on Android 11+, `preferredRefreshRate` fallback) at launch AND on every resume — no more silent 60fps cap on high-refresh phones. Wrapped defensively so exotic OEM display quirks can never crash launch.
+- **Cold-start stall removed**: all three `runBlocking` main-thread blocks in `MainActivity` (DataStore reads for daily-ayah scheduling, onboarding check, app-lock check) are gone. Daily-ayah scheduling now runs on the app's IO scope; the onboarding/app-lock checks run inside the already-suspend `LaunchedEffect`.
+- **Main-thread image decoding eliminated — the "app onk slow" root cause**: 12 screens decoded their hero/background WebPs synchronously during composition (`remember { loadAssetImage(...) }`), stalling the UI thread on every screen open. New `rememberAssetBitmap` pipeline: bounds-first downsampling (never decodes wider than 1600px), decode on `Dispatchers.IO`, and a 16 MB app-wide `LruCache` so re-entry is instant. Applied to Home, Prayer, Stories (×3), Namaz Shikkha (×2), Quiz, Topic Study (×2), Hadith Topics (×2), AI Scholar and Onboarding.
+- **Scroll-jank fix in the entrance animation toolkit**: `staggerEntrance` read the animated value during composition, forcing every visible list item to recompose on every animation frame. The value is now read inside the `graphicsLayer` lambda — animations run purely on the draw phase (this is how 120fps animation should be wired).
+- **Release network logging disabled**: `HttpLoggingInterceptor` (BASIC) is now debug-build-only — release builds skip the per-request logging I/O entirely.
+
+### 💎 Premium UI round
+- **Ken Burns cinematic hero**: the home hero image now breathes with a slow 14s zoom (1.0→1.07, reverse loop) drawn entirely on the graphics layer — zero recompositions, full refresh-rate motion.
+- **Live next-prayer countdown**: the home hero countdown used to freeze at launch and even show negative "-3h -12m" after midnight. A light 30s ticker recomputes it, the day rollover (midnight) triggers a full content refresh, and negative diffs show a neutral "—".
+
+### 🛠 Full troubleshooting pass
+- Verified every lazy list in the hot paths (surah list, ayah reader) has stable `key`s.
+- Verified no `runBlocking` remains on the UI thread anywhere in the app.
+- Verified the v5.12.0 Notepad, More-screen entries, and Settings premium redesign remain fully wired; nothing deleted.
+
 ## [v5.7.0] - 2026-09-25
 
 ### ⚡ Quran loading — FIXED (critical)

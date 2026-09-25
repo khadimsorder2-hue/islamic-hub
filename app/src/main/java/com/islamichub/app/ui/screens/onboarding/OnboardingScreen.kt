@@ -106,10 +106,10 @@ fun OnboardingScreen(
 
     Box(modifier = Modifier.fillMaxSize()) {
         // Background
-        val bgBitmap = remember(step.bgImage) {
-            if (step.bgImage != null) com.islamichub.app.ui.components.loadAssetImage(context, "img/${step.bgImage}")
-            else null
-        }
+        // v5.13.0 — async cached decode (was synchronous main-thread BitmapFactory)
+        val bgBitmap = if (step.bgImage != null) {
+            com.islamichub.app.ui.components.rememberAssetBitmap(context, "img/${step.bgImage}")
+        } else null
         if (bgBitmap != null) {
             androidx.compose.foundation.Image(
                 bitmap = bgBitmap.asImageBitmap(),

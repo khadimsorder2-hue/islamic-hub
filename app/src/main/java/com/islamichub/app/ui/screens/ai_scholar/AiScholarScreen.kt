@@ -84,7 +84,7 @@ import com.islamichub.app.R
 import com.islamichub.app.data.AppContainer
 import com.islamichub.app.data.repo.AIService
 import com.islamichub.app.ui.components.PremiumHeroCard
-import com.islamichub.app.ui.components.loadAssetImage
+import com.islamichub.app.ui.components.rememberAssetBitmap
 import com.islamichub.app.ui.theme.AppColors
 import com.islamichub.app.ui.theme.premiumTap
 import com.islamichub.app.ui.theme.staggerEntrance
@@ -331,7 +331,7 @@ fun AiScholarScreen(
             if (state.messages.isEmpty()) {
                 // Premium hero header
                 item {
-                    val bgBitmap = remember { loadAssetImage(context, "img/voice-ai-bg.webp") }
+                    val bgBitmap = rememberAssetBitmap(context, "img/voice-ai-bg.webp")
                     Card(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(28.dp),

@@ -69,7 +69,7 @@ import com.islamichub.app.ui.theme.staggerEntrance
 import androidx.compose.ui.unit.sp
 import com.islamichub.app.data.AppContainer
 import com.islamichub.app.ui.components.PremiumHeroCard
-import com.islamichub.app.ui.components.loadAssetImage
+import com.islamichub.app.ui.components.rememberAssetBitmap
 import com.islamichub.app.ui.theme.toBanglaDigits
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -180,7 +180,7 @@ private fun CategoryListScreen(
 @Composable
 private fun CategoryCard(category: QuizCategory, onClick: () -> Unit) {
     val context = LocalContext.current
-    val bgBitmap = remember(category.id) { loadAssetImage(context, "img/${category.icon}") }
+    val bgBitmap = rememberAssetBitmap(context, "img/${category.icon}")
 
     Card(
         modifier = Modifier

@@ -43,6 +43,24 @@ class IslamicHubApp : Application() {
         }
     }
 
+    /**
+     * v5.13.0 — schedule (or cancel) the daily-ayah notification off the main
+     * thread. The previous implementation block[ed] the UI thread with
+     * runBlocking before the first frame, stalling every cold start.
+     */
+    fun scheduleDailyAyahIfEnabled(activityContext: android.content.Context) {
+        appScope.launch {
+            try {
+                val enabled = container.settingsRepository.dailyAyahEnabled.first()
+                if (enabled) {
+                    com.islamichub.app.data.repo.DailyAyahWorker.schedule(activityContext)
+                } else {
+                    com.islamichub.app.data.repo.DailyAyahWorker.cancel(activityContext)
+                }
+            } catch (_: Exception) { /* notification scheduling must never crash */ }
+        }
+    }
+
     companion object {
         lateinit var instance: IslamicHubApp
             private set
