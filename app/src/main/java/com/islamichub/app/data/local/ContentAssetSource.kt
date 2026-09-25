@@ -184,7 +184,24 @@ data class NamazShikkhaPrayer(
 
 data class NamazExtrasData(
     @SerializedName("namazSurahs") val namazSurahs: List<NamazSurah>?,
-    @SerializedName("extraPrayers") val extraPrayers: Map<String, ExtraPrayer>?
+    @SerializedName("extraPrayers") val extraPrayers: Map<String, ExtraPrayer>?,
+    // v5.9.0 — these existed in namaz_extras.json but were never parsed/rendered; wired now
+    @SerializedName("namazImportantDuas") val namazImportantDuas: List<NamazImportantDua>? = null,
+    @SerializedName("koumiHadiths") val koumiHadiths: List<KoumiHadith>? = null
+)
+
+data class NamazImportantDua(
+    @SerializedName("id") val id: String?,
+    @SerializedName("name_bn") val nameBn: String?,
+    @SerializedName("content") val content: NamazStepContent?
+)
+
+data class KoumiHadith(
+    @SerializedName("id") val id: Int? = null,
+    @SerializedName("arabic") val arabic: String?,
+    @SerializedName("transliteration") val transliteration: String?,
+    @SerializedName("translation") val translation: String?,
+    @SerializedName("source") val source: String?
 )
 
 data class NamazSurah(

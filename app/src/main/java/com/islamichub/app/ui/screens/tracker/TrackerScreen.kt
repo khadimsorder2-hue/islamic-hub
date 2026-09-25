@@ -49,6 +49,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.islamichub.app.R
+import com.islamichub.app.ui.theme.AppColors
 import com.islamichub.app.data.AppContainer
 import com.islamichub.app.ui.components.PremiumSectionHeader
 import com.islamichub.app.ui.theme.PremiumProgressBar
@@ -187,7 +188,7 @@ fun TrackerScreen(
                         if (doneCount == 5) {
                             Text("🎉 মাশাআল্লাহ! আজকের সব নামাজ সম্পন্ন",
                                 style = MaterialTheme.typography.bodySmall,
-                                color = Color(0xFF2E7D32),
+                                color = AppColors.success,
                                 fontWeight = FontWeight.Bold)
                         }
                     }

@@ -56,6 +56,8 @@ import com.islamichub.app.ui.components.PremiumSectionHeader
 import com.islamichub.app.ui.theme.arabicSp
 import com.islamichub.app.ui.theme.banglaSp
 import com.islamichub.app.ui.theme.staggerEntrance
+import androidx.compose.material.icons.filled.Verified
+import com.islamichub.app.ui.theme.premiumTap
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -146,6 +148,12 @@ fun QaScreen(
     state.verificationResult?.let { result ->
         AlertDialog(
             onDismissRequest = vm::clearVerification,
+            icon = {
+                com.islamichub.app.ui.components.PremiumDialogIcon(
+                    icon = androidx.compose.material.icons.Icons.Filled.Verified,
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            },
             title = { Text("AI যাচাই") },
             text = {
                 Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
@@ -166,7 +174,7 @@ private fun QaCard(
 ) {
     var expanded by remember { mutableStateOf(false) }
     Card(
-        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).clickable { expanded = !expanded },
+        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).premiumTap { expanded = !expanded },
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)

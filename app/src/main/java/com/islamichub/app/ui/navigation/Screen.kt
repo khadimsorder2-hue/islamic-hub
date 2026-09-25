@@ -14,7 +14,10 @@ import androidx.compose.ui.graphics.vector.ImageVector
 sealed class Screen(val route: String) {
     data object Home : Screen("home")
     data object Quran : Screen("quran")
-    data object QuranSearch : Screen("quran/search")
+    data object QuranSearch : Screen("quran/search?q={q}") {
+        /** v5.9.0 — carry the query so Home's smart search bar lands pre-filled + searching. */
+        fun createRoute(query: String) = "quran/search?q=${android.net.Uri.encode(query)}"
+    }
     data object QuranReader : Screen("quran/{surahNumber}") {
         fun createRoute(surahNumber: Int) = "quran/$surahNumber"
     }
@@ -41,9 +44,6 @@ sealed class Screen(val route: String) {
 
     // Quran extras
     data object Bookmarks : Screen("bookmarks")
-    data object Tafsir : Screen("tafsir/{surah}/{ayah}") {
-        fun createRoute(surah: Int, ayah: Int) = "tafsir/$surah/$ayah"
-    }
     data object Khatam : Screen("khatam")
 
     // Trackers

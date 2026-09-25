@@ -1,5 +1,6 @@
 package com.islamichub.app.ui.screens.quiz
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -20,6 +21,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -59,6 +61,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.islamichub.app.ui.theme.AppColors
+import com.islamichub.app.ui.theme.premiumTap
+import com.islamichub.app.ui.theme.staggerEntrance
 import androidx.compose.ui.unit.sp
 import com.islamichub.app.data.AppContainer
 import com.islamichub.app.ui.components.PremiumHeroCard
@@ -73,6 +78,10 @@ fun QuizScreen(
     val vm = remember { QuizViewModel(container) }
     val state by vm.uiState.collectAsState()
     val context = LocalContext.current
+
+    // v5.9.0 — system back inside a quiz now walks back to categories instead of
+    // killing the whole app (only the top-bar arrow handled it before).
+    BackHandler(enabled = state.currentScreen != QuizScreen.Category) { vm.backToCategories() }
 
     Scaffold(
         topBar = {
@@ -157,8 +166,10 @@ private fun CategoryListScreen(
                 modifier = Modifier.padding(vertical = 4.dp))
         }
 
-        items(QuizData.categories, key = { it.id }) { category ->
-            CategoryCard(category, onClick = { vm.selectCategory(category) })
+        itemsIndexed(QuizData.categories, key = { _, c -> c.id }) { index, category ->
+            Box(modifier = Modifier.staggerEntrance(index)) {
+                CategoryCard(category, onClick = { vm.selectCategory(category) })
+            }
         }
     }
 }
@@ -172,9 +183,9 @@ private fun CategoryCard(category: QuizCategory, onClick: () -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(20.dp))
-            .clickable(onClick = onClick),
+            .premiumTap(onClick),
         shape = RoundedCornerShape(20.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Box(
             modifier = Modifier
@@ -243,11 +254,9 @@ private fun QuestionScreen(
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         // Progress
-        LinearProgressIndicator(
-            progress = { (state.currentQuestionIndex + 1) / total.toFloat() },
-            modifier = Modifier.fillMaxWidth().height(8.dp).clip(RoundedCornerShape(4.dp)),
-            color = MaterialTheme.colorScheme.primary,
-            trackColor = MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.35f)
+        com.islamichub.app.ui.theme.PremiumProgressBar(
+            progress = (state.currentQuestionIndex + 1) / total.toFloat(),
+            modifier = Modifier.fillMaxWidth()
         )
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -372,21 +381,21 @@ private fun OptionRow(
     onClick: () -> Unit
 ) {
     val borderColor = when {
-        isAnswered && isCorrect -> Color(0xFF2E7D32)
-        isAnswered && isSelected && !isCorrect -> Color(0xFFC62828)
+        isAnswered && isCorrect -> AppColors.success
+        isAnswered && isSelected && !isCorrect -> AppColors.error
         isSelected -> MaterialTheme.colorScheme.primary
         else -> MaterialTheme.colorScheme.outlineVariant
     }
     val bg = when {
-        isAnswered && isCorrect -> Color(0xFF2E7D32).copy(alpha = 0.12f)
-        isAnswered && isSelected && !isCorrect -> Color(0xFFC62828).copy(alpha = 0.12f)
+        isAnswered && isCorrect -> AppColors.success.copy(alpha = 0.12f)
+        isAnswered && isSelected && !isCorrect -> AppColors.error.copy(alpha = 0.12f)
         else -> Color.Transparent
     }
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(14.dp))
-            .clickable(enabled = !isAnswered, onClick = onClick)
+            .premiumTap(enabled = !isAnswered, onClick = onClick)
             .border(2.dp, borderColor, RoundedCornerShape(14.dp)),
         colors = CardDefaults.cardColors(containerColor = bg)
     ) {
@@ -509,8 +518,8 @@ private fun ResultScreen(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                StatCard(label = "সঠিক", value = "$score", color = Color(0xFF2E7D32))
-                StatCard(label = "ভুল", value = "${total - score}", color = Color(0xFFC62828))
+                StatCard(label = "সঠিক", value = "$score", color = AppColors.success)
+                StatCard(label = "ভুল", value = "${total - score}", color = AppColors.error)
                 StatCard(label = "মোট স্কোর", value = "${state.totalScore}", color = MaterialTheme.colorScheme.primary)
             }
 

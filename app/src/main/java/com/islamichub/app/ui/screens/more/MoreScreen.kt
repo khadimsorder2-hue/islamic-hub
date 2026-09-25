@@ -156,7 +156,7 @@ fun MoreScreen(
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clickable { onNavigate(Screen.Settings.route) },
+                        .premiumTap { onNavigate(Screen.Settings.route) },
                     shape = RoundedCornerShape(20.dp),
                     colors = CardDefaults.cardColors(
                         containerColor = MaterialTheme.colorScheme.secondaryContainer

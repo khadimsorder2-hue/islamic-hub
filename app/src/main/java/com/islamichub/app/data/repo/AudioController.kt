@@ -545,6 +545,51 @@ class AudioController(
         }
     }
 
+    /**
+     * v5.9.0 — stream a remote audio URL (https://…) through the shared player so the
+     * FloatingAudioPlayer UI shows automatically. Used by NamazExtras surah playback
+     * where the bundled JSON points at CDN recordings instead of bundled assets.
+     */
+    fun playUrl(url: String, title: String = "অডিও", subtitle: String = "") {
+        if (!url.startsWith("http")) {
+            _state.value = _state.value.copy(
+                isPlaying = false,
+                error = "অডিও লিংক সঠিক নয়"
+            )
+            return
+        }
+        try {
+            player?.stop()
+            player?.clearMediaItems()
+            if (player == null) {
+                player = ExoPlayer.Builder(context)
+                    .setHandleAudioBecomingNoisy(true)
+                    .build()
+                player?.addListener(listener)
+            }
+            val mediaItem = MediaItem.fromUri(url)
+            player?.setMediaItem(mediaItem)
+            player?.prepare()
+            player?.playWhenReady = true
+            _state.value = _state.value.copy(
+                isPlaying = true,
+                isLoading = true,
+                currentSurah = null,
+                currentAyah = null,
+                reciter = subtitle.ifBlank { title },
+                error = null,
+                mode = PlaybackMode.SINGLE_AYAH,
+                isKhatamMode = false,
+                isPlayingBanglaAudio = false
+            )
+        } catch (_: Exception) {
+            _state.value = _state.value.copy(
+                isPlaying = false,
+                error = "অডিও চালানো যায়নি"
+            )
+        }
+    }
+
     private fun startAutoPauseTicker() {
         autoPauseTick = object : Runnable {
             override fun run() {

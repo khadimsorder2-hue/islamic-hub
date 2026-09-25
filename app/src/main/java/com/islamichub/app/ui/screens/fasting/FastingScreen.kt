@@ -144,7 +144,7 @@ fun FastingScreen(
                 TextButton(onClick = {
                     vm.resetAll()
                     showResetDialog = false
-                }) { Text("মুছুন", color = Color(0xFFC62828)) }
+                }) { Text("মুছুন", color = MaterialTheme.colorScheme.error) }
             },
             dismissButton = {
                 TextButton(onClick = { showResetDialog = false }) { Text("বাতিল") }

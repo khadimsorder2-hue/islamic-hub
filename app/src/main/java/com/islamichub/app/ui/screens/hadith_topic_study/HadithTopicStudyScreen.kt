@@ -76,6 +76,8 @@ import com.islamichub.app.ui.components.PremiumHeroCard
 import com.islamichub.app.ui.components.loadAssetImage
 import com.islamichub.app.ui.theme.arabicSp
 import com.islamichub.app.ui.theme.banglaSp
+import androidx.compose.foundation.lazy.itemsIndexed
+import com.islamichub.app.ui.theme.staggerEntrance
 
 // ─── LIST SCREEN ─────────────────────────────────────────────────────────────
 
@@ -179,8 +181,10 @@ fun HadithTopicStudyListScreen(
             }
 
             // Topic cards
-            items(state.filteredTopics) { topic ->
-                HadithTopicCard(topic = topic, context = context) { onTopicClick(topic.slug) }
+            itemsIndexed(state.filteredTopics, key = { _, t -> t.slug }) { tIdx, topic ->
+                Box(modifier = Modifier.staggerEntrance(tIdx)) {
+                    HadithTopicCard(topic = topic, context = context) { onTopicClick(topic.slug) }
+                }
             }
 
             if (state.filteredTopics.isEmpty()) {

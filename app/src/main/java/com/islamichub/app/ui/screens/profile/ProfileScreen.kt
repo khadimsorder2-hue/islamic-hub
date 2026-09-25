@@ -552,6 +552,12 @@ fun ProfileScreen(
     if (showEditDialog) {
         AlertDialog(
             onDismissRequest = { showEditDialog = false },
+            icon = {
+                com.islamichub.app.ui.components.PremiumDialogIcon(
+                    icon = androidx.compose.material.icons.Icons.Filled.Person,
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            },
             title = { Text(stringResource(R.string.profile_edit_name)) },
             text = {
                 OutlinedTextField(

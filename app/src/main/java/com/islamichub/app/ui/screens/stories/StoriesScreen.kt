@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -59,6 +60,8 @@ import com.islamichub.app.ui.components.loadAssetImage
 import com.islamichub.app.ui.theme.banglaSp
 import com.islamichub.app.ui.theme.staggerEntrance
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.MenuBook
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -89,6 +92,24 @@ fun StoriesScreen(
             Column(modifier = Modifier.padding(padding).fillMaxWidth().padding(32.dp),
                 horizontalAlignment = Alignment.CenterHorizontally) {
                 androidx.compose.material3.CircularProgressIndicator()
+            }
+            return@Scaffold
+        }
+
+        // v5.9.0 — if every section came back empty (asset-load failure) show a proper
+        // empty state instead of a bare hero.
+        if (state.prophets.isEmpty() && state.khalifas.isEmpty() &&
+            state.merajChapters.isEmpty() && state.siratChapters.isEmpty()) {
+            Column(modifier = Modifier.padding(padding).fillMaxWidth().padding(32.dp),
+                horizontalAlignment = Alignment.CenterHorizontally) {
+                Text("📖", style = MaterialTheme.typography.headlineMedium)
+                Spacer(Modifier.height(12.dp))
+                Text("গল্প লোড করা যায়নি",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold)
+                Text("অ্যাপ রিস্টার্ট করে আবার চেষ্টা করুন",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             return@Scaffold
         }
@@ -177,6 +198,12 @@ fun StoriesScreen(
     selectedProphet?.let { prophet ->
         AlertDialog(
             onDismissRequest = { selectedProphet = null },
+            icon = {
+                com.islamichub.app.ui.components.PremiumDialogIcon(
+                    icon = androidx.compose.material.icons.Icons.Filled.Person,
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            },
             title = { Text(prophet.name ?: "নবী", style = MaterialTheme.typography.titleLarge) },
             text = {
                 Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
@@ -207,6 +234,12 @@ fun StoriesScreen(
     selectedKhalifa?.let { khalifa ->
         AlertDialog(
             onDismissRequest = { selectedKhalifa = null },
+            icon = {
+                com.islamichub.app.ui.components.PremiumDialogIcon(
+                    icon = androidx.compose.material.icons.Icons.Filled.Person,
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            },
             title = { Text(khalifa.name ?: "খলিফা", style = MaterialTheme.typography.titleLarge) },
             text = {
                 Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
@@ -232,6 +265,12 @@ fun StoriesScreen(
     selectedChapter?.let { (sectionTitle, chapter) ->
         AlertDialog(
             onDismissRequest = { selectedChapter = null },
+            icon = {
+                com.islamichub.app.ui.components.PremiumDialogIcon(
+                    icon = androidx.compose.material.icons.Icons.Filled.MenuBook,
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            },
             title = { Text(chapter.title ?: "অধ্যায়", style = MaterialTheme.typography.titleLarge) },
             text = {
                 Column(modifier = Modifier.verticalScroll(rememberScrollState())) {

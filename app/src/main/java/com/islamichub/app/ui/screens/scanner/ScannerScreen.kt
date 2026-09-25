@@ -43,6 +43,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -58,6 +59,7 @@ import androidx.core.content.FileProvider
 import com.islamichub.app.data.AppContainer
 import com.islamichub.app.ui.components.PremiumSectionHeader
 import com.islamichub.app.ui.theme.staggerEntrance
+import kotlinx.coroutines.launch
 import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -67,6 +69,7 @@ fun ScannerScreen(
     onBack: () -> Unit
 ) {
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     var imageBitmap by remember { mutableStateOf<Bitmap?>(null) }
     var imageUri by remember { mutableStateOf<Uri?>(null) }
     var isAnalyzing by remember { mutableStateOf(false) }
@@ -230,21 +233,29 @@ fun ScannerScreen(
 
             Button(
                 onClick = {
-                    if (imageBitmap != null) {
+                    val bmp = imageBitmap
+                    if (bmp != null && !isAnalyzing) {
                         isAnalyzing = true
                         error = null
                         result = null
-                        // Simulate AI analysis — in real app, send image to vision model
-                        android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                        // v5.9.0 — real AI vision analysis via the shared AIService
+                        // (Gemini inline-image). Result streams into the result card.
+                        scope.launch {
+                            val res = container.aiService.analyzeImage(bmp)
                             isAnalyzing = false
-                            result = "AI বিশ্লেষণ সম্পন্ন। (এই feature এর জন্য vision API কনফিগার করা প্রয়োজন — Settings এ AI API key যোগ করুন এবং vision-capable model ব্যবহার করুন।)"
-                        }, 1500)
+                            if (res.error != null) {
+                                error = res.error
+                            } else {
+                                result = res.answer
+                                res.warning?.let { warn -> error = warn }
+                            }
+                        }
                     }
                 },
                 modifier = Modifier.fillMaxWidth().staggerEntrance(3),
                 enabled = imageBitmap != null && !isAnalyzing
             ) {
-                Text(if (isAnalyzing) "বিশ্লেষণ চলছে…" else "AI দিয়ে বিশ্লেষণ করুন")
+                Text(if (isAnalyzing) "AI বিশ্লেষণ চলছে… (কয়েক সেকেন্ড লাগতে পারে)" else "AI দিয়ে বিশ্লেষণ করুন")
             }
 
             if (isAnalyzing) {

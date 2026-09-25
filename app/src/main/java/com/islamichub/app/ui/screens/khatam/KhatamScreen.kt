@@ -21,6 +21,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AutoStories
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.DeleteForever
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Share
@@ -84,6 +85,7 @@ fun KhatamScreen(
     val context = LocalContext.current
 
     var showClearHistoryDialog by remember { mutableStateOf(false) }
+    var showResetConfirm by remember { mutableStateOf(false) }
 
     val khatamShareText = stringResource(R.string.khatam_share_text)
     val khatamTitle = stringResource(R.string.khatam_title)
@@ -276,7 +278,7 @@ fun KhatamScreen(
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         OutlinedButton(
-                            onClick = { vm.reset() },
+                            onClick = { showResetConfirm = true },
                             modifier = Modifier.weight(1f)
                         ) { Text("রিসেট") }
                         if (khatam.isComplete) {
@@ -530,6 +532,36 @@ fun KhatamScreen(
                 }
             }
         }
+    }
+
+    if (showResetConfirm) {
+        // v5.9.0 — resetting an in-progress khatam destroys real progress, so it
+        // now asks for confirmation first (same pattern as history deletion).
+        AlertDialog(
+            onDismissRequest = { showResetConfirm = false },
+            icon = {
+                com.islamichub.app.ui.components.PremiumDialogIcon(
+                    icon = Icons.Filled.Delete,
+                    tint = MaterialTheme.colorScheme.error
+                )
+            },
+            title = { Text("খতম রিসেট করবেন?") },
+            text = { Text("চলমান খতমের সব পড়া সূরার রেকর্ড মুছে যাবে (ইতিহাস থাকবে)। আপনি কি নিশ্চিত?") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showResetConfirm = false
+                        vm.reset()
+                    },
+                    colors = ButtonDefaults.textButtonColors(
+                        contentColor = MaterialTheme.colorScheme.error
+                    )
+                ) { Text("রিসেট করুন") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showResetConfirm = false }) { Text("না") }
+            }
+        )
     }
 
     if (showClearHistoryDialog) {

@@ -5,15 +5,19 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Bolt
+import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -32,6 +36,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -174,12 +181,69 @@ fun DuaDetailScreen(
                     modifier = Modifier.padding(8.dp).staggerEntrance(3)
                 )
 
-                // AI explanation button
+                // AI explanation button + copy + share (v5.9.0 — the dua screens
+                // finally match Hadith/Quran parity: real clipboard + share intent)
+                val clipboard = LocalClipboardManager.current
+                val shareContext = LocalContext.current
                 var showAI by remember { mutableStateOf(false) }
+                val duaShareText = buildString {
+                    appendLine(d.titleBengali)
+                    appendLine(d.titleEnglish)
+                    appendLine()
+                    appendLine(d.arabic)
+                    appendLine()
+                    appendLine(d.transliteration)
+                    appendLine()
+                    appendLine(d.translationBengali)
+                    if (d.reference.isNotBlank()) appendLine("সূত্র: ${d.reference}")
+                    append("\nIslamic Hub অ্যাপ থেকে শেয়ার করা")
+                }
                 Row(
                     modifier = Modifier.fillMaxWidth().padding(top = 8.dp).staggerEntrance(4),
                     horizontalArrangement = Arrangement.End
                 ) {
+                    // Copy
+                    Box(
+                        modifier = Modifier
+                            .clip(androidx.compose.foundation.shape.RoundedCornerShape(50))
+                            .background(MaterialTheme.colorScheme.secondaryContainer)
+                            .premiumTap {
+                                clipboard.setText(AnnotatedString(duaShareText))
+                                android.widget.Toast.makeText(shareContext, "কপি হয়েছে", android.widget.Toast.LENGTH_SHORT).show()
+                            }
+                            .padding(horizontal = 12.dp, vertical = 6.dp)
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Filled.ContentCopy, contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onSecondaryContainer, modifier = Modifier.size(16.dp))
+                            Text("  কপি", style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSecondaryContainer, fontWeight = FontWeight.SemiBold)
+                        }
+                    }
+                    Spacer(Modifier.width(8.dp))
+                    // Share
+                    Box(
+                        modifier = Modifier
+                            .clip(androidx.compose.foundation.shape.RoundedCornerShape(50))
+                            .background(MaterialTheme.colorScheme.secondaryContainer)
+                            .premiumTap {
+                                val sendIntent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+                                    type = "text/plain"
+                                    putExtra(android.content.Intent.EXTRA_TEXT, duaShareText)
+                                }
+                                shareContext.startActivity(android.content.Intent.createChooser(sendIntent, "দোয়া শেয়ার করুন"))
+                            }
+                            .padding(horizontal = 12.dp, vertical = 6.dp)
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Filled.Share, contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onSecondaryContainer, modifier = Modifier.size(16.dp))
+                            Text("  শেয়ার", style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSecondaryContainer, fontWeight = FontWeight.SemiBold)
+                        }
+                    }
+                    Spacer(Modifier.width(8.dp))
+                    // AI
                     Box(
                         modifier = Modifier
                             .clip(androidx.compose.foundation.shape.RoundedCornerShape(50))

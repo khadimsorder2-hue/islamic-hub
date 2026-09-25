@@ -25,6 +25,7 @@ import androidx.compose.material.icons.filled.CleaningServices
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.FormatSize
 import androidx.compose.material.icons.filled.Headphones
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.MenuBook
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.SystemUpdate
@@ -453,6 +454,7 @@ fun SettingsScreen(
                     )
                     ToggleRow(
                         label = stringResource(R.string.settings_word_audio),
+                        sublabel = stringResource(R.string.settings_word_audio_coming_soon),
                         checked = state.wordByWordAudioEnabled,
                         onCheckedChange = vm::setWordByWordAudioEnabled
                     )
@@ -682,6 +684,21 @@ fun SettingsScreen(
                         Text("  AI ক্যাশ মুছুন (${state.cacheCount})",
                             color = MaterialTheme.colorScheme.error)
                     }
+                }
+            }
+
+            // ─── Security / App Lock (v5.9.0) ─────────────────────────
+            item {
+                SettingsSection(index = 8, title = stringResource(R.string.settings_security), icon = Icons.Filled.Lock, accent = Color(0xFF37474F)) {
+                    // v5.9.0 — the App Lock feature is now fully wired: the toggle
+                    // persists via SettingsRepository and MainActivity gates the whole
+                    // app behind BiometricPrompt on the next launch.
+                    ToggleRow(
+                        label = stringResource(R.string.settings_app_lock),
+                        sublabel = stringResource(R.string.settings_app_lock_sub),
+                        checked = state.appLockEnabled,
+                        onCheckedChange = vm::setAppLockEnabled
+                    )
                 }
             }
 

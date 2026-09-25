@@ -25,6 +25,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.MenuBook
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
@@ -65,6 +66,7 @@ import com.islamichub.app.ui.components.PremiumSectionHeader
 import com.islamichub.app.ui.components.loadAssetImage
 import com.islamichub.app.ui.theme.arabicSp
 import com.islamichub.app.ui.theme.banglaSp
+import com.islamichub.app.ui.theme.premiumTap
 import com.islamichub.app.ui.theme.staggerEntrance
 import androidx.compose.ui.graphics.asImageBitmap
 import kotlinx.coroutines.launch
@@ -370,6 +372,12 @@ fun NamazShikkhaScreen(
     selectedExtended?.let { item ->
         AlertDialog(
             onDismissRequest = { selectedExtended = null },
+            icon = {
+                com.islamichub.app.ui.components.PremiumDialogIcon(
+                    icon = androidx.compose.material.icons.Icons.Filled.MenuBook,
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            },
             title = { Text(item.name) },
             text = {
                 Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
@@ -380,6 +388,40 @@ fun NamazShikkhaScreen(
                         step.arabic?.let { Text(it, style = MaterialTheme.typography.titleMedium.copy(fontSize = arabicSp(MaterialTheme.typography.titleMedium.fontSize)), modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.End) }
                         step.pronunciation?.let { Text(it, style = MaterialTheme.typography.bodySmall.copy(fontSize = banglaSp(MaterialTheme.typography.bodySmall.fontSize)), color = MaterialTheme.colorScheme.onSurfaceVariant) }
                         step.meaning?.let { Text(it, style = MaterialTheme.typography.bodyMedium.copy(fontSize = banglaSp(MaterialTheme.typography.bodyMedium.fontSize))) }
+                        // v5.9.0 — the step audio files were bundled since v1 but no play
+                        // button ever surfaced them; Jumma/Eid/Janaza steps now play too.
+                        step.audio?.let { audio ->
+                            val fileName = audio.replace("namaz-audio/", "")
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 4.dp)
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.08f))
+                                    .premiumTap {
+                                        container.audioController.playAssetAudio(
+                                            assetPath = "namaz_audio/$fileName",
+                                            title = (step.name ?: item.name),
+                                            subtitle = "নামাজ শিক্ষা"
+                                        )
+                                    }
+                                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    androidx.compose.material.icons.Icons.Filled.PlayArrow,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                                Text(
+                                    "  অডিও শুনুন",
+                                    style = MaterialTheme.typography.labelMedium,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            }
+                        }
                     }
                 }
             },

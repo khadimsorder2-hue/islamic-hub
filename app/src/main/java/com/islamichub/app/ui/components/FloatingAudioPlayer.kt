@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -50,7 +51,11 @@ import kotlinx.coroutines.delay
 @Composable
 fun FloatingAudioPlayer(
     container: AppContainer,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    /** v5.9.0 — tap the title row to jump into that surah in the Quran reader. */
+    onOpenReader: ((Int) -> Unit)? = null,
+    /** v5.9.0 — add bottom inset when the bottom navigation bar is hidden. */
+    padForNavigationBar: Boolean = false
 ) {
     val audioState by container.audioController.state.collectAsState()
     var elapsedSeconds by remember { mutableStateOf(0) }
@@ -80,6 +85,7 @@ fun FloatingAudioPlayer(
         Card(
             modifier = Modifier
                 .fillMaxWidth()
+                .then(if (padForNavigationBar) Modifier.navigationBarsPadding() else Modifier)
                 .padding(horizontal = 12.dp, vertical = 4.dp),
             shape = RoundedCornerShape(16.dp),
             colors = CardDefaults.cardColors(
@@ -90,7 +96,11 @@ fun FloatingAudioPlayer(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable { /* tap to expand — future: navigate to reader */ }
+                    .then(
+                        if (onOpenReader != null && audioState.currentSurah != null)
+                            Modifier.clickable { onOpenReader(audioState.currentSurah!!) }
+                        else Modifier
+                    )
                     .padding(horizontal = 12.dp, vertical = 10.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(10.dp)

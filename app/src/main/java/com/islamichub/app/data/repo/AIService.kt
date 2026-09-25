@@ -1,6 +1,8 @@
 package com.islamichub.app.data.repo
 
 import android.content.Context
+import android.graphics.Bitmap
+import android.util.Base64
 import com.google.gson.Gson
 import com.google.gson.JsonObject
 import kotlinx.coroutines.Dispatchers
@@ -175,6 +177,134 @@ class AIService(private val context: Context) {
     }
 
     /**
+     * Analyze an image with the LLM (vision). Used by the Scanner screen so users can
+     * photograph a Quran page, dua card, or prayer-related content and get a real,
+     * detailed Bangla explanation — no more fake "configure vision API" placeholder.
+     *
+     * Vision calls are supported for the Gemini provider (default, works out of the box
+     * with the built-in key). The bitmap is downscaled + JPEG-compressed so the inline
+     * payload stays small on mobile data.
+     */
+    suspend fun analyzeImage(
+        bitmap: Bitmap,
+        userMessage: String = VISION_PROMPT
+    ): ChatResult = withContext(Dispatchers.IO) {
+        val cfg = _config.value
+        if (cfg.apiKey.isBlank()) {
+            return@withContext ChatResult(
+                requestId = "",
+                answer = "",
+                error = "কোনো API key কনফিগার করা নেই। Settings এ গিয়ে আপনার API key যোগ করুন।"
+            )
+        }
+        if (cfg.provider != "gemini") {
+            return@withContext ChatResult(
+                requestId = "",
+                answer = "",
+                error = "ছবি বিশ্লেষণ এখন শুধুমাত্র Gemini provider এ কাজ করে। Settings থেকে Gemini নির্বাচন করুন।"
+            )
+        }
+        val requestId = UUID.randomUUID().toString()
+        latestRequestId.set(requestId)
+        try {
+            val answer = callGeminiVision(cfg, ISLAMIC_SCHOLAR_PROMPT, userMessage, bitmap)
+            // Stale check
+            if (latestRequestId.get() != requestId) {
+                return@withContext ChatResult(requestId = requestId, answer = "", error = "stale")
+            }
+            ChatResult(
+                requestId = requestId,
+                answer = answer.trim(),
+                warning = if (answer.contains("আমি নিশ্চিত নই", ignoreCase = true) ||
+                              answer.contains("জানি না", ignoreCase = true))
+                    "AI নিশ্চিত না — দয়া করে একজন যোগ্য আলেমের সাথে যাচাই করুন।" else null
+            )
+        } catch (e: Exception) {
+            ChatResult(requestId = requestId, answer = "", error = e.message ?: "নেটওয়ার্ক ত্রুটি")
+        }
+    }
+
+    /**
+     * Call Gemini API with an inline base64 image (vision request).
+     * Mirrors callGemini()'s payload structure but sends an inline_data part.
+     */
+    private fun callGeminiVision(
+        cfg: Config,
+        systemPrompt: String,
+        userMessage: String,
+        bitmap: Bitmap
+    ): String {
+        val url = "${cfg.baseUrl.trimEnd('/')}/models/${cfg.model}:generateContent?key=${cfg.apiKey}"
+
+        // Downscale + compress → smaller upload, faster on mobile data
+        val scaled = scaleBitmapForVision(bitmap, 1024)
+        val baos = java.io.ByteArrayOutputStream()
+        scaled.compress(Bitmap.CompressFormat.JPEG, 80, baos)
+        val base64Image = Base64.encodeToString(baos.toByteArray(), Base64.NO_WRAP)
+
+        val imagePart = JsonObject().apply {
+            add("inline_data", JsonObject().apply {
+                addProperty("mime_type", "image/jpeg")
+                addProperty("data", base64Image)
+            })
+        }
+        val textPart = JsonObject().apply { addProperty("text", userMessage) }
+        val partsArray = com.google.gson.JsonArray().apply {
+            add(imagePart)
+            add(textPart)
+        }
+        val contentObj = JsonObject().apply {
+            addProperty("role", "user")
+            add("parts", partsArray)
+        }
+        val contentsArray = com.google.gson.JsonArray().apply { add(contentObj) }
+
+        val requestBody = JsonObject().apply {
+            add("contents", contentsArray)
+            add("systemInstruction", JsonObject().apply {
+                val sysPart = JsonObject().apply { addProperty("text", systemPrompt) }
+                add("parts", com.google.gson.JsonArray().apply { add(sysPart) })
+            })
+            add("generationConfig", JsonObject().apply {
+                addProperty("temperature", cfg.temperature)
+                addProperty("maxOutputTokens", cfg.maxTokens)
+            })
+        }
+
+        val request = Request.Builder()
+            .url(url)
+            .addHeader("Content-Type", "application/json")
+            .post(requestBody.toString().toRequestBody("application/json".toMediaType()))
+            .build()
+
+        val response = client.newCall(request).execute()
+        val responseBody = response.body?.string()
+        if (!response.isSuccessful) {
+            throw Exception("Gemini API ত্রুটি ${response.code}: ${responseBody?.take(300)}")
+        }
+
+        val parsed = gson.fromJson(responseBody, JsonObject::class.java)
+        return parsed
+            ?.getAsJsonArray("candidates")
+            ?.get(0)?.asJsonObject
+            ?.getAsJsonObject("content")
+            ?.getAsJsonArray("parts")
+            ?.get(0)?.asJsonObject
+            ?.get("text")?.asString
+            ?: throw Exception("AI উত্তর পার্স করা যায়নি")
+    }
+
+    /** Downscale so the largest dimension is at most [maxDim] px before upload. */
+    private fun scaleBitmapForVision(bitmap: Bitmap, maxDim: Int): Bitmap {
+        val largest = maxOf(bitmap.width, bitmap.height)
+        if (largest <= maxDim) return bitmap
+        val scale = maxDim.toFloat() / largest
+        val w = (bitmap.width * scale).toInt().coerceAtLeast(1)
+        val h = (bitmap.height * scale).toInt().coerceAtLeast(1)
+        return Bitmap.createScaledBitmap(bitmap, w, h, true)
+    }
+
+    /**
      * Call Gemini API (generativelanguage.googleapis.com)
      */
     private fun callGemini(
@@ -313,6 +443,28 @@ class AIService(private val context: Context) {
 
         /** v5.7.0 — default model is from the Gemini 3 series. */
         const val DEFAULT_MODEL = "gemini-3-flash"
+
+        /**
+         * v5.9.0 — Scanner screen vision prompt. The user photographs Quran pages,
+         * dua cards, madrasa books etc. and gets a full, village-simple Bangla
+         * breakdown of what is written + what it means + how to act on it.
+         */
+        const val VISION_PROMPT = """এই ছবিটি বিশ্লেষণ করে সম্পূর্ণ ব্যাখ্যা বাংলায় দিন। ছবিতে কুরআনের আয়াত, হাদিস, দোয়া, আরবি লেখা বা ইসলামি কোনো কিছু থাকতে পারে।
+
+আপনার উত্তরে এই ক্রমে সেকশনগুলো থাকবে:
+
+🔍 ছবিতে কী লেখা আছে: [ছবির সব আরবি/বাংলা/ইংরেজি লেখা হুবহু পড়ে লিখুন — আরবি হলে আরবিতে, তারপর বাংলা উচ্চারণ ও অর্থ]
+
+📖 এটা কী: [এটি কোন সূরা/আয়াত/হাদিস/দোয়া — নাম ও সূত্র উল্লেখ করুন। চিনতে না পারলে সৎভাবে বলুন চিনতে পারিনি]
+
+💬 সহজ অর্থ: [একদম সহজ বাংলায় — ছোট ছোট বাক্যে, গ্রামের মানুষ যেন প্রথমবার শুনেই বুঝতে পারে]
+
+🌟 কেন গুরুত্বপূর্ণ: [এই বিষয়টি আমাদের দৈনন্দিন জীবনে কী শেখায় — ১-২টি বাস্তব উদাহরণ দিয়ে]
+
+🏠 আমরা কী করব: [পাঠক দৈনন্দিন জীবনে এটি কীভাবে পালন/ব্যবহার করবে — ধাপে ধাপে]
+
+নিয়ম: ছবিতে যা আছে শুধু সেটাই ব্যাখ্যা করুন, বাইরের কিছু বানিয়ে বলবেন না। অস্পষ্ট হলে বলুন "ছবিটা একটু পরিষ্কার হলে আরো ভালো বুঝতে পারতাম"। কঠিন শব্দ এলে বন্ধনীতে সহজ বাংলা অর্থ দিন।"""
+
 
         const val ISLAMIC_SCHOLAR_PROMPT = """আপনি "Islamic Hub AI" — একজন অত্যন্ত বিশ্বস্ত, প্রাজ্ঞ এবং অভিজ্ঞ ইসলামি স্কলার ও সিনিয়র মুফতি, আর সাথে একজন স্নেহময় গ্রামের মুরুব্বির মতো শিক্ষক। আপনার পাঠক হলেন বাংলাদেশের সাধারণ মানুষ — কৃষক, শ্রমিক, গৃহিণী, ছাত্র — যাঁদের অনেকে বেশি লেখাপড়া জানেন না। আপনার জ্ঞানের উৎস: পবিত্র কুরআন, সহিহ হাদিস (বুখারি, মুসলিম, তিরমিজি, আবু দাউদ, নাসাই, ইবনে মাজাহ), ফিকাহ এবং বিশ্বখ্যাত ইসলামি স্কলারদের মতামত।
 

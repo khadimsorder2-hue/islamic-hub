@@ -168,17 +168,8 @@ class QuranReaderViewModel(
         }
     }
 
-    fun toggleAudio() {
-        if (_state.value.isPlayingAudio) {
-            container.audioController.pause()
-        } else {
-            container.audioController.resume()
-        }
-    }
-
-    fun stopAudio() {
-        container.audioController.stop()
-    }
+    // v5.9.0 — dead toggleAudio()/stopAudio() helpers removed: they only served the
+    // deleted AudioPlaybackBar. Playback controls live in FloatingAudioPlayer now.
 
     fun toggleBanglaAudio() {
         val current = _state.value.banglaAudioEnabled

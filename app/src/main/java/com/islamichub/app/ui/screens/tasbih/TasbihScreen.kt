@@ -49,6 +49,7 @@ import androidx.compose.ui.unit.sp
 import com.islamichub.app.R
 import com.islamichub.app.data.AppContainer
 import com.islamichub.app.data.model.DhikrOption
+import com.islamichub.app.ui.theme.premiumTap
 import com.islamichub.app.ui.theme.staggerEntrance
 
 @Composable
@@ -260,6 +261,7 @@ fun TasbihScreen(container: AppContainer) {
             }
 
             // Reset buttons — at the very bottom
+            var showResetAllConfirm by remember { mutableStateOf(false) }
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -269,11 +271,38 @@ fun TasbihScreen(container: AppContainer) {
                     modifier = Modifier.weight(1f)
                 ) { Text(stringResource(R.string.tasbih_reset)) }
                 Button(
-                    onClick = vm::onResetAll,
+                    // v5.9.0 — destructive Reset All now asks for confirmation and
+                    // reports completion through the (previously unused) snackbar.
+                    onClick = { showResetAllConfirm = true },
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
                     modifier = Modifier.weight(1f)
                 ) { Text("Reset All") }
             }
+        }
+
+        if (showResetAllConfirm) {
+            androidx.compose.material3.AlertDialog(
+                onDismissRequest = { showResetAllConfirm = false },
+                icon = {
+                    com.islamichub.app.ui.components.PremiumDialogIcon(
+                        icon = androidx.compose.material.icons.Icons.Filled.Delete,
+                        tint = MaterialTheme.colorScheme.error
+                    )
+                },
+                title = { Text("সব সংখ্যা রিসেট?") },
+                text = { Text("আপনার সব জিকিরের সংখ্যা মুছে যাবে। এটা ফিরিয়ে আনা যাবে না — আপনি কি নিশ্চিত?") },
+                confirmButton = {
+                    androidx.compose.material3.TextButton(onClick = {
+                        showResetAllConfirm = false
+                        vm.onResetAll()
+                    }) { Text("হ্যাঁ, রিসেট করুন", color = MaterialTheme.colorScheme.error) }
+                },
+                dismissButton = {
+                    androidx.compose.material3.TextButton(onClick = { showResetAllConfirm = false }) {
+                        Text("না")
+                    }
+                }
+            )
         }
 
         SnackbarHost(
@@ -296,7 +325,7 @@ private fun DhikrChip(
                 if (selected) MaterialTheme.colorScheme.primary
                 else MaterialTheme.colorScheme.surfaceVariant
             )
-            .clickable(onClick = onClick)
+            .premiumTap(onClick)
             .padding(horizontal = 12.dp, vertical = 8.dp)
     ) {
         Text(

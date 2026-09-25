@@ -82,8 +82,16 @@ fun IslamicHubNavGraph(container: AppContainer) {
     Scaffold(
         bottomBar = {
             Column {
-                // Floating audio player — ALWAYS visible (above nav bar on all screens)
-                com.islamichub.app.ui.components.FloatingAudioPlayer(container = container)
+                // Floating audio player — ALWAYS visible (above nav bar on all screens).
+                // v5.9.0 — tapping the title row opens that surah in the reader, and the
+                // player pads itself for the gesture bar on screens without the nav bar.
+                com.islamichub.app.ui.components.FloatingAudioPlayer(
+                    container = container,
+                    padForNavigationBar = !showBottomBar,
+                    onOpenReader = { surah ->
+                        navController.navigate(Screen.QuranReader.createRoute(surah))
+                    }
+                )
                 if (showBottomBar) {
                     // Premium glassmorphism nav bar
                     Surface(
@@ -200,17 +208,24 @@ fun IslamicHubNavGraph(container: AppContainer) {
                         navController.navigate(Screen.QuranReader.createRoute(num))
                     },
                     onSearchClick = {
-                        navController.navigate(Screen.QuranSearch.route)
+                        navController.navigate(Screen.QuranSearch.createRoute(""))
                     }
                 )
             }
-            composable(Screen.QuranSearch.route) {
+            composable(
+                route = Screen.QuranSearch.route,
+                arguments = listOf(navArgument("q") {
+                    type = NavType.StringType
+                    defaultValue = ""
+                })
+            ) { backStackEntry ->
                 QuranSearchScreen(
                     container = container,
                     onBack = { navController.popBackStack() },
                     onAyahClick = { num ->
                         navController.navigate(Screen.QuranReader.createRoute(num))
-                    }
+                    },
+                    initialQuery = backStackEntry.arguments?.getString("q") ?: ""
                 )
             }
             composable(
@@ -239,6 +254,7 @@ fun IslamicHubNavGraph(container: AppContainer) {
             composable(Screen.Duas.route) {
                 DuaListScreen(
                     container = container,
+                    onBack = { navController.popBackStack() },
                     onDuaClick = { id -> navController.navigate(Screen.DuaDetail.createRoute(id)) }
                 )
             }
@@ -250,7 +266,7 @@ fun IslamicHubNavGraph(container: AppContainer) {
                 DuaDetailScreen(container = container, duaId = id, onBack = { navController.popBackStack() })
             }
             composable(Screen.Calendar.route) {
-                CalendarScreen(container = container)
+                CalendarScreen(container = container, onBack = { navController.popBackStack() })
             }
 
             // ─── Hadith ────────────────────────────────────────────────

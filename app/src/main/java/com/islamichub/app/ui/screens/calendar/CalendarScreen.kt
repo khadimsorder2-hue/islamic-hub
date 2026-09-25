@@ -57,7 +57,7 @@ import androidx.compose.ui.layout.ContentScale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CalendarScreen(container: AppContainer) {
+fun CalendarScreen(container: AppContainer, onBack: () -> Unit = {}) {
     val vm = remember { CalendarViewModel(container) }
     val state by vm.state.collectAsState()
     val context = LocalContext.current
@@ -67,7 +67,9 @@ fun CalendarScreen(container: AppContainer) {
             CenterAlignedTopAppBar(
                 title = { Text("হিজরি ক্যালেন্ডার") },
                 navigationIcon = {
-                    IconButton(onClick = { /* no back — it's a tab */ }) {
+                    // v5.9.0 — this IS a pushed sub-screen, so the back arrow now
+                    // actually pops the back stack instead of doing nothing.
+                    IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 }

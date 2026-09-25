@@ -31,6 +31,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -43,6 +44,7 @@ import androidx.compose.ui.unit.dp
 import com.islamichub.app.R
 import com.islamichub.app.data.AppContainer
 import com.islamichub.app.data.repo.AyahSearchResult
+import com.islamichub.app.ui.theme.premiumTap
 import com.islamichub.app.ui.theme.staggerEntrance
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -50,10 +52,16 @@ import com.islamichub.app.ui.theme.staggerEntrance
 fun QuranSearchScreen(
     container: AppContainer,
     onBack: () -> Unit,
-    onAyahClick: (Int) -> Unit
+    onAyahClick: (Int) -> Unit,
+    initialQuery: String = ""
 ) {
     val vm = remember { QuranSearchViewModel(container) }
     val state by vm.state.collectAsState()
+
+    // v5.9.0 — when arriving from Home's smart search bar, run the query immediately
+    LaunchedEffect(initialQuery) {
+        if (initialQuery.isNotBlank()) vm.onQueryChange(initialQuery)
+    }
 
     Scaffold(
         topBar = {
@@ -152,7 +160,7 @@ private fun AyahResultCard(
     onClick: () -> Unit
 ) {
     Card(
-        modifier = modifier.fillMaxWidth().clickable(onClick = onClick),
+        modifier = modifier.fillMaxWidth().premiumTap(onClick),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)

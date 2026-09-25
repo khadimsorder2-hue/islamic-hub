@@ -85,7 +85,13 @@ fun NamazExtrasScreen(
             return@Scaffold
         }
 
-        val surahHeaderIndex = (data.extraPrayers?.size ?: 0) + 1
+        val extraCount = data.extraPrayers?.size ?: 0
+        val duaCount = data.namazImportantDuas?.size ?: 0
+        val hadithCount = data.koumiHadiths?.size ?: 0
+        // Stagger index bookkeeping — hero=0, then every card gets the next slot
+        val duaHeaderIndex = extraCount + 1
+        val hadithHeaderIndex = duaHeaderIndex + duaCount + 1
+        val surahHeaderIndex = hadithHeaderIndex + hadithCount + 1
         LazyColumn(
             modifier = Modifier.padding(padding),
             contentPadding = PaddingValues(16.dp),
@@ -177,6 +183,149 @@ fun NamazExtrasScreen(
                 }
             }
 
+            // v5.9.0 — these duas existed in the JSON since the beginning but no section
+            // ever rendered them. Namaz-only duas (সানা, তাশাহহুদ, কুনুত) in one place.
+            if (duaCount > 0) {
+                item {
+                    PremiumSectionHeader(
+                        title = "নামাজের গুরুত্বপূর্ণ দোয়া",
+                        modifier = Modifier.padding(top = 16.dp, bottom = 4.dp).staggerEntrance(duaHeaderIndex)
+                    )
+                }
+            }
+            data.namazImportantDuas?.forEachIndexed { idx, dua ->
+                item(key = "dua_${dua.id}") {
+                    Card(
+                        modifier = Modifier.fillMaxWidth().staggerEntrance(duaHeaderIndex + 1 + idx),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Text(
+                                text = dua.nameBn ?: "",
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                            dua.content?.arabic?.let { arabic ->
+                                if (arabic.isNotBlank()) {
+                                    Text(
+                                        text = arabic,
+                                        style = MaterialTheme.typography.titleLarge.copy(fontSize = arabicSp(MaterialTheme.typography.titleLarge.fontSize)),
+                                        color = MaterialTheme.colorScheme.onSurface,
+                                        modifier = Modifier.fillMaxWidth(),
+                                        textAlign = TextAlign.End
+                                    )
+                                }
+                            }
+                            dua.content?.transliteration?.let { tr ->
+                                if (tr.isNotBlank()) {
+                                    Text(
+                                        text = tr,
+                                        style = MaterialTheme.typography.bodySmall.copy(fontSize = banglaSp(MaterialTheme.typography.bodySmall.fontSize)),
+                                        color = MaterialTheme.colorScheme.primary,
+                                        fontWeight = FontWeight.Medium
+                                    )
+                                }
+                            }
+                            dua.content?.translation?.let { tr ->
+                                if (tr.isNotBlank()) {
+                                    Text(
+                                        text = tr,
+                                        style = MaterialTheme.typography.bodySmall.copy(fontSize = banglaSp(MaterialTheme.typography.bodySmall.fontSize)),
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // v5.9.0 — কওমি হাদিস সেকশন: the 10 hadiths shipped in the JSON but
+            // never surfaced anywhere in the app.
+            if (hadithCount > 0) {
+                item {
+                    PremiumSectionHeader(
+                        title = "কওমি হাদিস",
+                        modifier = Modifier.padding(top = 16.dp, bottom = 4.dp).staggerEntrance(hadithHeaderIndex)
+                    )
+                }
+            }
+            data.koumiHadiths?.forEachIndexed { idx, hadith ->
+                item(key = "hadith_${hadith.id}") {
+                    Card(
+                        modifier = Modifier.fillMaxWidth().staggerEntrance(hadithHeaderIndex + 1 + idx),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(28.dp)
+                                        .clip(CircleShape)
+                                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        "${idx + 1}",
+                                        style = MaterialTheme.typography.labelMedium,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
+                                }
+                                hadith.source?.let { src ->
+                                    Text(
+                                        "  $src",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+                            hadith.arabic?.let { ar ->
+                                if (ar.isNotBlank()) {
+                                    Text(
+                                        text = ar,
+                                        style = MaterialTheme.typography.titleMedium.copy(fontSize = arabicSp(MaterialTheme.typography.titleMedium.fontSize)),
+                                        color = MaterialTheme.colorScheme.onSurface,
+                                        modifier = Modifier.fillMaxWidth(),
+                                        textAlign = TextAlign.End
+                                    )
+                                }
+                            }
+                            hadith.transliteration?.let { tr ->
+                                if (tr.isNotBlank()) {
+                                    Text(
+                                        text = tr,
+                                        style = MaterialTheme.typography.bodySmall.copy(fontSize = banglaSp(MaterialTheme.typography.bodySmall.fontSize)),
+                                        color = MaterialTheme.colorScheme.primary,
+                                        fontWeight = FontWeight.Medium
+                                    )
+                                }
+                            }
+                            hadith.translation?.let { tr ->
+                                if (tr.isNotBlank()) {
+                                    Text(
+                                        text = tr,
+                                        style = MaterialTheme.typography.bodySmall.copy(fontSize = banglaSp(MaterialTheme.typography.bodySmall.fontSize)),
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
             // Short surahs for namaz
             item {
                 PremiumSectionHeader(
@@ -185,7 +334,7 @@ fun NamazExtrasScreen(
                 )
             }
             data.namazSurahs?.forEachIndexed { idx, surah ->
-                item {
+                item(key = "surah_${surah.id}") {
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -401,21 +550,27 @@ private fun NamazSurahFullScreen(
                 }
             }
 
-            // Audio play button
+            // Audio play button — v5.9.0 actually works now: the JSON points at remote
+            // CDN recordings, so we stream the surah through the reciter-based player
+            // (falls back to the raw URL via playUrl if the id is unknown).
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
                     .staggerEntrance(4)
                     .clip(RoundedCornerShape(16.dp))
                     .premiumTap {
-                        surah.audioUrl?.let { audioUrl ->
-                            val fileName = audioUrl.replace("namaz-audio/", "")
-                            // Use shared AudioController → FloatingAudioPlayer shows automatically
-                            container.audioController.playAssetAudio(
-                                assetPath = "namaz_audio/$fileName",
-                                title = surah.nameBn,
-                                subtitle = "নামাজের সূরা"
-                            )
+                        val surahNumber = surah.id.filter { it.isDigit() }.toIntOrNull()
+                        if (surahNumber != null && surahNumber in 1..114) {
+                            // Full reciter system (selected qari, CDN streaming, cache)
+                            container.audioController.playSurah(surahNumber)
+                        } else {
+                            surah.audioUrl?.let { audioUrl ->
+                                container.audioController.playUrl(
+                                    url = audioUrl,
+                                    title = surah.nameBn,
+                                    subtitle = "নামাজের সূরা"
+                                )
+                            }
                         }
                     },
                 shape = RoundedCornerShape(16.dp),

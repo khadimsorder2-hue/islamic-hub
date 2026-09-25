@@ -40,6 +40,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.islamichub.app.R
+import com.islamichub.app.ui.theme.premiumTap
 import com.islamichub.app.data.AppContainer
 import com.islamichub.app.data.local.HadithCollectionMeta
 import com.islamichub.app.ui.theme.staggerEntrance
@@ -123,7 +124,7 @@ private fun CollectionCard(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(20.dp))
-            .clickable(onClick = onClick),
+            .premiumTap(onClick),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {

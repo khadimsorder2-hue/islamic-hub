@@ -20,6 +20,7 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoStories
@@ -42,6 +43,7 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Psychology
 import androidx.compose.material.icons.filled.QuestionAnswer
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Spa
 import androidx.compose.material.icons.filled.AccountTree
 import androidx.compose.material.icons.filled.TrendingUp
@@ -233,6 +235,14 @@ fun HomeScreen(
                     keyboardType = KeyboardType.Text,
                     imeAction = ImeAction.Search
                 ),
+                // v5.9.0 — the search bar finally works: pressing search/enter opens
+                // Quran Search with the typed query pre-filled and searching instantly.
+                keyboardActions = KeyboardActions(onSearch = {
+                    if (searchQuery.isNotBlank()) {
+                        onNavigate(Screen.QuranSearch.createRoute(searchQuery.trim()))
+                        searchQuery = ""
+                    }
+                }),
                 singleLine = true
             )
         }
@@ -482,6 +492,40 @@ fun HomeScreen(
                                 style = MaterialTheme.typography.labelSmall,
                                 color = Color.White.copy(alpha = 0.85f),
                                 modifier = Modifier.padding(top = 4.dp))
+                        }
+                        // v5.9.0 — the "shareable" card finally has its share button
+                        state.ayahOfDay?.let { ayah ->
+                            Row(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(Color.White.copy(alpha = 0.18f))
+                                    .clickable {
+                                        val text = buildString {
+                                            ayah.arabic?.let { appendLine(it) }
+                                            ayah.bengali?.let { appendLine(it) }
+                                            ayah.reference?.let { append("— $it") }
+                                            append("\n\nIslamic Hub অ্যাপ থেকে শেয়ার করা")
+                                        }
+                                        val sendIntent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+                                            type = "text/plain"
+                                            putExtra(android.content.Intent.EXTRA_TEXT, text)
+                                        }
+                                        context.startActivity(
+                                            android.content.Intent.createChooser(sendIntent, "আয়াত শেয়ার করুন")
+                                        )
+                                    }
+                                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    Icons.Filled.Share, contentDescription = null,
+                                    tint = Color.White, modifier = Modifier.size(16.dp)
+                                )
+                                Text("  শেয়ার করুন",
+                                    style = MaterialTheme.typography.labelMedium,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = Color.White)
+                            }
                         }
                     }
                 }

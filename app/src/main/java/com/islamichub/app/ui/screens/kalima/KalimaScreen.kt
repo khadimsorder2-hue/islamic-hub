@@ -57,6 +57,7 @@ import com.islamichub.app.ui.components.PremiumHeroCard
 import com.islamichub.app.ui.theme.arabicSp
 import com.islamichub.app.ui.theme.banglaSp
 import com.islamichub.app.ui.theme.englishSp
+import com.islamichub.app.ui.theme.staggerEntrance
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -127,14 +128,13 @@ fun KalimaScreen(
             }
 
             items(kalimas, key = { it.id }) { kalima ->
+                val idx = kalimas.indexOfFirst { it.id == kalima.id }.coerceAtLeast(0)
                 val isExpanded = expandedStates[kalima.id] ?: false
                 KalimaPremiumCard(
                     kalima = kalima,
+                    index = idx,
                     isExpanded = isExpanded,
-                    onToggleExpand = { expandedStates[kalima.id] = !isExpanded },
-                    onPlayAudio = {
-                        // Audio playback handled via floating player (placeholder)
-                    }
+                    onToggleExpand = { expandedStates[kalima.id] = !isExpanded }
                 )
             }
         }
@@ -144,9 +144,9 @@ fun KalimaScreen(
 @Composable
 private fun KalimaPremiumCard(
     kalima: Kalima,
+    index: Int,
     isExpanded: Boolean,
-    onToggleExpand: () -> Unit,
-    onPlayAudio: () -> Unit
+    onToggleExpand: () -> Unit
 ) {
     val kalimaColors = listOf(
         Color(0xFF6D45C7), Color(0xFF1B5E20), Color(0xFFC9A34E),
@@ -155,7 +155,7 @@ private fun KalimaPremiumCard(
     val accent = kalimaColors[(kalima.id - 1) % kalimaColors.size]
 
     Card(
-        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)),
+        modifier = Modifier.fillMaxWidth().staggerEntrance(index).clip(RoundedCornerShape(20.dp)),
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(containerColor = Color.Transparent),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
@@ -297,26 +297,10 @@ private fun KalimaPremiumCard(
                             }
                         }
 
-                        // Audio button (placeholder — would play kalima audio)
-                        kalima.audioFile?.let { audio ->
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clip(RoundedCornerShape(12.dp))
-                                    .background(accent.copy(alpha = 0.1f))
-                                    .clickable(onClick = onPlayAudio)
-                                    .padding(12.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.Center
-                            ) {
-                                Icon(Icons.Filled.PlayArrow, contentDescription = null,
-                                    tint = accent, modifier = Modifier.size(20.dp))
-                                Text("  অডিও শুনুন",
-                                    style = MaterialTheme.typography.labelMedium,
-                                    fontWeight = FontWeight.Bold,
-                                    color = accent)
-                            }
-                        }
+                        // v5.9.0 — the fake "অডিও শুনুন" button was removed: no kalima
+                        // audio files were ever bundled, so the button silently did
+                        // nothing. The screen already teaches correct recitation through
+                        // the Bangla + English pronunciation rows above.
                     }
                 }
             }

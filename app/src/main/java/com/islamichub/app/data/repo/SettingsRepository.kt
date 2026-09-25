@@ -94,6 +94,11 @@ class SettingsRepository(private val context: Context) {
         it[WORD_AUDIO_ENABLED] ?: true
     }
 
+    // v5.9.0 — biometric App Lock (face/fingerprint/device credential)
+    val appLockEnabled: Flow<Boolean> = context.settingsStore.data.map {
+        it[APP_LOCK_ENABLED] ?: false
+    }
+
     // Show Arabic text in Quran reader
     val showArabic: Flow<Boolean> = context.settingsStore.data.map { it[SHOW_ARABIC] ?: true }
 
@@ -174,6 +179,11 @@ class SettingsRepository(private val context: Context) {
         context.settingsStore.edit { it[WORD_AUDIO_ENABLED] = enabled }
     }
 
+    // v5.9.0 — App Lock toggle
+    suspend fun setAppLockEnabled(enabled: Boolean) = withContext(Dispatchers.IO) {
+        context.settingsStore.edit { it[APP_LOCK_ENABLED] = enabled }
+    }
+
     suspend fun setShowArabic(show: Boolean) = withContext(Dispatchers.IO) {
         context.settingsStore.edit { it[SHOW_ARABIC] = show }
     }
@@ -248,6 +258,7 @@ class SettingsRepository(private val context: Context) {
         private val AUTO_PAUSE = stringPreferencesKey("auto_pause")
         private val BN_AUDIO_ENABLED = booleanPreferencesKey("bn_audio_enabled")
         private val WORD_AUDIO_ENABLED = booleanPreferencesKey("word_audio_enabled")
+        private val APP_LOCK_ENABLED = booleanPreferencesKey("app_lock_enabled")
         private val SHOW_ARABIC = booleanPreferencesKey("show_arabic")
         private val SHOW_BANGLA = booleanPreferencesKey("show_bangla")
         private val SHOW_ENGLISH = booleanPreferencesKey("show_english")

@@ -126,22 +126,9 @@ fun QuranReaderScreen(
                     IconButton(onClick = { vm.increaseFontSize() }) {
                         Text("A+", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
-                    // Bangla audio toggle (clear icon)
-                    IconButton(onClick = { vm.toggleBanglaAudio() }) {
-                        Icon(
-                            imageVector = if (state.banglaAudioEnabled) Icons.Filled.GraphicEq else Icons.Filled.PlayArrow,
-                            contentDescription = "বাংলা অডিও",
-                            tint = if (state.banglaAudioEnabled) MaterialTheme.colorScheme.primary
-                                   else MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        if (state.banglaAudioEnabled) {
-                            Text(
-                                text = "বাংলা",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                        }
-                    }
+                    // v5.9.0 — the "বাংলা অডিও" pill was removed: it flipped a flag that
+                    // no playback path ever consumed (Bangla recitation pipeline is not
+                    // built yet), so the button was pure confusion. Reciter audio below.
                     // Qari selector button
                     IconButton(onClick = { showQariSelector = true }) {
                         Icon(Icons.Filled.Person, contentDescription = "Select reciter")
@@ -230,19 +217,9 @@ fun QuranReaderScreen(
                                     fontWeight = FontWeight.SemiBold,
                                     color = MaterialTheme.colorScheme.onSecondaryContainer
                                 )
-                                if (state.banglaAudioEnabled) {
-                                    Surface(
-                                        shape = RoundedCornerShape(50),
-                                        color = MaterialTheme.colorScheme.primary
-                                    ) {
-                                        Text(
-                                            text = " 🎧 বাংলা অডিও চালু ",
-                                            style = MaterialTheme.typography.labelSmall,
-                                            color = MaterialTheme.colorScheme.onPrimary,
-                                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                                        )
-                                    }
-                                }
+                                // v5.9.0 — "বাংলা অডিও চালু" pill removed: the flag behind
+                                // it never influenced playback (no Bangla recitation pipeline
+                                // yet), so it advertised a feature that does not exist.
                                 Text(
                                     text = "  ফন্ট: ${"%.0f".format(state.quranFontScale * 100)}%",
                                     style = MaterialTheme.typography.labelSmall,
@@ -487,68 +464,8 @@ fun QuranReaderScreen(
     }
 }
 
-@Composable
-private fun AudioPlaybackBar(
-    isLoading: Boolean,
-    isPlaying: Boolean,
-    ayahLabel: String,
-    onPlayPause: () -> Unit,
-    onStop: () -> Unit
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            if (isLoading) {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(28.dp),
-                    strokeWidth = 2.dp
-                )
-            } else {
-                FilledTonalIconButton(onClick = onPlayPause, modifier = Modifier.size(40.dp)) {
-                    Icon(
-                        imageVector = if (isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
-                        contentDescription = "Play/Pause"
-                    )
-                }
-            }
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = if (isLoading) "বাফার হচ্ছে…" else if (isPlaying) "চলছে" else "বিরতি",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSecondaryContainer
-                )
-                Text(
-                    text = ayahLabel,
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSecondaryContainer
-                )
-            }
-            IconButton(onClick = onStop, modifier = Modifier.size(40.dp)) {
-                Icon(Icons.Filled.Stop, contentDescription = "Stop")
-            }
-        }
-        if (isLoading) {
-            LinearProgressIndicator(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 4.dp)
-                    .clip(RoundedCornerShape(2.dp)),
-                color = MaterialTheme.colorScheme.primary,
-                trackColor = MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.35f)
-            )
-        }
-    }
-}
+// v5.9.0 — dead AudioPlaybackBar composable removed (superseded by the
+// always-visible FloatingAudioPlayer in the app scaffold).
 
 @Composable
 private fun AyahCard(

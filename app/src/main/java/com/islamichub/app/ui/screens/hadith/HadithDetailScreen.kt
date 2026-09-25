@@ -77,6 +77,7 @@ import com.islamichub.app.ui.theme.arabicSp
 import com.islamichub.app.ui.theme.banglaSp
 import com.islamichub.app.ui.theme.staggerEntrance
 import kotlinx.coroutines.launch
+import androidx.compose.material.icons.filled.SkipNext
 
 // ═══════════════════════════════════════════════════════════════════════════
 // COLLECTION LIST SCREEN (per collection)
@@ -122,6 +123,12 @@ fun HadithCollectionScreen(
     if (showJumpDialog) {
         AlertDialog(
             onDismissRequest = { showJumpDialog = false },
+            icon = {
+                com.islamichub.app.ui.components.PremiumDialogIcon(
+                    icon = androidx.compose.material.icons.Icons.Filled.SkipNext,
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            },
             title = { Text("হাদিস নম্বর দিন") },
             text = {
                 OutlinedTextField(
@@ -470,6 +477,8 @@ fun HadithDetailScreen(
                             val text = "${collectionName} #${h.hadithNumber}\n\n${h.arabicOrFallback()}\n\n${h.banglaOrFallback()}"
                             val clipboard = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
                             clipboard.setPrimaryClip(android.content.ClipData.newPlainText("Hadith", text))
+                            // v5.9.0 — confirmation feedback, matching TafsirFullScreen
+                            android.widget.Toast.makeText(context, "কপি হয়েছে", android.widget.Toast.LENGTH_SHORT).show()
                         }) {
                             Icon(Icons.Filled.ContentCopy, contentDescription = "কপি")
                         }

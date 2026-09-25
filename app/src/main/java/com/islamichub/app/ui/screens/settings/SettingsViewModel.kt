@@ -23,6 +23,8 @@ data class SettingsUiState(
     val autoPause: AutoPauseOption = AutoPauseOption.OFF,
     val banglaAudioEnabled: Boolean = false,
     val wordByWordAudioEnabled: Boolean = true,
+    /** v5.9.0 — biometric App Lock */
+    val appLockEnabled: Boolean = false,
     val showArabic: Boolean = true,
     val showBangla: Boolean = true,
     val showEnglish: Boolean = true,
@@ -79,6 +81,7 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
             val autoPause = container.settingsRepository.autoPauseMinutes.first()
             val bnAudio = container.settingsRepository.banglaAudioEnabled.first()
             val wordAudio = container.settingsRepository.wordByWordAudioEnabled.first()
+            val appLock = container.settingsRepository.appLockEnabled.first()
             val showAr = container.settingsRepository.showArabic.first()
             val showBn = container.settingsRepository.showBangla.first()
             val showEn = container.settingsRepository.showEnglish.first()
@@ -105,6 +108,7 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
                 autoPause = autoPause,
                 banglaAudioEnabled = bnAudio,
                 wordByWordAudioEnabled = wordAudio,
+                appLockEnabled = appLock,
                 showArabic = showAr,
                 showBangla = showBn,
                 showEnglish = showEn,
@@ -268,6 +272,13 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
         viewModelScope.launch {
             container.settingsRepository.setWordByWordAudioEnabled(enabled)
             _state.value = _state.value.copy(wordByWordAudioEnabled = enabled)
+        }
+    }
+    /** v5.9.0 — biometric App Lock */
+    fun setAppLockEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            container.settingsRepository.setAppLockEnabled(enabled)
+            _state.value = _state.value.copy(appLockEnabled = enabled)
         }
     }
     fun setShowArabic(show: Boolean) {

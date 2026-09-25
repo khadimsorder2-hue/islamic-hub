@@ -43,6 +43,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.islamichub.app.R
+import com.islamichub.app.ui.theme.premiumTap
 import com.islamichub.app.data.AppContainer
 import com.islamichub.app.data.local.MisconceptionCategory
 import com.islamichub.app.data.local.MisconceptionItem
@@ -128,7 +129,7 @@ private fun MisconceptionCard(item: MisconceptionItem, container: com.islamichub
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
-            .clickable { expanded = !expanded },
+            .premiumTap { expanded = !expanded },
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {

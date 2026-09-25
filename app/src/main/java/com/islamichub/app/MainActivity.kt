@@ -69,6 +69,7 @@ class MainActivity : ComponentActivity() {
                     var showOnboarding by remember { mutableStateOf(false) }
                     var showAppLock by remember { mutableStateOf(false) }
                     var checked by remember { mutableStateOf(false) }
+                    val context = androidx.compose.ui.platform.LocalContext.current
 
                     // Initial check
                     androidx.compose.runtime.LaunchedEffect(Unit) {
@@ -76,6 +77,24 @@ class MainActivity : ComponentActivity() {
                             container.settingsRepository.onboardingDone.first()
                         }
                         showOnboarding = !onboardingDone
+                        // v5.9.0 — App Lock is finally wired end-to-end: if the user
+                        // enabled it in Settings AND the device actually has a lock
+                        // (biometric or credential), gate the whole app behind the
+                        // biometric prompt. Without the capability check a user could
+                        // lock themselves out of the app entirely.
+                        if (!showOnboarding) {
+                            val lockEnabled = runBlocking {
+                                container.settingsRepository.appLockEnabled.first()
+                            }
+                            if (lockEnabled) {
+                                val bm = androidx.biometric.BiometricManager.from(context)
+                                val canAuth = bm.canAuthenticate(
+                                    androidx.biometric.BiometricManager.Authenticators.BIOMETRIC_WEAK or
+                                        androidx.biometric.BiometricManager.Authenticators.DEVICE_CREDENTIAL
+                                )
+                                showAppLock = canAuth == androidx.biometric.BiometricManager.BIOMETRIC_SUCCESS
+                            }
+                        }
                         checked = true
                     }
 

@@ -20,6 +20,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -222,21 +223,31 @@ ${if (context.isNotBlank()) "কনটেক্সট: $context" else ""}
                         }
                     }
 
-                    // Copy button
+                    // v5.9.0 — the "কপি" button used to fire a share intent (mislabeled).
+                    // Now: a real clipboard copy + a separate share button.
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.End
                     ) {
                         TextButton(onClick = {
-                            val shareIntent = Intent(Intent.ACTION_SEND).apply {
-                                type = "text/plain"
-                                putExtra(Intent.EXTRA_TEXT, "$question\n\n$ans")
-                            }
-                            appContext.startActivity(Intent.createChooser(shareIntent, "Copy / Share"))
+                            val clipboard = appContext.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+                            clipboard.setPrimaryClip(android.content.ClipData.newPlainText("Islamic Hub", "$question\n\n$ans"))
+                            android.widget.Toast.makeText(appContext, "কপি হয়েছে", android.widget.Toast.LENGTH_SHORT).show()
                         }) {
                             Icon(Icons.Filled.ContentCopy, contentDescription = null,
                                 modifier = Modifier.size(16.dp))
                             Text(" কপি", modifier = Modifier.padding(start = 4.dp))
+                        }
+                        TextButton(onClick = {
+                            val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                                type = "text/plain"
+                                putExtra(Intent.EXTRA_TEXT, "$question\n\n$ans")
+                            }
+                            appContext.startActivity(Intent.createChooser(shareIntent, "শেয়ার করুন"))
+                        }) {
+                            Icon(Icons.Filled.Share, contentDescription = null,
+                                modifier = Modifier.size(16.dp))
+                            Text(" শেয়ার", modifier = Modifier.padding(start = 4.dp))
                         }
                     }
                 }

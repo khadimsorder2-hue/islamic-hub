@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -83,6 +84,10 @@ import com.islamichub.app.data.AppContainer
 import com.islamichub.app.data.repo.AIService
 import com.islamichub.app.ui.components.PremiumHeroCard
 import com.islamichub.app.ui.components.loadAssetImage
+import com.islamichub.app.ui.theme.AppColors
+import com.islamichub.app.ui.theme.premiumTap
+import com.islamichub.app.ui.theme.staggerEntrance
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -97,6 +102,7 @@ fun AiScholarScreen(
     val listState = rememberLazyListState()
     val context = LocalContext.current
     val snackbarHostState = remember { SnackbarHostState() }
+    val copyScope = androidx.compose.runtime.rememberCoroutineScope()
     var showClearCacheDialog by remember { mutableStateOf(false) }
 
     // Auto-scroll to bottom on new message
@@ -112,7 +118,7 @@ fun AiScholarScreen(
             icon = {
                 com.islamichub.app.ui.components.PremiumDialogIcon(
                     icon = androidx.compose.material.icons.Icons.Filled.Delete,
-                    tint = androidx.compose.ui.graphics.Color(0xFFC62828)
+                    tint = AppColors.error
                 )
             },
             title = { Text("AI ক্যাশ মুছবেন?") },
@@ -221,13 +227,13 @@ fun AiScholarScreen(
                             Icon(
                                 imageVector = Icons.Filled.CheckCircle,
                                 contentDescription = null,
-                                tint = Color(0xFF2E7D32),
+                                tint = AppColors.success,
                                 modifier = Modifier.size(14.dp)
                             )
                             Text(
                                 text = "  ক্যাশ থেকে তাৎক্ষণিক উত্তর",
                                 style = MaterialTheme.typography.labelSmall,
-                                color = Color(0xFF2E7D32)
+                                color = AppColors.success
                             )
                         }
                     }
@@ -396,12 +402,13 @@ fun AiScholarScreen(
                     "যাকাত কাদের প্রদান করতে হয়?" to "💰",
                     "তালাকের ইসলামিক বিধান কী?" to "⚖️"
                 )
-                items(quickQuestions) { (q, emoji) ->
+                itemsIndexed(quickQuestions) { qIdx, (q, emoji) ->
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
+                            .staggerEntrance(qIdx)
                             .clip(RoundedCornerShape(14.dp))
-                            .clickable { vm.sendQuickQuestion(q) },
+                            .premiumTap { vm.sendQuickQuestion(q) },
                         colors = CardDefaults.cardColors(
                             containerColor = MaterialTheme.colorScheme.surfaceContainerLow
                         )
@@ -443,6 +450,8 @@ fun AiScholarScreen(
                     onCopy = { text ->
                         val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                         clipboard.setPrimaryClip(ClipData.newPlainText("AI Answer", text))
+                        // v5.9.0 — the previously-declared snackbar finally reports the copy
+                        copyScope.launch { snackbarHostState.showSnackbar("কপি হয়েছে") }
                     },
                     onShare = { text ->
                         val shareIntent = Intent(Intent.ACTION_SEND).apply {
