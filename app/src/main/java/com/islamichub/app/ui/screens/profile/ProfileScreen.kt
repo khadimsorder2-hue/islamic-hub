@@ -17,10 +17,12 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Surface
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.AutoStories
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.Book
 import androidx.compose.material.icons.filled.Bookmark
@@ -52,6 +54,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -84,6 +87,9 @@ fun ProfileScreen(
     var showEditDialog by remember { mutableStateOf(false) }
     var editName by remember { mutableStateOf(state.userName) }
     val context = LocalContext.current
+
+    // v5.10.0 — load the saved-backup list for the manage section
+    LaunchedEffect(Unit) { vm.refreshBackups() }
 
     Scaffold(
         topBar = {
@@ -542,6 +548,76 @@ fun ProfileScreen(
                         modifier = Modifier.weight(1f),
                         onClick = { vm.restore() }
                     )
+                }
+            }
+            state.backupMessage?.let { msg ->
+                item {
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        color = if (msg.startsWith("✓"))
+                            MaterialTheme.colorScheme.surfaceContainerLow
+                        else
+                            MaterialTheme.colorScheme.errorContainer
+                    ) {
+                        Text(
+                            msg,
+                            modifier = Modifier.padding(12.dp),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = if (msg.startsWith("✓"))
+                                MaterialTheme.colorScheme.onSurface
+                            else
+                                MaterialTheme.colorScheme.onErrorContainer
+                        )
+                    }
+                }
+            }
+
+            // v5.10.0 — existing backups with size + delete (deleteBackup was dead code)
+            if (state.backups.isNotEmpty()) {
+                item {
+                    Text(
+                        "সংরক্ষিত ব্যাকআপ (${state.backups.size})",
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(top = 4.dp)
+                    )
+                }
+                items(state.backups.size, key = { state.backups[it].first }) { i ->
+                    val (name, sizeBytes) = state.backups[i]
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        color = MaterialTheme.colorScheme.surfaceContainerLow
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    name,
+                                    style = MaterialTheme.typography.labelMedium,
+                                    maxLines = 1,
+                                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                                )
+                                val sizeKb = sizeBytes / 1024.0
+                                Text(
+                                    if (sizeKb >= 1024) "%.1f MB".format(sizeKb / 1024) else "%.0f KB".format(sizeKb),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                            IconButton(onClick = { vm.deleteBackup(name) }) {
+                                Icon(
+                                    Icons.Filled.Delete,
+                                    contentDescription = "ব্যাকআপ মুছুন",
+                                    tint = MaterialTheme.colorScheme.error
+                                )
+                            }
+                        }
+                    }
                 }
             }
 

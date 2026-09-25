@@ -61,6 +61,11 @@ class TasbihViewModel(private val container: AppContainer) : ViewModel() {
         viewModelScope.launch {
             val target = _state.value.target
             container.tasbihRepository.increment()
+            // v5.10.0 — feed the daily Tracker so "Total Zikr" stats and the
+            // zikr achievement badge in Profile actually move (was always 0).
+            try {
+                container.trackerRepository.addZikr(1)
+            } catch (_: Exception) { /* tracker must never break counting */ }
             val completed = container.tasbihRepository.checkRoundComplete(target)
             if (completed) {
                 _state.value = _state.value.copy(justCompletedRound = true)

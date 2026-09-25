@@ -25,6 +25,8 @@ data class HomeUiState(
     val ayahOfDay: Ayah? = null,
     val hadithOfDay: String = "",
     val hadithReference: String = "",
+    // v5.10.0 — Dua of the Day finally surfaced (duaOfDay() was never consumed)
+    val duaOfDay: com.islamichub.app.data.model.Dua? = null,
     val prayerTimes: PrayerTimes? = null,
     val isLoading: Boolean = true,
     // v3.1.0 daily progress
@@ -47,6 +49,7 @@ class HomeViewModel(
             _uiState.value = _uiState.value.copy(isLoading = true)
             val ayah = container.quranRepository.ayahOfDay()
             val (hadith, ref) = container.quranRepository.hadithOfDay()
+            val dua = try { container.duaRepository.duaOfDay() } catch (_: Exception) { null }
 
             // Try location-based prayer times
             var times: PrayerTimes? = null
@@ -77,6 +80,7 @@ class HomeViewModel(
                 ayahOfDay = ayah,
                 hadithOfDay = hadith,
                 hadithReference = ref,
+                duaOfDay = dua,
                 prayerTimes = times,
                 isLoading = false,
                 todayPrayersDone = todayTracker.prayersDone(),

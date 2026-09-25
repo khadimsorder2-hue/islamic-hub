@@ -187,7 +187,10 @@ data class NamazExtrasData(
     @SerializedName("extraPrayers") val extraPrayers: Map<String, ExtraPrayer>?,
     // v5.9.0 — these existed in namaz_extras.json but were never parsed/rendered; wired now
     @SerializedName("namazImportantDuas") val namazImportantDuas: List<NamazImportantDua>? = null,
-    @SerializedName("koumiHadiths") val koumiHadiths: List<KoumiHadith>? = null
+    @SerializedName("koumiHadiths") val koumiHadiths: List<KoumiHadith>? = null,
+    // v5.10.0 — the remaining two orphaned sections (13 namaz duas + categorized daily duas)
+    @SerializedName("namazDuas") val namazDuas: List<NamazImportantDua>? = null,
+    @SerializedName("allDuas") val allDuas: List<CategorizedDuaGroup>? = null
 )
 
 data class NamazImportantDua(
@@ -202,6 +205,17 @@ data class KoumiHadith(
     @SerializedName("transliteration") val transliteration: String?,
     @SerializedName("translation") val translation: String?,
     @SerializedName("source") val source: String?
+)
+
+/** v5.10.0 — categorized daily duas from namaz_extras.json (allDuas). */
+data class CategorizedDuaGroup(
+    @SerializedName("category") val category: String?,
+    @SerializedName("items") val items: List<CategorizedDuaItem>? = null
+)
+
+data class CategorizedDuaItem(
+    @SerializedName("name_bn") val nameBn: String?,
+    @SerializedName("content") val content: NamazStepContent?
 )
 
 data class NamazSurah(

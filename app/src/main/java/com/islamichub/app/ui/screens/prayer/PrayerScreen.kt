@@ -360,6 +360,12 @@ fun PrayerScreen(container: AppContainer) {
             onSave = { jamat ->
                 vm.saveJamatTime(jamat)
                 showJamatDialog = false
+            },
+            onDelete = editingJamat?.let { existing ->
+                {
+                    vm.deleteJamatTime(existing.prayerName)
+                    showJamatDialog = false
+                }
             }
         )
     }
@@ -491,7 +497,8 @@ private fun JamatTimeCard(jamat: JamatTime, onEdit: () -> Unit) {
 private fun JamatTimeDialog(
     existing: JamatTime?,
     onDismiss: () -> Unit,
-    onSave: (JamatTime) -> Unit
+    onSave: (JamatTime) -> Unit,
+    onDelete: (() -> Unit)? = null
 ) {
     var prayerName by remember { mutableStateOf(existing?.prayerName ?: "ফজর") }
     var jamatTime by remember { mutableStateOf(existing?.jamatTime ?: "") }
@@ -547,7 +554,17 @@ private fun JamatTimeDialog(
                 }
             }) { Text("সংরক্ষণ") }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("বাতিল") } }
+        dismissButton = {
+            Row {
+                // v5.10.0 — delete wrong jamat entries (removeJamatTime was dead code)
+                if (onDelete != null) {
+                    TextButton(onClick = onDelete) {
+                        Text("মুছুন", color = MaterialTheme.colorScheme.error)
+                    }
+                }
+                TextButton(onClick = onDismiss) { Text("বাতিল") }
+            }
+        }
     )
 }
 

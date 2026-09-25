@@ -25,6 +25,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Psychology
 import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.BookmarkBorder
+import androidx.compose.material.icons.filled.FastForward
 import androidx.compose.material.icons.filled.GraphicEq
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Pause
@@ -45,9 +46,11 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -80,6 +83,7 @@ import com.islamichub.app.ui.theme.premiumGlow
 import com.islamichub.app.ui.theme.premiumPulseHighlight
 import com.islamichub.app.ui.theme.premiumTap
 import com.islamichub.app.ui.theme.staggerEntrance
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -94,6 +98,42 @@ fun QuranReaderScreen(
     var showTafsirFor by remember { mutableStateOf<Int?>(null) }
     var showQariSelector by remember { mutableStateOf(false) }
     var showWordByWordFor by remember { mutableStateOf<Int?>(null) }
+
+    // v5.10.0 — keep the screen awake while reading (user-toggleable in Settings)
+    val keepScreenOn by container.settingsRepository.keepScreenOnReading
+        .collectAsState(initial = true)
+    val view = androidx.compose.ui.platform.LocalView.current
+    androidx.compose.runtime.DisposableEffect(keepScreenOn) {
+        val window = (view.context as? android.app.Activity)?.window
+        if (keepScreenOn && window != null) {
+            window.addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        }
+        onDispose {
+            window?.clearFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        }
+    }
+
+    // v5.10.0 — list state for ayah jump + real reading-position tracking
+    val listState = androidx.compose.foundation.lazy.rememberLazyListState()
+    val scope = androidx.compose.runtime.rememberCoroutineScope()
+    var showJumpDialog by remember { mutableStateOf(false) }
+    androidx.compose.runtime.LaunchedEffect(listState) {
+        var lastRecorded = -1
+        var lastWriteMs = 0L
+        androidx.compose.runtime.snapshotFlow {
+            listState.layoutInfo.visibleItemsInfo
+                .firstOrNull { it.key is Int }?.key as? Int
+        }.collect { ayahNum ->
+            if (ayahNum != null && ayahNum > 0 && ayahNum != lastRecorded) {
+                val now = System.currentTimeMillis()
+                if (now - lastWriteMs > 3000) {
+                    lastRecorded = ayahNum
+                    lastWriteMs = now
+                    vm.updateLastRead(ayahNum)
+                }
+            }
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -132,6 +172,10 @@ fun QuranReaderScreen(
                     // Qari selector button
                     IconButton(onClick = { showQariSelector = true }) {
                         Icon(Icons.Filled.Person, contentDescription = "Select reciter")
+                    }
+                    // v5.10.0 — jump to a specific ayah
+                    IconButton(onClick = { showJumpDialog = true }) {
+                        Icon(Icons.Filled.FastForward, contentDescription = "আয়াতে যান")
                     }
                     // Play full surah
                     if (state.surah != null) {
@@ -180,6 +224,7 @@ fun QuranReaderScreen(
             else -> {
                 val surah = state.surah!!
                 LazyColumn(
+                    state = listState,
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(padding),
@@ -459,7 +504,59 @@ fun QuranReaderScreen(
     if (showQariSelector) {
         QariSelectorSheet(
             container = container,
-            onDismiss = { showQariSelector = false }
+            onDismiss = { showQariSelector = false },
+            surahForDownload = surahNumber,
+            surahAyahCount = state.surah?.ayahCount ?: 0
+        )
+    }
+
+    // v5.10.0 — "আয়াতে যান" jump dialog
+    if (showJumpDialog) {
+        var jumpInput by remember { mutableStateOf("") }
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = { showJumpDialog = false },
+            icon = {
+                com.islamichub.app.ui.components.PremiumDialogIcon(
+                    icon = Icons.Filled.FastForward,
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            },
+            title = { Text("আয়াতে যান", fontWeight = FontWeight.Bold) },
+            text = {
+                Column {
+                    Text(
+                        "আয়াত নম্বর লিখুন (১–${state.surah?.ayahCount ?: 0})",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    OutlinedTextField(
+                        value = jumpInput,
+                        onValueChange = { jumpInput = it.filter { ch -> ch.isDigit() } },
+                        singleLine = true,
+                        label = { Text("আয়াত নম্বর") }
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        val target = jumpInput.toIntOrNull()
+                        val count = state.surah?.ayahCount ?: 0
+                        if (target != null && target in 1..count) {
+                            showJumpDialog = false
+                            val total = listState.layoutInfo.totalItemsCount
+                            val nonAyah = (total - count).coerceAtLeast(0)
+                            val index = (nonAyah + target - 1).coerceIn(0, (total - 1).coerceAtLeast(0))
+                            scope.launch { listState.animateScrollToItem(index) }
+                        }
+                    },
+                    enabled = (jumpInput.toIntOrNull() ?: 0) in 1..(state.surah?.ayahCount ?: 0)
+                ) { Text("যান") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showJumpDialog = false }) { Text("বাতিল") }
+            }
         )
     }
 }

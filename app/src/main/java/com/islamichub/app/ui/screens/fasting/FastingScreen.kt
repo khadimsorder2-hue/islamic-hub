@@ -70,6 +70,7 @@ import com.islamichub.app.ui.theme.AppColors
 import com.islamichub.app.ui.theme.AppRadius
 import com.islamichub.app.ui.theme.AppSpacing
 import com.islamichub.app.ui.theme.PremiumCountUpText
+import com.islamichub.app.ui.theme.banglaSp
 import com.islamichub.app.ui.theme.premiumTap
 import com.islamichub.app.ui.theme.staggerEntrance
 import java.text.SimpleDateFormat
@@ -763,7 +764,7 @@ private fun AddFastSheet(
             modifier = Modifier.fillMaxWidth().height(54.dp),
             shape = RoundedCornerShape(14.dp)
         ) {
-            Text("যোগ করুন", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+            Text("যোগ করুন", fontWeight = FontWeight.Bold, fontSize = banglaSp(16.sp))
         }
     }
 

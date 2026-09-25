@@ -49,6 +49,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.islamichub.app.data.AppContainer
 import com.islamichub.app.ui.components.PremiumHeroCard
+import com.islamichub.app.ui.theme.banglaSp
 import com.islamichub.app.ui.theme.staggerEntrance
 import java.text.NumberFormat
 import java.util.Locale
@@ -263,7 +264,7 @@ fun ZakatScreen(
                     ) {
                         Icon(Icons.Filled.Calculate, contentDescription = null)
                         Spacer(Modifier.size(8.dp))
-                        Text("হিসাব করুন", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                        Text("হিসাব করুন", fontWeight = FontWeight.Bold, fontSize = banglaSp(16.sp))
                     }
                     OutlinedButton(
                         onClick = { vm.reset() },

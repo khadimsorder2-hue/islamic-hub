@@ -25,6 +25,10 @@ data class SettingsUiState(
     val wordByWordAudioEnabled: Boolean = true,
     /** v5.9.0 — biometric App Lock */
     val appLockEnabled: Boolean = false,
+    /** v5.10.0 — notification toggles + keep-screen-on while reading */
+    val prayerNotificationsEnabled: Boolean = true,
+    val dailyAyahEnabled: Boolean = true,
+    val keepScreenOnReading: Boolean = true,
     val showArabic: Boolean = true,
     val showBangla: Boolean = true,
     val showEnglish: Boolean = true,
@@ -82,6 +86,9 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
             val bnAudio = container.settingsRepository.banglaAudioEnabled.first()
             val wordAudio = container.settingsRepository.wordByWordAudioEnabled.first()
             val appLock = container.settingsRepository.appLockEnabled.first()
+            val prayerNotif = container.settingsRepository.prayerNotificationsEnabled.first()
+            val dailyAyah = container.settingsRepository.dailyAyahEnabled.first()
+            val keepScreenOn = container.settingsRepository.keepScreenOnReading.first()
             val showAr = container.settingsRepository.showArabic.first()
             val showBn = container.settingsRepository.showBangla.first()
             val showEn = container.settingsRepository.showEnglish.first()
@@ -109,6 +116,9 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
                 banglaAudioEnabled = bnAudio,
                 wordByWordAudioEnabled = wordAudio,
                 appLockEnabled = appLock,
+                prayerNotificationsEnabled = prayerNotif,
+                dailyAyahEnabled = dailyAyah,
+                keepScreenOnReading = keepScreenOn,
                 showArabic = showAr,
                 showBangla = showBn,
                 showEnglish = showEn,
@@ -325,12 +335,13 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
             _state.value = _state.value.copy(showTransliteration = show)
         }
     }
-    fun clearCache() {
+    fun clearCache(onDone: (String) -> Unit = {}) {
         viewModelScope.launch {
             container.tafsirRepository.clearCache()
             container.settingsRepository.clearCache()
             val newSize = container.tafsirRepository.cacheSizeBytes()
             _state.value = _state.value.copy(cacheSizeBytes = newSize)
+            onDone("✓ ক্যাশ পরিষ্কার হয়েছে")
         }
     }
 
@@ -344,6 +355,27 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
         viewModelScope.launch {
             container.settingsRepository.setThemeMode(mode)
             _state.value = _state.value.copy(themeMode = mode)
+        }
+    }
+
+    fun setPrayerNotifications(enabled: Boolean, onToggled: (Boolean) -> Unit = {}) {
+        viewModelScope.launch {
+            container.settingsRepository.setPrayerNotificationsEnabled(enabled)
+            _state.value = _state.value.copy(prayerNotificationsEnabled = enabled)
+            onToggled(enabled)
+        }
+    }
+    fun setDailyAyah(enabled: Boolean, onToggled: (Boolean) -> Unit = {}) {
+        viewModelScope.launch {
+            container.settingsRepository.setDailyAyahEnabled(enabled)
+            _state.value = _state.value.copy(dailyAyahEnabled = enabled)
+            onToggled(enabled)
+        }
+    }
+    fun setKeepScreenOnReading(enabled: Boolean) {
+        viewModelScope.launch {
+            container.settingsRepository.setKeepScreenOnReading(enabled)
+            _state.value = _state.value.copy(keepScreenOnReading = enabled)
         }
     }
 }

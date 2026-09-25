@@ -42,8 +42,15 @@ class MainActivity : ComponentActivity() {
             navigationBarStyle = SystemBarStyle.auto(android.graphics.Color.TRANSPARENT, android.graphics.Color.TRANSPARENT)
         )
 
-        // Schedule daily ayah notification
-        DailyAyahWorker.schedule(this)
+        // Schedule daily ayah notification (only if the user hasn't disabled it)
+        val dailyAyahEnabled = kotlinx.coroutines.runBlocking {
+            (application as IslamicHubApp).container.settingsRepository.dailyAyahEnabled.first()
+        }
+        if (dailyAyahEnabled) {
+            DailyAyahWorker.schedule(this)
+        } else {
+            DailyAyahWorker.cancel(this)
+        }
 
         setContent {
             val container = (application as IslamicHubApp).container

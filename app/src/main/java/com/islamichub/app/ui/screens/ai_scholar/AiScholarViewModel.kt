@@ -23,8 +23,7 @@ data class AiScholarUiState(
     /** Total cached entries (for display in cache button) */
     val cacheCount: Int = 0,
     /** Search results from web (if user asked for current events) */
-    val webResults: List<WebSearchResult> = emptyList(),
-    val isWebSearching: Boolean = false
+    val webResults: List<WebSearchResult> = emptyList()
 )
 
 /** Web search result (used when AI needs current info) */
@@ -95,6 +94,7 @@ class AiScholarViewModel(private val container: AppContainer) : ViewModel() {
             val result = container.aiService.ask(question, history, cacheType = "scholar")
 
             if (result.error == "stale") {
+                _state.value = _state.value.copy(isThinking = false)
                 return@launch
             }
             if (result.error != null) {
@@ -114,6 +114,12 @@ class AiScholarViewModel(private val container: AppContainer) : ViewModel() {
                 lastAnswerFromCache = result.fromCache
             )
         }
+    }
+
+    /** v5.10.0 — let the user cancel a stuck AI request (cancelInFlight was dead code). */
+    fun cancelThinking() {
+        container.aiService.cancelInFlight()
+        _state.value = _state.value.copy(isThinking = false)
     }
 
     /**
@@ -148,20 +154,8 @@ class AiScholarViewModel(private val container: AppContainer) : ViewModel() {
         }
     }
 
-    /**
-     * Trigger web search (placeholder for future integration — actual search
-     * happens in AIService via a configured search provider).
-     */
-    fun performWebSearch(query: String) {
-        if (query.isBlank()) return
-        viewModelScope.launch {
-            _state.value = _state.value.copy(isWebSearching = true)
-            // For now we just notify the AI to answer using its training data.
-            // Real web search would be added in a future release via z-ai-web-dev-sdk.
-            sendQuestion("🌐 ওয়েবে খুঁজে বের করো: $query")
-            _state.value = _state.value.copy(isWebSearching = false)
-        }
-    }
+    /** v5.10.0 — dead performWebSearch/isWebSearching placeholder removed (no call sites,
+     *  misleading feature flag). The AI answers from its training data directly. */
 
     fun sendQuickQuestion(question: String) {
         sendQuestion(question)

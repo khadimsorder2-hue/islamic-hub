@@ -141,26 +141,6 @@ class KhatamRepository(private val context: Context) {
         }
     }
 
-    /**
-     * Mark a single ayah as read (progress tracking within a surah).
-     */
-    suspend fun markAyahRead(surahNumber: Int, ayahNumber: Int) = withContext(Dispatchers.IO) {
-        context.khatamStore.edit { prefs ->
-            val current = currentKhatam(prefs) ?: return@edit
-            val newAyahs = current.completedAyahs.toMutableMap()
-            val existing = newAyahs[surahNumber]
-            newAyahs[surahNumber] = if (existing == null) {
-                ayahNumber..ayahNumber
-            } else {
-                val start = minOf(existing.first, ayahNumber)
-                val end = maxOf(existing.last, ayahNumber)
-                start..end
-            }
-            val updated = current.copy(completedAyahs = newAyahs)
-            prefs[KEY] = gson.toJson(updated)
-        }
-    }
-
     /** Resets only the *in-progress* khatam. History of completed khatams is preserved. */
     suspend fun reset() = withContext(Dispatchers.IO) {
         context.khatamStore.edit { it.remove(KEY) }

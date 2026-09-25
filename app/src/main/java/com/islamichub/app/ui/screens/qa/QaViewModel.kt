@@ -14,6 +14,7 @@ import com.islamichub.app.data.local.AnsQA
 data class QaUiState(
     val categories: List<QaCategory> = emptyList(),
     val isLoading: Boolean = true,
+    val error: String? = null,
     val verifyingId: String? = null,
     val verificationResult: String? = null,
     val apiKeyConfigured: Boolean = false
@@ -76,7 +77,7 @@ class QaViewModel(private val container: AppContainer) : ViewModel() {
                     apiKeyConfigured = apiKey.isNotBlank()
                 )
             } catch (e: Exception) {
-                _state.value = QaUiState(isLoading = false)
+                _state.value = QaUiState(isLoading = false, error = "প্রশ্ন-উত্তর লোড করা যায়নি — অ্যাপটি আবার খুলে চেষ্টা করুন")
             }
         }
     }

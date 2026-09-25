@@ -62,6 +62,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.islamichub.app.ui.theme.AppColors
+import com.islamichub.app.ui.theme.banglaSp
 import com.islamichub.app.ui.theme.premiumTap
 import com.islamichub.app.ui.theme.staggerEntrance
 import androidx.compose.ui.unit.sp
@@ -362,7 +363,7 @@ private fun QuestionScreen(
                 text = if (state.isAnswered)
                     if (state.currentQuestionIndex + 1 == total) "ফলাফল দেখুন" else "পরবর্তী প্রশ্ন"
                 else "উত্তর নিশ্চিত করুন",
-                fontSize = 16.sp,
+                fontSize = banglaSp(16.sp),
                 fontWeight = FontWeight.Bold
             )
             Spacer(Modifier.size(8.dp))

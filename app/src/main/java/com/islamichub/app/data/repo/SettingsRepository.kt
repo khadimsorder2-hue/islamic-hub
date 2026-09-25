@@ -184,6 +184,11 @@ class SettingsRepository(private val context: Context) {
         context.settingsStore.edit { it[APP_LOCK_ENABLED] = enabled }
     }
 
+    // v5.10.0: notification toggles + keep-screen-on while reading
+    val prayerNotificationsEnabled: Flow<Boolean> = context.settingsStore.data.map { it[PRAYER_NOTIFICATIONS_ENABLED] ?: true }
+    val dailyAyahEnabled: Flow<Boolean> = context.settingsStore.data.map { it[DAILY_AYAH_ENABLED] ?: true }
+    val keepScreenOnReading: Flow<Boolean> = context.settingsStore.data.map { it[KEEP_SCREEN_ON_READING] ?: true }
+
     suspend fun setShowArabic(show: Boolean) = withContext(Dispatchers.IO) {
         context.settingsStore.edit { it[SHOW_ARABIC] = show }
     }
@@ -218,6 +223,16 @@ class SettingsRepository(private val context: Context) {
         context.settingsStore.edit { it[AI_PROVIDER] = provider }
     }
 
+    suspend fun setPrayerNotificationsEnabled(enabled: Boolean) = withContext(Dispatchers.IO) {
+        context.settingsStore.edit { it[PRAYER_NOTIFICATIONS_ENABLED] = enabled }
+    }
+    suspend fun setDailyAyahEnabled(enabled: Boolean) = withContext(Dispatchers.IO) {
+        context.settingsStore.edit { it[DAILY_AYAH_ENABLED] = enabled }
+    }
+    suspend fun setKeepScreenOnReading(enabled: Boolean) = withContext(Dispatchers.IO) {
+        context.settingsStore.edit { it[KEEP_SCREEN_ON_READING] = enabled }
+    }
+
     // v5.6.0: persist the last time we auto-checked for app updates
     suspend fun setLastUpdateCheckMs(ms: Long) = withContext(Dispatchers.IO) {
         context.settingsStore.edit { it[LAST_UPDATE_CHECK_MS] = ms }
@@ -227,6 +242,8 @@ class SettingsRepository(private val context: Context) {
         // Clear tafsir cache directory
         val tafsirDir = context.filesDir.resolve("tafsir_cache")
         tafsirDir.deleteRecursively()
+        // Clear offline translation cache (Quran reader downloads)
+        context.filesDir.resolve("translation_cache").deleteRecursively()
         // Clear audio cache (glide/coil)
         context.cacheDir.listFiles()?.forEach { it.deleteRecursively() }
     }
@@ -259,6 +276,9 @@ class SettingsRepository(private val context: Context) {
         private val BN_AUDIO_ENABLED = booleanPreferencesKey("bn_audio_enabled")
         private val WORD_AUDIO_ENABLED = booleanPreferencesKey("word_audio_enabled")
         private val APP_LOCK_ENABLED = booleanPreferencesKey("app_lock_enabled")
+        private val PRAYER_NOTIFICATIONS_ENABLED = booleanPreferencesKey("prayer_notifications_enabled")
+        private val DAILY_AYAH_ENABLED = booleanPreferencesKey("daily_ayah_enabled")
+        private val KEEP_SCREEN_ON_READING = booleanPreferencesKey("keep_screen_on_reading")
         private val SHOW_ARABIC = booleanPreferencesKey("show_arabic")
         private val SHOW_BANGLA = booleanPreferencesKey("show_bangla")
         private val SHOW_ENGLISH = booleanPreferencesKey("show_english")

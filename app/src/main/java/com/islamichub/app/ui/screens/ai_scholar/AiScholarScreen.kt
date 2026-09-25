@@ -42,7 +42,6 @@ import androidx.compose.material.icons.filled.Psychology
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Warning
-import androidx.compose.material.icons.filled.Web
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -73,6 +72,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -488,26 +488,43 @@ fun AiScholarScreen(
                                 .padding(20.dp)
                         ) {
                             Row(
+                                modifier = Modifier.fillMaxWidth(),
                                 verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                horizontalArrangement = Arrangement.SpaceBetween
                             ) {
-                                CircularProgressIndicator(
-                                    modifier = Modifier.size(20.dp),
-                                    strokeWidth = 2.dp
-                                )
-                                Column {
-                                    Text(
-                                        text = "🤲 AI ভাবছে…",
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        fontWeight = FontWeight.Medium,
-                                        color = MaterialTheme.colorScheme.onSurface
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                ) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(20.dp),
+                                        strokeWidth = 2.dp
                                     )
-                                    Text(
-                                        text = "কুরআন ও হাদিস থেকে সোর্স খুঁজছে",
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
+                                    Column {
+                                        Text(
+                                            text = "🤲 AI ভাবছে…",
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            fontWeight = FontWeight.Medium,
+                                            color = MaterialTheme.colorScheme.onSurface
+                                        )
+                                        Text(
+                                            text = "কুরআন ও হাদিস থেকে সোর্স খুঁজছে",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
                                 }
+                                // v5.10.0 — cancel a stuck request (was impossible before)
+                                Text(
+                                    text = "বাতিল",
+                                    style = MaterialTheme.typography.labelMedium,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = MaterialTheme.colorScheme.error,
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(10.dp))
+                                        .clickable { vm.cancelThinking() }
+                                        .padding(horizontal = 10.dp, vertical = 6.dp)
+                                )
                             }
                         }
                     }
@@ -768,24 +785,36 @@ private fun StructuredAIAnswer(answer: String) {
     }
 }
 
-/** Color for each section emoji */
+/** Color for each section emoji — lightened in dark theme for contrast */
 @Composable
-private fun colorForSection(emoji: String): Color = when (emoji) {
-    "📖" -> Color(0xFF1B5E20)        // Quran — green
-    "📚" -> Color(0xFF1565C0)        // Hadith — blue
-    "⚖️" -> Color(0xFFEF6C00)        // Fiqh — orange
-    "💡" -> Color(0xFF8E24AA)        // Spiritual — purple
-    "⚠️" -> Color(0xFFC62828)        // Warning — red
-    "✅" -> Color(0xFF2E7D32)        // Action — green
-    "🎯" -> Color(0xFF00897B)        // Summary — teal
-    "🔗" -> Color(0xFF3949AB)        // Related — indigo
-    "🔄" -> Color(0xFFD84315)        // Other books — orange-red
-    "🌙" -> Color(0xFF5C6BC0)        // Ramadan — indigo
-    "🕌" -> Color(0xFFC9A34E)        // Prayer — gold
-    "🤲" -> Color(0xFF7E57C2)        // Spiritual — purple
-    "✨" -> Color(0xFFFF6B35)        // Highlight — orange
-    "💎" -> Color(0xFF00ACC1)        // Treasure — cyan
-    else -> MaterialTheme.colorScheme.primary
+private fun colorForSection(emoji: String): Color {
+    val base = when (emoji) {
+        "📖" -> Color(0xFF1B5E20)        // Quran — green
+        "📚" -> Color(0xFF1565C0)        // Hadith — blue
+        "⚖️" -> Color(0xFFEF6C00)        // Fiqh — orange
+        "💡" -> Color(0xFF8E24AA)        // Spiritual — purple
+        "⚠️" -> Color(0xFFC62828)        // Warning — red
+        "✅" -> Color(0xFF2E7D32)        // Action — green
+        "🎯" -> Color(0xFF00897B)        // Summary — teal
+        "🔗" -> Color(0xFF3949AB)        // Related — indigo
+        "🔄" -> Color(0xFFD84315)        // Other books — orange-red
+        "🌙" -> Color(0xFF5C6BC0)        // Ramadan — indigo
+        "🕌" -> Color(0xFFC9A34E)        // Prayer — gold
+        "🤲" -> Color(0xFF7E57C2)        // Spiritual — purple
+        "✨" -> Color(0xFFFF6B35)        // Highlight — orange
+        "💎" -> Color(0xFF00ACC1)        // Treasure — cyan
+        else -> return MaterialTheme.colorScheme.primary
+    }
+    val dark = MaterialTheme.colorScheme.surface.luminance() < 0.5f
+    return if (dark) {
+        // Blend towards white so labels stay readable on dark surfaces
+        Color(
+            red = base.red * 0.55f + 0.45f,
+            green = base.green * 0.55f + 0.45f,
+            blue = base.blue * 0.55f + 0.45f,
+            alpha = 1f
+        )
+    } else base
 }
 
 /**

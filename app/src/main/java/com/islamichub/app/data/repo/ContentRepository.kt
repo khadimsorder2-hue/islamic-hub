@@ -56,38 +56,4 @@ class ContentRepository(private val source: ContentAssetSource) {
     suspend fun loadAnsData(): AnsData = withContext(Dispatchers.IO) {
         source.loadAsset("ans.json", AnsData::class.java)
     }
-
-    suspend fun searchMisconceptions(query: String): List<MisconceptionSearchResult> = withContext(Dispatchers.IO) {
-        if (query.isBlank()) return@withContext emptyList()
-        val data = loadMisconceptions()
-        val q = query.trim().lowercase()
-        val results = mutableListOf<MisconceptionSearchResult>()
-        for (cat in data.categories) {
-            for (item in cat.questions) {
-                if (item.question.contains(query, ignoreCase = true) ||
-                    item.answer?.contains(query, ignoreCase = true) == true
-                ) {
-                    results.add(
-                        MisconceptionSearchResult(
-                            categoryId = cat.id,
-                            categoryName = cat.name,
-                            itemId = item.id,
-                            question = item.question,
-                            answer = item.answer ?: ""
-                        )
-                    )
-                    if (results.size >= 50) return@withContext results
-                }
-            }
-        }
-        results
-    }
 }
-
-data class MisconceptionSearchResult(
-    val categoryId: String,
-    val categoryName: String,
-    val itemId: String,
-    val question: String,
-    val answer: String
-)

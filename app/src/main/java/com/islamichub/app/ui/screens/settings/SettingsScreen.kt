@@ -1,5 +1,7 @@
 package com.islamichub.app.ui.screens.settings
 
+import android.widget.Toast
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -27,6 +29,7 @@ import androidx.compose.material.icons.filled.FormatSize
 import androidx.compose.material.icons.filled.Headphones
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.MenuBook
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.SystemUpdate
 import androidx.compose.material3.AlertDialog
@@ -702,6 +705,47 @@ fun SettingsScreen(
                 }
             }
 
+            // ─── Notifications (v5.10.0) ──────────────────────────────
+            item {
+                val ctx = LocalContext.current
+                SettingsSection(index = 9, title = "নোটিফিকেশন", icon = Icons.Filled.Notifications, accent = Color(0xFF455A64)) {
+                    ToggleRow(
+                        label = "নামাজের সময় নোটিফিকেশন",
+                        sublabel = "পাঁচ ওয়াক্ত নামাজের সময় হলে নোটিফিকেশন পাবেন",
+                        checked = state.prayerNotificationsEnabled,
+                        onCheckedChange = { enabled ->
+                            vm.setPrayerNotifications(enabled) { on ->
+                                if (!on) {
+                                    Toast.makeText(ctx, "নামাজের নোটিফিকেশন বন্ধ করা হয়েছে", Toast.LENGTH_SHORT).show()
+                                } else {
+                                    Toast.makeText(ctx, "নামাজের নোটিফিকেশন চালু হয়েছে", Toast.LENGTH_SHORT).show()
+                                }
+                            }
+                        }
+                    )
+                    ToggleRow(
+                        label = "দৈনিক আয়াত নোটিফিকেশন",
+                        sublabel = "প্রতিদিন সকালে একটি আয়াত ও অর্থ পাবেন",
+                        checked = state.dailyAyahEnabled,
+                        onCheckedChange = { enabled ->
+                            vm.setDailyAyah(enabled) { on ->
+                                Toast.makeText(
+                                    ctx,
+                                    if (on) "দৈনিক আয়াত চালু হয়েছে" else "দৈনিক আয়াত বন্ধ করা হয়েছে",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                        }
+                    )
+                    ToggleRow(
+                        label = "পড়ার সময় স্ক্রিন চালু রাখুন",
+                        sublabel = "কুরআন/তাফসীর পড়ার সময় স্ক্রিন নিভে যাবে না",
+                        checked = state.keepScreenOnReading,
+                        onCheckedChange = vm::setKeepScreenOnReading
+                    )
+                }
+            }
+
             // ─── App Update (v5.6.0) ──────────────────────────────────
             item {
                 SettingsSection(index = 6, title = stringResource(R.string.settings_update), icon = Icons.Filled.SystemUpdate, accent = Color(0xFF2E7D32)) {
@@ -843,7 +887,14 @@ fun SettingsScreen(
                     )
                     Spacer(8.dp)
                     OutlinedButton(
-                        onClick = vm::clearCache,
+                        onClick = {
+                            vm.clearCache()
+                            Toast.makeText(
+                                LocalContext.current,
+                                "✓ ক্যাশ পরিষ্কার হয়েছে",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        },
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Icon(Icons.Filled.Cached, contentDescription = null)

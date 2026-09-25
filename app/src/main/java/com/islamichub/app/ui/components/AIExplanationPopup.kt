@@ -17,6 +17,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ContentCopy
@@ -124,30 +125,15 @@ ${if (context.isNotBlank()) "কনটেক্সট: $context" else ""}
 
     AlertDialog(
         onDismissRequest = onDismiss,
+        icon = {
+            com.islamichub.app.ui.components.PremiumDialogIcon(
+                icon = Icons.Filled.AutoAwesome,
+                tint = MaterialTheme.colorScheme.primary
+            )
+        },
         title = {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(32.dp)
-                        .clip(CircleShape)
-                        .background(
-                            brush = Brush.linearGradient(
-                                colors = listOf(
-                                    MaterialTheme.colorScheme.primary,
-                                    MaterialTheme.colorScheme.secondary
-                                )
-                            )
-                        ),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text("✨", style = MaterialTheme.typography.titleSmall)
-                }
-                Text("AI বিস্তারিত", style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold)
-            }
+            Text("AI বিস্তারিত", style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold)
         },
         text = {
             Column(

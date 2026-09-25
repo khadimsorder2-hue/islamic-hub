@@ -67,17 +67,10 @@ class QuranReaderViewModel(
                 isLoading = false,
                 notAvailable = surah == null
             )
-            // Mark khatam progress and last read
+            // Mark khatam progress; last-read is now recorded from the ACTUAL
+            // scroll position (updateLastRead, wired to listState snapshotFlow)
             if (surah != null) {
                 container.khatamRepository.markSurahCompleted(surahNumber, surah.ayahCount)
-                container.lastReadRepository.set(
-                    LastRead(
-                        surahNumber = surahNumber,
-                        ayahNumber = surah.ayahs.lastOrNull()?.numberInSurah ?: 1,
-                        surahName = surah.nameEnglish,
-                        surahNameBn = surah.nameBengali
-                    )
-                )
                 container.trackerRepository.recordSurahRead()
             }
         }
@@ -226,6 +219,8 @@ class QuranReaderViewModel(
     /**
      * Fetch all Bangla translations for this surah from Quran.com API.
      * Stores results in onlineTranslationsMap: ayahNumber → [mujib, taisirul, zakaria, rawai]
+     * v5.10.0 — when the API is unreachable, falls back to the offline download
+     * cache so the "অফলাইনে ডাউনলোড করুন" button finally has real effect.
      */
     private fun loadOnlineTranslations() {
         viewModelScope.launch {
@@ -264,16 +259,60 @@ class QuranReaderViewModel(
                         onlineTranslationsLoaded = true
                     )
                 } else {
-                    _state.value = _state.value.copy(isLoadingOnlineTranslations = false)
+                    loadFromOfflineCache()
                 }
             } catch (_: Exception) {
-                _state.value = _state.value.copy(isLoadingOnlineTranslations = false)
+                loadFromOfflineCache()
             }
+        }
+    }
+
+    /** v5.10.0 — populate translations from the offline download cache when online fails. */
+    private suspend fun loadFromOfflineCache() {
+        try {
+            val cached = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                container.translationCache.getSurahCached(surahNumber)
+            }
+            if (cached.isEmpty()) {
+                _state.value = _state.value.copy(isLoadingOnlineTranslations = false)
+                return
+            }
+            val transMap = mutableMapOf<Int, List<String>>()
+            for (verse in cached) {
+                val texts = verse.translations.values.filter { it.isNotBlank() }
+                if (texts.isNotEmpty()) transMap[verse.ayah] = texts
+            }
+            val names = cached.firstOrNull()?.translations?.keys?.toList() ?: emptyList()
+            _state.value = _state.value.copy(
+                availableTranslations = names,
+                onlineTranslationsMap = transMap,
+                isLoadingOnlineTranslations = false,
+                onlineTranslationsLoaded = true
+            )
+        } catch (_: Exception) {
+            _state.value = _state.value.copy(isLoadingOnlineTranslations = false)
         }
     }
 
     fun selectTranslation(index: Int) {
         _state.value = _state.value.copy(selectedTranslationIndex = index)
+    }
+
+    /** v5.10.0 — record the user's ACTUAL reading position (was: last ayah of surah). */
+    fun updateLastRead(ayahNumber: Int) {
+        val surah = _state.value.surah ?: return
+        viewModelScope.launch {
+            try {
+                container.lastReadRepository.set(
+                    LastRead(
+                        surahNumber = surahNumber,
+                        ayahNumber = ayahNumber,
+                        surahName = surah.nameEnglish,
+                        surahNameBn = surah.nameBengali
+                    )
+                )
+            } catch (_: Exception) { }
+        }
     }
 
     /** Get the Bangla text for an ayah considering selected translation */

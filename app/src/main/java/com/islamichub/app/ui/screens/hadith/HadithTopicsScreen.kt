@@ -20,6 +20,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Bolt
+import androidx.compose.material.icons.filled.Topic
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -193,11 +194,19 @@ fun HadithTopicsScreen(
     selectedTopic?.let { topic ->
         AlertDialog(
             onDismissRequest = { selectedTopic = null },
+            icon = {
+                com.islamichub.app.ui.components.PremiumDialogIcon(
+                    icon = Icons.Filled.Topic,
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            },
             title = {
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(topic.arabicName ?: "", style = MaterialTheme.typography.titleMedium)
-                    Text(topic.name ?: "", style = MaterialTheme.typography.titleSmall,
+                Column {
+                    Text(topic.name ?: "", style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.primary)
+                    (topic.arabicName ?: "").let {
+                        if (it.isNotBlank()) Text(it, style = MaterialTheme.typography.titleSmall)
+                    }
                 }
             },
             text = {

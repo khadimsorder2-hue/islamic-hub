@@ -168,7 +168,10 @@ class TafsirViewModel(
                 if (tafsir != null) {
                     _state.value = _state.value.copy(isLoading = false, tafsirText = tafsir, source = source, isCached = true)
                 } else {
-                    _state.value = _state.value.copy(isLoading = false, source = source)
+                    _state.value = _state.value.copy(
+                        isLoading = false, source = source,
+                        error = "অফলাইন তাফসীর লোড করা যায়নি — ইন্টারনেট সংযোগ চেক করুন"
+                    )
                 }
             } catch (e: Exception) {
                 _state.value = _state.value.copy(isLoading = false, error = e.message, source = source)

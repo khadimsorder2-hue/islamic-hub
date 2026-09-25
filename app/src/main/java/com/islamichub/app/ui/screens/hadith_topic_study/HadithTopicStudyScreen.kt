@@ -68,6 +68,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.islamichub.app.data.AppContainer
 import com.islamichub.app.data.repo.HadithTopic
@@ -268,13 +269,16 @@ private fun HadithTopicCard(topic: HadithTopic, context: android.content.Context
                 Column {
                     Text(topic.nameBn,
                         style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.Bold, color = Color.White)
+                        fontWeight = FontWeight.Bold, color = Color.White,
+                        maxLines = 2, overflow = TextOverflow.Ellipsis)
                     Text(topic.nameEn,
                         style = MaterialTheme.typography.titleSmall,
-                        color = Color.White.copy(alpha = 0.9f))
+                        color = Color.White.copy(alpha = 0.9f),
+                        maxLines = 1, overflow = TextOverflow.Ellipsis)
                     Text(topic.nameAr,
                         style = MaterialTheme.typography.titleMedium,
-                        color = Color.White.copy(alpha = 0.95f))
+                        color = Color.White.copy(alpha = 0.95f),
+                        maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
                 Row(
                     modifier = Modifier.fillMaxWidth(),

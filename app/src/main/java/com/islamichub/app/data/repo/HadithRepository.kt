@@ -20,12 +20,6 @@ class HadithRepository(private val assetSource: HadithAssetSource) {
     suspend fun getCollection(collectionId: String): HadithCollectionJson = withContext(Dispatchers.IO) {
         assetSource.loadCollection(collectionId)
     }
-
-    suspend fun listHadiths(collectionId: String, limit: Int? = null): List<HadithJson> = withContext(Dispatchers.IO) {
-        val coll = assetSource.loadCollection(collectionId)
-        if (limit != null) coll.hadiths.take(limit) else coll.hadiths
-    }
-
     suspend fun getHadith(collectionId: String, hadithNumber: Int): HadithJson? = withContext(Dispatchers.IO) {
         assetSource.loadCollection(collectionId).hadiths.firstOrNull { it.hadithNumber == hadithNumber }
     }

@@ -21,7 +21,9 @@ data class ProfileUiState(
     val totalFasts: Int = 0,
     val qadaPending: Int = 0,
     val isLoading: Boolean = true,
-    val backupMessage: String? = null
+    val backupMessage: String? = null,
+    // v5.10.0 — backup management (name + size, delete wired)
+    val backups: List<Pair<String, Long>> = emptyList()
 )
 
 class ProfileViewModel(private val container: AppContainer) : ViewModel() {
@@ -76,6 +78,33 @@ class ProfileViewModel(private val container: AppContainer) : ViewModel() {
         _state.value = _state.value.copy(userName = name)
     }
 
+    /** v5.10.0 — list existing backups with sizes (was a dead repo feature). */
+    fun refreshBackups() {
+        viewModelScope.launch {
+            try {
+                val list = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                    container.backupRestoreService.listBackups().map { it.name to it.length() }
+                }
+                _state.value = _state.value.copy(backups = list)
+            } catch (_: Exception) { }
+        }
+    }
+
+    /** v5.10.0 — delete a specific backup file. */
+    fun deleteBackup(fileName: String) {
+        viewModelScope.launch {
+            try {
+                val ok = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                    container.backupRestoreService.deleteBackup(fileName)
+                }
+                _state.value = _state.value.copy(
+                    backupMessage = if (ok) "✓ ব্যাকআপ মুছে ফেলা হয়েছে" else "ব্যাকআপ মুছে ফেলা যায়নি"
+                )
+                refreshBackups()
+            } catch (_: Exception) { }
+        }
+    }
+
     fun backup() {
         viewModelScope.launch {
             try {
@@ -86,6 +115,7 @@ class ProfileViewModel(private val container: AppContainer) : ViewModel() {
                         onFailure = { "ব্যাকআপ ব্যর্থ: ${it.message}" }
                     )
                 )
+                refreshBackups()
             } catch (e: Exception) {
                 _state.value = _state.value.copy(backupMessage = "ব্যাকআপ ব্যর্থ: ${e.message}")
             }

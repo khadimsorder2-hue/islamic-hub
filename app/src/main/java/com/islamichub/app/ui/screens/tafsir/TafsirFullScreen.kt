@@ -58,6 +58,7 @@ import com.islamichub.app.data.AppContainer
 import androidx.compose.ui.text.input.TextFieldValue
 import android.widget.Toast
 import android.content.Intent
+import androidx.activity.compose.BackHandler
 import com.islamichub.app.ui.components.PremiumSectionHeader
 import com.islamichub.app.ui.theme.arabicSp
 import com.islamichub.app.ui.theme.banglaSp
@@ -79,6 +80,8 @@ fun TafsirFullScreen(
     val clipboardManager = LocalClipboardManager.current
     var showNoteEditor by remember { mutableStateOf(false) }
     val stripHtml = { s: String -> s.replace(Regex("<[^>]*>"), "").trim() }
+
+    BackHandler { onClose() }
 
     Scaffold(
         topBar = {
@@ -315,6 +318,23 @@ fun TafsirFullScreen(
                         Text(state.tafsirText!!, style = MaterialTheme.typography.bodyLarge.copy(
                             fontSize = banglaSp(MaterialTheme.typography.bodyLarge.fontSize)
                         ), color = MaterialTheme.colorScheme.onSurface)
+                    }
+                }
+            } else if (!state.isLoading && state.error != null) {
+                Surface(
+                    modifier = Modifier.fillMaxWidth().staggerEntrance(4), shape = RoundedCornerShape(16.dp),
+                    color = MaterialTheme.colorScheme.surfaceContainerLow
+                ) {
+                    Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Text("⚠️", style = MaterialTheme.typography.titleMedium)
+                        Spacer(Modifier.size(8.dp))
+                        Text(
+                            state.error ?: "",
+                            style = MaterialTheme.typography.bodySmall.copy(
+                                fontSize = banglaSp(MaterialTheme.typography.bodySmall.fontSize)
+                            ),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     }
                 }
             }

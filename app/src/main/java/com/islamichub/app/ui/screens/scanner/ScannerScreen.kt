@@ -93,7 +93,11 @@ fun ScannerScreen(
     ) { success ->
         if (success) {
             imageUri = cameraImageUri
-            imageBitmap = loadBitmap(context, cameraImageUri)
+            val bmp = loadBitmap(context, cameraImageUri)
+            if (bmp == null) {
+                error = "ছবিটি লোড করা যায়নি — অন্য ছবি দিয়ে চেষ্টা করুন"
+            }
+            imageBitmap = bmp
         }
     }
 
@@ -102,7 +106,11 @@ fun ScannerScreen(
     ) { uri ->
         uri?.let {
             imageUri = it
-            imageBitmap = loadBitmap(context, it)
+            val bmp = loadBitmap(context, it)
+            if (bmp == null) {
+                error = "ছবিটি লোড করা যায়নি — অন্য ছবি দিয়ে চেষ্টা করুন"
+            }
+            imageBitmap = bmp
         }
     }
 
@@ -111,6 +119,8 @@ fun ScannerScreen(
     ) { granted ->
         if (granted) {
             cameraLauncher.launch(cameraImageUri)
+        } else {
+            error = "ক্যামেরার অনুমতি ছাড়া ছবি তোলা যাবে না — গ্যালারি থেকে ছবি বেছে নিন"
         }
     }
 

@@ -26,6 +26,7 @@ import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.MenuBook
+import androidx.compose.material.icons.filled.ReportProblem
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
@@ -433,6 +434,12 @@ fun NamazShikkhaScreen(
     if (showMistakes) {
         AlertDialog(
             onDismissRequest = { showMistakes = false },
+            icon = {
+                com.islamichub.app.ui.components.PremiumDialogIcon(
+                    icon = Icons.Filled.ReportProblem,
+                    tint = MaterialTheme.colorScheme.error
+                )
+            },
             title = { Text("নামাজের সাধারণ ভুলসমূহ") },
             text = {
                 Column(modifier = Modifier.verticalScroll(rememberScrollState())) {

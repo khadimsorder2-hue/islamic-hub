@@ -20,6 +20,7 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
@@ -281,6 +282,9 @@ class BootCompletedReceiver : BroadcastReceiver() {
                     try {
                         val app = context.applicationContext as? com.islamichub.app.IslamicHubApp
                             ?: return@launch
+                        // v5.10.0 — respect the user's notification toggle
+                        val enabled = app.container.settingsRepository.prayerNotificationsEnabled.first()
+                        if (!enabled) return@launch
                         val repo = app.container.prayerRepository
                         val times = if (repo.hasLocationPermission() && repo.isLocationEnabled()) {
                             val loc = repo.getCurrentLocation()

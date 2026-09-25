@@ -27,6 +27,18 @@ class TranslationCacheService(private val context: Context) {
         return try { gson.fromJson(file.readText(), CachedVerse::class.java) } catch (_: Exception) { null }
     }
 
+    /** v5.10.0 — read back a whole cached surah (offline download is now actually consumed). */
+    fun getSurahCached(surah: Int): List<CachedVerse> {
+        val dir = File(cacheDir, "surah_$surah")
+        if (!dir.exists()) return emptyList()
+        return dir.listFiles { f -> f.extension == "json" }
+            ?.mapNotNull { f ->
+                try { gson.fromJson(f.readText(), CachedVerse::class.java) } catch (_: Exception) { null }
+            }
+            ?.sortedBy { it.ayah }
+            ?: emptyList()
+    }
+
     suspend fun cacheVerse(verse: CachedVerse) = withContext(Dispatchers.IO) {
         val file = File(cacheDir, "${verse.surah}_${verse.ayah}.json")
         file.writeText(gson.toJson(verse))

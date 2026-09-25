@@ -11,7 +11,8 @@ import com.islamichub.app.data.local.KalimaData
 
 data class KalimaUiState(
     val data: KalimaData? = null,
-    val isLoading: Boolean = true
+    val isLoading: Boolean = true,
+    val error: String? = null
 )
 
 class KalimaViewModel(private val container: AppContainer) : ViewModel() {

@@ -88,10 +88,15 @@ fun NamazExtrasScreen(
         val extraCount = data.extraPrayers?.size ?: 0
         val duaCount = data.namazImportantDuas?.size ?: 0
         val hadithCount = data.koumiHadiths?.size ?: 0
+        // v5.10.0 — the two remaining orphaned sections
+        val namazDuaCount = data.namazDuas?.size ?: 0
+        val allDuaItemCount = data.allDuas?.sumOf { it.items?.size ?: 0 } ?: 0
         // Stagger index bookkeeping — hero=0, then every card gets the next slot
         val duaHeaderIndex = extraCount + 1
         val hadithHeaderIndex = duaHeaderIndex + duaCount + 1
-        val surahHeaderIndex = hadithHeaderIndex + hadithCount + 1
+        val namazDuaHeaderIndex = hadithHeaderIndex + hadithCount + 1
+        val allDuaHeaderIndex = namazDuaHeaderIndex + namazDuaCount + 1
+        val surahHeaderIndex = allDuaHeaderIndex + allDuaItemCount + 1
         LazyColumn(
             modifier = Modifier.padding(padding),
             contentPadding = PaddingValues(16.dp),
@@ -319,6 +324,132 @@ fun NamazExtrasScreen(
                                         style = MaterialTheme.typography.bodySmall.copy(fontSize = banglaSp(MaterialTheme.typography.bodySmall.fontSize)),
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // v5.10.0 — the 13 namaz duas bundled in the JSON but never rendered
+            if (namazDuaCount > 0) {
+                item {
+                    PremiumSectionHeader(
+                        title = "নামাজের দোয়াসমূহ (তাওউয, সানা, কুনুত)",
+                        modifier = Modifier.padding(top = 16.dp, bottom = 4.dp).staggerEntrance(namazDuaHeaderIndex)
+                    )
+                }
+            }
+            data.namazDuas?.forEachIndexed { idx, dua ->
+                item(key = "ndua_${dua.id}") {
+                    Card(
+                        modifier = Modifier.fillMaxWidth().staggerEntrance(namazDuaHeaderIndex + 1 + idx),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Text(
+                                text = dua.nameBn ?: "",
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                            dua.content?.arabic?.let { arabic ->
+                                if (arabic.isNotBlank()) {
+                                    Text(
+                                        text = arabic,
+                                        style = MaterialTheme.typography.titleLarge.copy(fontSize = arabicSp(MaterialTheme.typography.titleLarge.fontSize)),
+                                        color = MaterialTheme.colorScheme.onSurface,
+                                        modifier = Modifier.fillMaxWidth(),
+                                        textAlign = TextAlign.End
+                                    )
+                                }
+                            }
+                            dua.content?.transliteration?.let { tr ->
+                                if (tr.isNotBlank()) {
+                                    Text(
+                                        text = tr,
+                                        style = MaterialTheme.typography.bodySmall.copy(fontSize = banglaSp(MaterialTheme.typography.bodySmall.fontSize)),
+                                        color = MaterialTheme.colorScheme.primary,
+                                        fontWeight = FontWeight.Medium
+                                    )
+                                }
+                            }
+                            dua.content?.translation?.let { tr ->
+                                if (tr.isNotBlank()) {
+                                    Text(
+                                        text = tr,
+                                        style = MaterialTheme.typography.bodySmall.copy(fontSize = banglaSp(MaterialTheme.typography.bodySmall.fontSize)),
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // v5.10.0 — categorized daily duas (ঘুম/রাস্তা/খাবার…) bundled but never rendered
+            data.allDuas?.forEach { group ->
+                val groupItems = group.items ?: emptyList()
+                if (groupItems.isEmpty()) return@forEach
+                item(key = "agroup_${group.category}") {
+                    PremiumSectionHeader(
+                        title = group.category ?: "দৈনন্দিন দোয়া",
+                        modifier = Modifier.padding(top = 16.dp, bottom = 4.dp).staggerEntrance(allDuaHeaderIndex)
+                    )
+                }
+                groupItems.forEachIndexed { idx, item ->
+                    item(key = "adua_${group.category}_$idx") {
+                        Card(
+                            modifier = Modifier.fillMaxWidth().staggerEntrance(allDuaHeaderIndex + 1 + idx),
+                            shape = RoundedCornerShape(16.dp),
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(16.dp),
+                                verticalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                Text(
+                                    text = item.nameBn ?: "",
+                                    style = MaterialTheme.typography.titleSmall,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                                item.content?.arabic?.let { arabic ->
+                                    if (arabic.isNotBlank()) {
+                                        Text(
+                                            text = arabic,
+                                            style = MaterialTheme.typography.titleLarge.copy(fontSize = arabicSp(MaterialTheme.typography.titleLarge.fontSize)),
+                                            color = MaterialTheme.colorScheme.onSurface,
+                                            modifier = Modifier.fillMaxWidth(),
+                                            textAlign = TextAlign.End
+                                        )
+                                    }
+                                }
+                                item.content?.transliteration?.let { tr ->
+                                    if (tr.isNotBlank()) {
+                                        Text(
+                                            text = tr,
+                                            style = MaterialTheme.typography.bodySmall.copy(fontSize = banglaSp(MaterialTheme.typography.bodySmall.fontSize)),
+                                            color = MaterialTheme.colorScheme.primary,
+                                            fontWeight = FontWeight.Medium
+                                        )
+                                    }
+                                }
+                                item.content?.translation?.let { tr ->
+                                    if (tr.isNotBlank()) {
+                                        Text(
+                                            text = tr,
+                                            style = MaterialTheme.typography.bodySmall.copy(fontSize = banglaSp(MaterialTheme.typography.bodySmall.fontSize)),
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
                                 }
                             }
                         }

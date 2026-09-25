@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import com.islamichub.app.data.AppContainer
 import com.islamichub.app.data.model.PrayerTimes
@@ -53,8 +54,9 @@ class PrayerViewModel(private val container: AppContainer) : ViewModel() {
             }
 
             val resolvedTimes = times
-            // Schedule notifications if we got times AND have permission
-            if (resolvedTimes != null && container.prayerScheduler.hasNotificationPermission()) {
+            // Schedule notifications if we got times AND have permission AND user hasn't disabled them
+            val prayerNotifEnabled = container.settingsRepository.prayerNotificationsEnabled.first()
+            if (resolvedTimes != null && container.prayerScheduler.hasNotificationPermission() && prayerNotifEnabled) {
                 try {
                     container.prayerScheduler.scheduleToday(resolvedTimes)
                     val scheduleState = container.prayerScheduler.state.value
@@ -71,6 +73,9 @@ class PrayerViewModel(private val container: AppContainer) : ViewModel() {
                 } catch (e: Exception) {
                     error = (error ?: "") + " (notification schedule failed: ${e.message})"
                 }
+            } else if (!prayerNotifEnabled) {
+                // User disabled prayer notifications — cancel any previously scheduled alarms
+                container.prayerScheduler.cancelAll()
             }
 
             _state.value = PrayerUiState(
@@ -102,6 +107,13 @@ class PrayerViewModel(private val container: AppContainer) : ViewModel() {
     fun saveJamatTime(jamat: com.islamichub.app.data.repo.JamatTime) {
         viewModelScope.launch {
             container.jamatTimeRepository.setJamatTime(jamat)
+        }
+    }
+
+    /** v5.10.0 — delete a jamat entry (was impossible: removeJamatTime had no call sites). */
+    fun deleteJamatTime(prayerName: String) {
+        viewModelScope.launch {
+            container.jamatTimeRepository.removeJamatTime(prayerName)
         }
     }
 }

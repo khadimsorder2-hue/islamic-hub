@@ -19,6 +19,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Repeat
+import androidx.compose.material.icons.filled.RepeatOne
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -161,6 +163,49 @@ fun FloatingAudioPlayer(
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f),
                         maxLines = 1
+                    )
+                }
+
+                // v5.10.0 — repeat-ayah toggle (was dead state before)
+                Box(
+                    modifier = Modifier
+                        .size(32.dp)
+                        .clip(CircleShape)
+                        .clickable { container.audioController.toggleRepeatMode() },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = if (audioState.isRepeatMode) Icons.Filled.RepeatOne else Icons.Filled.Repeat,
+                        contentDescription = "Repeat ayah",
+                        tint = if (audioState.isRepeatMode) MaterialTheme.colorScheme.primary
+                               else MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.6f),
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+
+                // v5.10.0 — playback speed cycle (1.0x → 1.25x → 1.5x → 2.0x → 1.0x)
+                Box(
+                    modifier = Modifier
+                        .clip(CircleShape)
+                        .clickable {
+                            val next = when (audioState.playbackSpeed) {
+                                1.0f -> 1.25f
+                                1.25f -> 1.5f
+                                1.5f -> 2.0f
+                                else -> 1.0f
+                            }
+                            container.audioController.setPlaybackSpeed(next)
+                        }
+                        .padding(horizontal = 6.dp, vertical = 4.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = if (audioState.playbackSpeed == audioState.playbackSpeed.toInt().toFloat())
+                            "${audioState.playbackSpeed.toInt()}x"
+                        else "${audioState.playbackSpeed}x",
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.8f)
                     )
                 }
 
