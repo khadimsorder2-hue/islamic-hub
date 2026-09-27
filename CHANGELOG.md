@@ -2,6 +2,23 @@
 
 All notable changes to the Islamic Hub project.
 
+## [v5.13.1] - 2026-09-25
+
+### 🔐 Biometric unlock — FIXED (critical)
+- Root cause: `MainActivity` extended `ComponentActivity`, but `BiometricPrompt` can only attach to a `FragmentActivity` — the cast silently failed and the authentication prompt never appeared ("biometric e kaj korche nah").
+- `MainActivity` now extends `FragmentActivity` (a drop-in supertype — splash/edge-to-edge/Compose all unchanged), and the lock screen fails OPEN on any impossible-authentication error so a user can never be locked out of the app.
+
+### 📖 Quran loading — hang-proofed
+- Both the surah list and the reader now load with a 15-second timeout, a full exception guard, and `runCatching` around the progress writes — the loading spinner can never spin forever again.
+- If a load does fail, a premium retry state ("আবার চেষ্টা করুন") appears instead of an endless/blank body.
+
+### 🫥 Active card boxes — fully invisible (round 3)
+- Reciter selector (Qari sheet): selected card's violet container + 3dp shadow removed — selection shows via gradient avatar + "✓ নির্বাচিত" + check icon only.
+- Floating audio player: gold `secondaryContainer` box + 4dp shadow removed — blends with the canvas; gradient play button + progress bar carry the affordance.
+- Fasting fast-type selector and Settings AI-model presets: 2dp selection borders removed (soft tint + check indicator remain).
+- Quiz: pre-answer selected option no longer draws a box boundary (correct/wrong answer feedback borders remain — functional feedback, not a box).
+- `premiumTap`: bounded ripple removed app-wide — the ripple used to flash each card's rectangular boundary on press; the spring scale-bounce stays as press feedback.
+
 ## [v5.13.0] - 2026-09-25
 
 ### ⚡ 120fps + performance engine (major)

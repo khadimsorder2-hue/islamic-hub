@@ -3,7 +3,6 @@ package com.islamichub.app.ui.screens.settings
 import android.widget.Toast
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -553,14 +552,10 @@ fun SettingsScreen(
                                 .premiumTap(onClick = {
                                     vm.setAiModel(preset.modelName)
                                     vm.setAiBaseUrl(preset.baseUrl)
-                                })
-                                .border(
-                                    width = if (state.aiModel == preset.modelName) 2.dp else 0.dp,
-                                    color = if (state.aiModel == preset.modelName)
-                                        MaterialTheme.colorScheme.primary
-                                    else Color.Transparent,
-                                    shape = RoundedCornerShape(12.dp)
-                                ),
+                                }),
+                            // v5.13.1 — active/selected card box fully invisible:
+                            // the 2dp border is gone; selection reads via the
+                            // soft tint + the CheckCircle icon in the row.
                             colors = CardDefaults.cardColors(
                                 containerColor = if (state.aiModel == preset.modelName)
                                     MaterialTheme.colorScheme.primary.copy(alpha = 0.08f)
@@ -610,6 +605,14 @@ fun SettingsScreen(
                                                 color = Color(0xFF2E7D32),
                                                 fontWeight = FontWeight.Bold)
                                         }
+                                    }
+                                    // v5.13.1 — selected-model check (replaces the removed border)
+                                    if (state.aiModel == preset.modelName) {
+                                        androidx.compose.material3.Icon(
+                                            imageVector = androidx.compose.material.icons.Icons.Filled.CheckCircle,
+                                            contentDescription = null,
+                                            tint = MaterialTheme.colorScheme.primary
+                                        )
                                     }
                                 }
                                 Spacer(4.dp)

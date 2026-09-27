@@ -107,7 +107,12 @@ private fun showBiometricPrompt(
     context: Context,
     onUnlock: () -> Unit
 ) {
-    val activity = context as? FragmentActivity ?: return
+    // v5.13.1 — defensive: if the host activity can't host BiometricPrompt
+    // (not a FragmentActivity), fail OPEN — never lock the user out of the app.
+    val activity = context as? FragmentActivity ?: run {
+        onUnlock()
+        return
+    }
 
     val biometricManager = BiometricManager.from(context)
     val authenticators = BiometricManager.Authenticators.BIOMETRIC_WEAK or BiometricManager.Authenticators.DEVICE_CREDENTIAL
@@ -122,6 +127,16 @@ private fun showBiometricPrompt(
     val callback = object : BiometricPrompt.AuthenticationCallback() {
         override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
             onUnlock()
+        }
+
+        override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
+            // v5.13.1 — hardware/credential errors that make authentication
+            // impossible (not user cancels) also fail open so the app is
+            // always reachable.
+            val isUserCancel = errorCode == BiometricPrompt.ERROR_USER_CANCELED ||
+                errorCode == BiometricPrompt.ERROR_NEGATIVE_BUTTON ||
+                errorCode == BiometricPrompt.ERROR_CANCELED
+            if (!isUserCancel) onUnlock()
         }
     }
 

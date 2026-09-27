@@ -96,9 +96,12 @@ fun FloatingAudioPlayer(
                 .padding(horizontal = 12.dp, vertical = 4.dp),
             shape = RoundedCornerShape(16.dp),
             colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.secondaryContainer
+                // v5.13.1 — active player box fully invisible: surface matches
+                // the canvas (no gold tint), zero shadow. The gradient play
+                // button + progress bar carry the affordance.
+                containerColor = MaterialTheme.colorScheme.surfaceContainerLow
             ),
-            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
         ) {
             Row(
                 modifier = Modifier
@@ -159,7 +162,7 @@ fun FloatingAudioPlayer(
                             else "সূরা ${audioState.currentSurah?.toBanglaDigits()}",
                         style = MaterialTheme.typography.labelMedium,
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSecondaryContainer,
+                        color = MaterialTheme.colorScheme.onSurface,
                         maxLines = 1
                     )
                     // Show position / total duration
@@ -168,7 +171,7 @@ fun FloatingAudioPlayer(
                     Text(
                         text = "${audioState.reciter} • $posStr / $durStr",
                         style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f),
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
                         maxLines = 1
                     )
                 }
@@ -185,7 +188,7 @@ fun FloatingAudioPlayer(
                         imageVector = if (audioState.isRepeatMode) Icons.Filled.RepeatOne else Icons.Filled.Repeat,
                         contentDescription = "Repeat ayah",
                         tint = if (audioState.isRepeatMode) MaterialTheme.colorScheme.primary
-                               else MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.6f),
+                               else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                         modifier = Modifier.size(18.dp)
                     )
                 }
@@ -212,7 +215,7 @@ fun FloatingAudioPlayer(
                         else "${audioState.playbackSpeed}x",
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.8f)
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
                     )
                 }
 
@@ -231,7 +234,7 @@ fun FloatingAudioPlayer(
                     Icon(
                         imageVector = Icons.Filled.Close,
                         contentDescription = "Stop",
-                        tint = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.6f),
+                        tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                         modifier = Modifier.size(18.dp)
                     )
                 }
@@ -289,7 +292,7 @@ fun FloatingAudioPlayer(
                         colors = SliderDefaults.colors(
                             thumbColor = MaterialTheme.colorScheme.primary,
                             activeTrackColor = MaterialTheme.colorScheme.primary,
-                            inactiveTrackColor = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.15f)
+                            inactiveTrackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.15f)
                         )
                     )
                 } else {
@@ -298,7 +301,7 @@ fun FloatingAudioPlayer(
                             .fillMaxWidth()
                             .padding(horizontal = 12.dp, vertical = 2.dp),
                         color = MaterialTheme.colorScheme.primary,
-                        trackColor = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.15f)
+                        trackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.15f)
                     )
                 }
             }

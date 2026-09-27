@@ -14,6 +14,8 @@ data class QuranListUiState(
     val surahs: List<SurahSummary> = emptyList(),
     val query: String = "",
     val isLoading: Boolean = true,
+    // v5.13.1 — hang-proof: never leave the list stuck on an empty spinner
+    val loadFailed: Boolean = false,
     val progressMap: Map<Int, Float> = emptyMap()
 )
 
@@ -28,9 +30,27 @@ class QuranListViewModel(private val container: AppContainer) : ViewModel() {
 
     private fun load() {
         viewModelScope.launch {
-            val list = container.quranRepository.listSurahs()
-            _state.value = _state.value.copy(surahs = list, isLoading = false)
+            // v5.13.1 — HARDENED: timeout + full exception guard. Whatever
+            // happens, the spinner always resolves to content or a retry state.
+            try {
+                val list = kotlinx.coroutines.withTimeoutOrNull(15_000L) {
+                    container.quranRepository.listSurahs()
+                } ?: emptyList()
+                _state.value = _state.value.copy(
+                    surahs = list,
+                    isLoading = false,
+                    loadFailed = list.isEmpty()
+                )
+            } catch (_: Exception) {
+                _state.value = _state.value.copy(isLoading = false, loadFailed = true)
+            }
         }
+    }
+
+    /** v5.13.1 — user-visible retry after a failed/stalled load. */
+    fun retryLoad() {
+        _state.value = _state.value.copy(isLoading = true, loadFailed = false)
+        load()
     }
 
     private fun loadProgress() {

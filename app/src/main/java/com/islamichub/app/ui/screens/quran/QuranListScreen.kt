@@ -24,6 +24,7 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material.icons.filled.SearchOff
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Search
@@ -139,7 +140,18 @@ fun QuranListScreen(
             ),
             verticalArrangement = Arrangement.spacedBy(AppSpacing.sm)
         ) {
-            if (state.surahs.isEmpty() && state.query.isNotBlank()) {
+            if (state.loadFailed) {
+                // v5.13.1 — retry state instead of a blank/stuck body
+                item {
+                    com.islamichub.app.ui.components.PremiumEmptyState(
+                        icon = Icons.Filled.CloudOff,
+                        title = "সূরা তালিকা লোড করা যায়নি",
+                        subtitle = "আবার চেষ্টা করুন",
+                        ctaText = "আবার চেষ্টা করুন",
+                        onCta = { vm.retryLoad() }
+                    )
+                }
+            } else if (state.surahs.isEmpty() && state.query.isNotBlank()) {
                 // v5.11.0 — typo in the filter box used to render a blank body
                 item {
                     com.islamichub.app.ui.components.PremiumEmptyState(

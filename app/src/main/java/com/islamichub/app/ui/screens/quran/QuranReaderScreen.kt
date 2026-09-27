@@ -25,6 +25,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Psychology
 import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.BookmarkBorder
+import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material.icons.filled.FastForward
 import androidx.compose.material.icons.filled.GraphicEq
 import androidx.compose.material.icons.filled.MoreVert
@@ -202,6 +203,23 @@ fun QuranReaderScreen(
         }
     ) { padding ->
         when {
+            // v5.13.1 — retry state instead of an endless spinner
+            state.loadFailed -> {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(padding),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    com.islamichub.app.ui.components.PremiumEmptyState(
+                        icon = Icons.Filled.CloudOff,
+                        title = "সূরা লোড করা যায়নি",
+                        subtitle = "আবার চেষ্টা করুন — সমস্যা হলে অ্যাপটি বন্ধ করে খুলুন",
+                        ctaText = "আবার চেষ্টা করুন",
+                        onCta = { vm.retryLoad() }
+                    )
+                }
+            }
             state.isLoading -> {
                 Column(
                     modifier = Modifier

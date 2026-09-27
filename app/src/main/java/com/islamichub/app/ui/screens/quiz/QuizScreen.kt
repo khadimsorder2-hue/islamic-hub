@@ -394,7 +394,18 @@ private fun OptionRow(
     isAnswered: Boolean,
     onClick: () -> Unit
 ) {
+    // v5.13.1 — pre-answer "selected" no longer draws a box boundary (user:
+    // active card boxes fully invisible). Correct/wrong answer feedback keeps
+    // its colored border AFTER answering (functional feedback, not a box).
+    val showFeedbackBorder = isAnswered && (isCorrect || isSelected)
     val borderColor = when {
+        isAnswered && isCorrect -> AppColors.success
+        isAnswered && isSelected && !isCorrect -> AppColors.error
+        else -> Color.Transparent
+    }
+    // v5.13.1 — the option letter circle keeps a visible fill in every state
+    // (it's an indicator dot, not a card box).
+    val indicatorColor = when {
         isAnswered && isCorrect -> AppColors.success
         isAnswered && isSelected && !isCorrect -> AppColors.error
         isSelected -> MaterialTheme.colorScheme.primary
@@ -403,6 +414,7 @@ private fun OptionRow(
     val bg = when {
         isAnswered && isCorrect -> AppColors.success.copy(alpha = 0.12f)
         isAnswered && isSelected && !isCorrect -> AppColors.error.copy(alpha = 0.12f)
+        isSelected -> MaterialTheme.colorScheme.primary.copy(alpha = 0.08f)
         else -> Color.Transparent
     }
     Card(
@@ -410,7 +422,10 @@ private fun OptionRow(
             .fillMaxWidth()
             .clip(RoundedCornerShape(14.dp))
             .premiumTap(enabled = !isAnswered, onClick = onClick)
-            .border(2.dp, borderColor, RoundedCornerShape(14.dp)),
+            .then(
+                if (showFeedbackBorder) Modifier.border(2.dp, borderColor, RoundedCornerShape(14.dp))
+                else Modifier
+            ),
         colors = CardDefaults.cardColors(containerColor = bg)
     ) {
         Row(
@@ -422,14 +437,14 @@ private fun OptionRow(
                 modifier = Modifier
                     .size(28.dp)
                     .clip(CircleShape)
-                    .background(borderColor),
+                    .background(indicatorColor),
                 contentAlignment = Alignment.Center
             ) {
                 when {
                     isAnswered && isCorrect -> Icon(Icons.Filled.Check, contentDescription = null, tint = Color.White, modifier = Modifier.size(18.dp))
                     isAnswered && isSelected && !isCorrect -> Icon(Icons.Filled.Close, contentDescription = null, tint = Color.White, modifier = Modifier.size(18.dp))
                     else -> Text("${index + 1}", style = MaterialTheme.typography.labelLarge,
-                        fontWeight = FontWeight.Bold, color = if (isSelected) Color.White else borderColor)
+                        fontWeight = FontWeight.Bold, color = if (isSelected) Color.White else MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
             Text(option, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))

@@ -152,11 +152,12 @@ fun QariSelectorSheet(
                             }),
                         shape = RoundedCornerShape(16.dp),
                         colors = CardDefaults.cardColors(
-                            containerColor = if (isSelected)
-                                MaterialTheme.colorScheme.primaryContainer
-                            else MaterialTheme.colorScheme.surfaceContainerLow
+                            // v5.13.1 — active/selected card box FULLY invisible:
+                            // no tinted container, no shadow. Selection is shown
+                            // by the gradient avatar + "✓ নির্বাচিত" label + check icon.
+                            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
                         ),
-                        elevation = CardDefaults.cardElevation(defaultElevation = if (isSelected) 3.dp else 0.dp)
+                        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
                     ) {
                         Row(
                             modifier = Modifier

@@ -21,7 +21,6 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -141,7 +140,10 @@ fun Modifier.premiumTap(
         }
         .clickable(
             interactionSource = interaction,
-            indication = rememberRipple(),
+            // v5.13.1 — no bounded ripple: the ripple used to flash the card's
+            // rectangular boundary on press ("active card box visible"). The
+            // spring scale-bounce remains as the press feedback.
+            indication = null,
             enabled = enabled,
             onClick = onClick
         )

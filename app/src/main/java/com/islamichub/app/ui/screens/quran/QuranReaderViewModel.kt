@@ -17,6 +17,9 @@ data class QuranReaderUiState(
     val surah: Surah? = null,
     val isLoading: Boolean = true,
     val notAvailable: Boolean = false,
+    // v5.13.1 — hang-proof loading: if the load throws or stalls, the reader
+    // shows a retry state instead of an endless spinner.
+    val loadFailed: Boolean = false,
     val isPlayingAudio: Boolean = false,
     val isLoadingAudio: Boolean = false,
     val currentPlayingAyah: Int? = null,
@@ -61,19 +64,40 @@ class QuranReaderViewModel(
 
     private fun load() {
         viewModelScope.launch {
-            val surah = container.quranRepository.getSurah(surahNumber)
-            _state.value = _state.value.copy(
-                surah = surah,
-                isLoading = false,
-                notAvailable = surah == null
-            )
-            // Mark khatam progress; last-read is now recorded from the ACTUAL
-            // scroll position (updateLastRead, wired to listState snapshotFlow)
-            if (surah != null) {
-                container.khatamRepository.markSurahCompleted(surahNumber, surah.ayahCount)
-                container.trackerRepository.recordSurahRead()
+            // v5.13.1 — HARDENED: bound the load with a timeout, catch ANY
+            // throwable, and always clear the spinner. The endless-"loading"
+            // report can no longer occur — worst case shows a retry state.
+            try {
+                val surah = kotlinx.coroutines.withTimeoutOrNull(15_000L) {
+                    container.quranRepository.getSurah(surahNumber)
+                }
+                _state.value = _state.value.copy(
+                    surah = surah,
+                    isLoading = false,
+                    notAvailable = surah == null,
+                    loadFailed = false
+                )
+                // Mark khatam progress; last-read is now recorded from the ACTUAL
+                // scroll position (updateLastRead, wired to listState snapshotFlow)
+                if (surah != null) {
+                    runCatching {
+                        container.khatamRepository.markSurahCompleted(surahNumber, surah.ayahCount)
+                        container.trackerRepository.recordSurahRead()
+                    }
+                }
+            } catch (_: Exception) {
+                _state.value = _state.value.copy(
+                    isLoading = false,
+                    loadFailed = true
+                )
             }
         }
+    }
+
+    /** v5.13.1 — user-visible retry after a failed/stalled load. */
+    fun retryLoad() {
+        _state.value = _state.value.copy(isLoading = true, loadFailed = false, notAvailable = false)
+        load()
     }
 
     private fun observeAudio() {

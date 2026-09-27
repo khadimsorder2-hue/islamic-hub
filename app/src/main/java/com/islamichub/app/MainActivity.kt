@@ -37,6 +37,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.fragment.app.FragmentActivity
 import com.islamichub.app.data.repo.UpdateChecker
 import com.islamichub.app.ui.navigation.IslamicHubNavGraph
 import com.islamichub.app.ui.components.PremiumDialogIcon
@@ -46,7 +47,15 @@ import com.islamichub.app.ui.theme.AppColors
 import com.islamichub.app.ui.theme.IslamicHubTheme
 import kotlinx.coroutines.flow.first
 
-class MainActivity : ComponentActivity() {
+/**
+ * v5.13.1 — CRITICAL FIX: extend FragmentActivity, not ComponentActivity.
+ * BiometricPrompt (androidx.biometric) can ONLY attach to a FragmentActivity
+ * — with a plain ComponentActivity the `context as? FragmentActivity` cast in
+ * AppLockScreen silently returned null and the authentication prompt NEVER
+ * appeared ("biometric e kaj korche nah"). FragmentActivity IS-A
+ * ComponentActivity, so setContent / enableEdgeToEdge / splash all still work.
+ */
+class MainActivity : FragmentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
         super.onCreate(savedInstanceState)

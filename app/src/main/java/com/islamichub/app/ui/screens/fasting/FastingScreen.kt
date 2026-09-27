@@ -717,12 +717,10 @@ private fun AddFastSheet(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(12.dp))
-                    .premiumTap { onSelect(type) }
-                    .border(
-                        width = if (isSelected) 2.dp else 0.dp,
-                        color = if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent,
-                        shape = RoundedCornerShape(12.dp)
-                    ),
+                    .premiumTap { onSelect(type) },
+                // v5.13.1 — active/selected card box fully invisible: the 2dp
+                // selection border is gone; selection reads via the soft tint
+                // + the check circle below.
                 colors = CardDefaults.cardColors(
                     containerColor = if (isSelected)
                         MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
