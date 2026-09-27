@@ -61,7 +61,17 @@ class QuranAssetSource(private val context: Context) {
     suspend fun loadSurah(number: Int): Surah? = withContext(Dispatchers.IO) {
         if (number in 1..114) {
             try {
-                val text = readAsset("quran/surah/surah_%03d.json".format(number))
+                // v5.14.1 — CRITICAL BUGFIX: "%03d".format() uses the device's
+                // DEFAULT LOCALE. On Bengali/Arabic-locale phones %03d produced
+                // localised digits ("০০১"/"٠٠١") so assets.open() failed for
+                // EVERY per-surah file and every open fell back to the 4.7 MB
+                // full-Quran parse. The first surah opened (always Al-Fatiha,
+                // list item #1) hit the slow path, timed out and showed
+                // "Surah #1 not available" — every later surah loaded fine
+                // from the warm cache, which looked like "only Fatiha is
+                // broken". padStart() is locale-INDEPENDENT and always
+                // produces ASCII digits.
+                val text = readAsset("quran/surah/surah_" + number.toString().padStart(3, '0') + ".json")
                 val parsed = try {
                     gson.fromJson(text, SurahJson::class.java)
                 } catch (e: JsonSyntaxException) {
@@ -100,7 +110,7 @@ class QuranAssetSource(private val context: Context) {
             (1..114).map { n: Int ->
                 perSurahCache.getOrPut(n) {
                     gson.fromJson<SurahJson>(
-                        readAsset("quran/surah/surah_%03d.json".format(n)),
+                        readAsset("quran/surah/surah_" + n.toString().padStart(3, '0') + ".json"),
                         SurahJson::class.java
                     ).toDomain()
                 }
@@ -141,7 +151,11 @@ class QuranAssetSource(private val context: Context) {
     }
 
     private fun readAsset(path: String): String {
-        return context.assets.open(path).bufferedReader(Charsets.UTF_8).use { it.readText() }
+        // v5.14.1 — trim a leading U+FEFF (BOM/zero-width) defensively so a
+        // stray marker can never confuse Gson at the very first token.
+        return context.assets.open(path).bufferedReader(Charsets.UTF_8).use {
+            it.readText().trimStart('\uFEFF')
+        }
     }
 
     private val uccaronType by lazy {

@@ -3,6 +3,9 @@
     <color name="primary_violet">#FF6D45C7</color>
     <color name="primary_violet_dark">#FF4F3295</color>
     <color name="primary_violet_soft">#FFF1EBFA</color>
+    <!-- v5.14.1 — adaptive launcher-icon background (matches the generated
+         Islamic artwork's deep violet edge tone) -->
+    <color name="ic_launcher_background">#FF331252</color>
     <color name="muted_gold">#FFC9A34E</color>
     <color name="muted_gold_soft">#FFF7E8B5</color>
     <color name="warm_ivory_bg">#FFFCFAF7</color>

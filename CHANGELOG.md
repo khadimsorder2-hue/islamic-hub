@@ -2,6 +2,24 @@
 
 All notable changes to the Islamic Hub project.
 
+## [v5.14.1] - 2026-09-27
+
+### 🕌 Surah Al-Fatiha — REAL root cause found & fixed
+- **The actual bug was locale, not data**: per-surah asset filenames were built with `String.format("%03d")`, which follows the device's default locale. On Bengali/Arabic-locale phones `%03d` rendered localised digits (`০০১`), so `assets.open("surah_০০১.json")` failed for **every** per-surah file and each open silently fell back to the slow 4.7 MB full-Quran parse. The first surah opened (always Al-Fatiha — list item #1) exceeded the load budget and showed "Surah #1 not available", while every later surah loaded instantly from the warm cache — which looked exactly like "only Fatiha is broken".
+- Filenames are now built with locale-independent `padStart(3, '0')` — ASCII digits on every device, every language.
+- Reader load budget raised 15s → 30s, and a null result for a valid surah number now shows the retry screen (truthful + recoverable) instead of "not available".
+- Defensive BOM (`U+FEFF`) strip on every asset read.
+
+### 🕒 Top time/date panel — back, and never vanishes again
+- The Home hero now has an always-on panel: live **12-hour Bangla clock** ("বিকাল ৫:৪২") + full **Bangla date** ("শুক্রবার, ২৭ সেপ্টেম্বর ২০২৬") + **Hijri date** — computed on-device, no network needed.
+- The Hijri date no longer depends on the prayer-times API: an offline arithmetic conversion (calibrated tabular algorithm, verified against known dates) steps in whenever the API is unreachable, so the panel can never go blank ("—") again.
+
+### 🎨 New premium app icon + splash (from the generated image library)
+- AI-generated Islamic artwork — golden open Quran on a rehal stand with a glowing crescent over royal violet — is now the **launcher icon** (adaptive + legacy, all densities) and the **splash-screen logo** (circular emblem with a gold ring, safe-zone correct).
+
+### ✨ Thematic ayah cards — AI as the 4th option
+- Every thematic Quran ayah card's action row now ends with a 4th **"AI"** chip (after শোনো / সংরক্ষণ / শেয়ার) that opens an instant AI explanation of that exact ayah — context, teachings and practical guidance in plain Bangla.
+
 ## [v5.14.0] - 2026-09-27
 
 ### 📖 Surah Al-Fatiha loading — fixed

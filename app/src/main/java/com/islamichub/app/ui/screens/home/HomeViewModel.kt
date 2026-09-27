@@ -19,6 +19,9 @@ import com.islamichub.app.data.model.PrayerTimes
 
 data class HomeUiState(
     val hijriDate: String = "",
+    // v5.14.1 — always-on top time/date panel (device-local, never blank)
+    val currentClock: String = "",
+    val gregorianDate: String = "",
     val nextPrayerName: String = "",
     val nextPrayerTime: String = "",
     val timeRemaining: String = "",
@@ -63,7 +66,9 @@ class HomeViewModel(
     private fun startCountdownTicker() {
         viewModelScope.launch {
             while (true) {
-                kotlinx.coroutines.delay(30_000)
+                // v5.14.1 — tick aligned to :00/:30 so the new clock pill flips
+                // within half a minute of the real minute change.
+                kotlinx.coroutines.delay(30_000 - System.currentTimeMillis() % 30_000)
                 val today = java.util.Calendar.getInstance()
                     .get(java.util.Calendar.DAY_OF_YEAR)
                 if (today != loadedDayOfYear && loadedDayOfYear != -1) {
@@ -71,15 +76,19 @@ class HomeViewModel(
                     continue
                 }
                 val state = _uiState.value
-                val times = state.prayerTimes ?: continue
-                val next = computeNextPrayer(times) ?: continue
-                if (next.third != state.timeRemaining ||
-                    next.first != state.nextPrayerName
+                val times = state.prayerTimes
+                // v5.14.1 — keep the top time/date panel alive on every tick
+                val clock = com.islamichub.app.util.PrayerTimeFormatter.currentClock12hBangla()
+                val dateChanged = clock != state.currentClock
+                val next = if (times != null) computeNextPrayer(times) else null
+                if ((next != null && (next.third != state.timeRemaining || next.first != state.nextPrayerName)) ||
+                    dateChanged
                 ) {
                     _uiState.value = state.copy(
-                        nextPrayerName = next.first,
-                        nextPrayerTime = next.second,
-                        timeRemaining = next.third
+                        currentClock = clock,
+                        nextPrayerName = next?.first ?: state.nextPrayerName,
+                        nextPrayerTime = next?.second ?: state.nextPrayerTime,
+                        timeRemaining = next?.third ?: state.timeRemaining
                     )
                 }
             }
@@ -115,7 +124,13 @@ class HomeViewModel(
             val streak = container.trackerRepository.prayerStreak.first()
 
             _uiState.value = HomeUiState(
-                hijriDate = times?.hijriDate ?: "",
+                // v5.14.1 — the Hijri date no longer vanishes when the API is
+                // unreachable: the offline arithmetic conversion steps in.
+                hijriDate = times?.hijriDate?.takeIf { it.isNotBlank() }
+                    ?: com.islamichub.app.util.PrayerTimeFormatter.hijriDateBanglaOffline(),
+                // v5.14.1 — always-on time/date panel values (no network needed)
+                currentClock = com.islamichub.app.util.PrayerTimeFormatter.currentClock12hBangla(),
+                gregorianDate = com.islamichub.app.util.PrayerTimeFormatter.gregorianBanglaDate(),
                 nextPrayerName = nextPrayer?.first ?: "",
                 nextPrayerTime = nextPrayer?.second ?: "",
                 timeRemaining = nextPrayer?.third ?: "",

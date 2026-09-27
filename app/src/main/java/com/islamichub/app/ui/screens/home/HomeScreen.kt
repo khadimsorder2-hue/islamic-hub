@@ -55,6 +55,7 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Psychology
 import androidx.compose.material.icons.filled.QuestionAnswer
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Spa
 import androidx.compose.material.icons.filled.AccountTree
@@ -194,6 +195,42 @@ fun HomeScreen(
                     verticalArrangement = Arrangement.SpaceBetween
                 ) {
                     Column {
+                        // v5.14.1 — ALWAYS-ON top time/date panel: live clock +
+                        // full Bangla date. Works fully offline (device clock),
+                        // so the "system panel" the user missed can never vanish
+                        // again when the prayer API is unreachable.
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(50))
+                                .background(Color.White.copy(alpha = 0.16f))
+                                .padding(horizontal = 14.dp, vertical = 7.dp)
+                                .staggerEntrance(0)
+                        ) {
+                            Icon(
+                                Icons.Filled.Schedule,
+                                contentDescription = null,
+                                tint = Color.White,
+                                modifier = Modifier.size(15.dp)
+                            )
+                            Text(
+                                text = state.currentClock.ifBlank { "—" },
+                                style = MaterialTheme.typography.labelLarge,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
+                            )
+                            Text(
+                                text = "   •   ",
+                                style = MaterialTheme.typography.labelLarge,
+                                color = Color.White.copy(alpha = 0.6f)
+                            )
+                            Text(
+                                text = state.gregorianDate.ifBlank { "—" },
+                                style = MaterialTheme.typography.labelMedium,
+                                color = Color.White.copy(alpha = 0.95f)
+                            )
+                        }
+                        Spacer(Modifier.height(10.dp))
                         Text(
                             text = "আসসালামু আলাইকুম",
                             style = MaterialTheme.typography.displaySmall,

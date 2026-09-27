@@ -152,6 +152,8 @@ fun TopicStudyDetailScreen(
 
     // v5.7.0 — AI explanation popup (Thematic Quran AI)
     var showTopicAI by remember { mutableStateOf(false) }
+    // v5.14.1 — per-ayah AI option: the 4th action chip on each thematic ayah
+    var showAyahAI by remember { mutableStateOf<ResolvedAyah?>(null) }
 
     Scaffold(
         topBar = {
@@ -311,6 +313,7 @@ fun TopicStudyDetailScreen(
                     onPlay = { playAyahAudio(ayah.surahNumber, ayah.ayahNumber) },
                     onBookmark = { toggleTopicBookmark(ayah) },
                     onShare = { shareTopicAyah(ayah) },
+                    onAI = { showAyahAI = ayah },
                     isExpanded = state.expandedAyahRef == ayah.reference,
                     onToggle = { vm.toggleAyahExpand(ayah.reference) },
                     modifier = Modifier.staggerEntrance(idx, enabled = state.resolvedKeyAyahs.size <= 20)
@@ -346,6 +349,7 @@ fun TopicStudyDetailScreen(
                         onPlay = { playAyahAudio(ayah.surahNumber, ayah.ayahNumber) },
                         onBookmark = { toggleTopicBookmark(ayah) },
                         onShare = { shareTopicAyah(ayah) },
+                        onAI = { showAyahAI = ayah },
                         isExpanded = state.expandedAyahRef == ayah.reference,
                         onToggle = { vm.toggleAyahExpand(ayah.reference) }
                     )
@@ -576,6 +580,20 @@ fun TopicStudyDetailScreen(
         show = showTopicAI,
         onDismiss = { showTopicAI = false }
     )
+
+    // v5.14.1 — per-ayah AI explanation (the 4th chip on every thematic ayah)
+    showAyahAI?.let { a ->
+        com.islamichub.app.ui.components.AIExplanationPopup(
+            container = container,
+            title = "AI ব্যাখ্যা — ${a.reference}",
+            question = "পবিত্র কুরআনের ${a.surahNameEn} (${a.surahNameBn}) — ${a.reference} আয়াতটি সহজ বাংলায় ব্যাখ্যা করুন।\n\n" +
+                "আয়াত: ${a.arabic.take(300)}\n\nঅনুবাদ: ${a.bengali.take(300)}\n\n" +
+                "এই আয়াতের শিক্ষা, প্রেক্ষাপট ও আমলের উপায় বিনয়ী ভাষায় লিখুন।",
+            context = "বিষয়ভিত্তিক কুরআন আয়াত ব্যাখ্যা",
+            show = true,
+            onDismiss = { showAyahAI = null }
+        )
+    }
 }
 
 @Composable
@@ -615,6 +633,7 @@ private fun AyahCard(
     onPlay: () -> Unit,
     onBookmark: () -> Unit,
     onShare: () -> Unit,
+    onAI: () -> Unit = {},
     isExpanded: Boolean,
     onToggle: () -> Unit,
     modifier: Modifier = Modifier
@@ -812,6 +831,9 @@ private fun AyahCard(
                             onClick = onBookmark)
                         ActionChip(Icons.Filled.Share, "শেয়ার", accent,
                             onClick = onShare)
+                        // v5.14.1 — 4th option: AI explanation of this exact ayah
+                        ActionChip(Icons.Filled.Psychology, "AI", accent,
+                            onClick = onAI)
                     }
                 }
             }

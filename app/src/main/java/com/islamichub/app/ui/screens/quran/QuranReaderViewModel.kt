@@ -68,14 +68,20 @@ class QuranReaderViewModel(
             // throwable, and always clear the spinner. The endless-"loading"
             // report can no longer occur — worst case shows a retry state.
             try {
-                val surah = kotlinx.coroutines.withTimeoutOrNull(15_000L) {
+                // v5.14.1 — 30s budget (was 15s): low-end phones need more
+                // headroom if they ever fall back to the full-Quran parse.
+                val surah = kotlinx.coroutines.withTimeoutOrNull(30_000L) {
                     container.quranRepository.getSurah(surahNumber)
                 }
                 _state.value = _state.value.copy(
                     surah = surah,
                     isLoading = false,
-                    notAvailable = surah == null,
-                    loadFailed = false
+                    // v5.14.1 — a NULL result for a valid 1..114 number is a
+                    // LOAD FAILURE (timeout/parse), not "surah doesn't exist".
+                    // Showing the retry UI (instead of "Surah #N not available")
+                    // is both truthful and recoverable.
+                    notAvailable = surahNumber !in 1..114,
+                    loadFailed = surah == null && surahNumber in 1..114
                 )
                 // Mark khatam progress; last-read is now recorded from the ACTUAL
                 // scroll position (updateLastRead, wired to listState snapshotFlow)
