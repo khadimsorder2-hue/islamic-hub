@@ -77,9 +77,9 @@ class QuranListViewModel(private val container: AppContainer) : ViewModel() {
     }
 
     fun playSurah(surahNumber: Int) {
-        val reciter = AudioController.availableRecitersStatic.firstOrNull {
-            it.editionId == _state.value.surahs.firstOrNull()?.let { null } // use default
-        } ?: AudioController.availableRecitersStatic.first()
+        // v5.14.0 — fixed: the old reciter predicate compared editionId against
+        // null (always fell back); now simply uses the default reciter.
+        val reciter = AudioController.availableRecitersStatic.first()
         container.audioController.playSurah(surahNumber, reciter)
     }
 }

@@ -185,6 +185,11 @@ class QuranReaderViewModel(
         }
     }
 
+    /** v5.14.0 — pause the currently playing ayah (ayah-level play/pause toggle). */
+    fun pauseAudio() {
+        container.audioController.pause()
+    }
+
     // v5.9.0 — dead toggleAudio()/stopAudio() helpers removed: they only served the
     // deleted AudioPlaybackBar. Playback controls live in FloatingAudioPlayer now.
 

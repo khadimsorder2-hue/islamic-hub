@@ -59,8 +59,8 @@ import kotlinx.coroutines.delay
 fun FloatingAudioPlayer(
     container: AppContainer,
     modifier: Modifier = Modifier,
-    /** v5.9.0 — tap the title row to jump into that surah in the Quran reader. */
-    onOpenReader: ((Int) -> Unit)? = null,
+    /** v5.14.0 — tap the title row to land on the EXACT playing ayah in the reader. */
+    onOpenAyah: ((Int, Int) -> Unit)? = null,
     /** v5.9.0 — add bottom inset when the bottom navigation bar is hidden. */
     padForNavigationBar: Boolean = false
 ) {
@@ -107,8 +107,13 @@ fun FloatingAudioPlayer(
                 modifier = Modifier
                     .fillMaxWidth()
                     .then(
-                        if (onOpenReader != null && audioState.currentSurah != null)
-                            Modifier.clickable { onOpenReader(audioState.currentSurah!!) }
+                        if (onOpenAyah != null && audioState.currentSurah != null)
+                            Modifier.clickable {
+                                // v5.14.0 — jump to the exact playing ayah
+                                val surah = audioState.currentSurah ?: return@clickable
+                                val ayah = audioState.currentAyah ?: 1
+                                onOpenAyah(surah, ayah)
+                            }
                         else Modifier
                     )
                     .padding(horizontal = 12.dp, vertical = 10.dp),

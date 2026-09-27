@@ -121,7 +121,8 @@ class PrayerScheduler(
 
                 if (triggerAt < nextAt) {
                     nextAt = triggerAt
-                    nextTitle = "$name · $timeStr"
+                    // v5.14.0 — 12-hour Bangla display in notifications (24h dropped)
+                    nextTitle = "$name · ${com.islamichub.app.util.PrayerTimeFormatter.to12HourBangla(timeStr)}"
                 }
 
                 // Cancel any existing alarm with this request code

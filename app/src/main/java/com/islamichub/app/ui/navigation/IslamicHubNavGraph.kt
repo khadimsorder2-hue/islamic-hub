@@ -88,8 +88,19 @@ fun IslamicHubNavGraph(container: AppContainer) {
                 com.islamichub.app.ui.components.FloatingAudioPlayer(
                     container = container,
                     padForNavigationBar = !showBottomBar,
-                    onOpenReader = { surah ->
-                        navController.navigate(Screen.QuranReader.createRoute(surah))
+                    onOpenAyah = { surah, ayah ->
+                        // v5.14.0 — click the player → land on the EXACT playing ayah.
+                        // If the reader of the same surah is already open, pulse the
+                        // reader to scroll (navigation would recreate the screen).
+                        val sameReaderOpen = currentRoute == Screen.QuranReader.route &&
+                            backStackEntry?.arguments?.getInt("surahNumber") == surah
+                        if (sameReaderOpen) {
+                            container.audioController.requestReaderScroll()
+                        } else {
+                            navController.navigate(
+                                Screen.QuranReader.createRoute(surah, if (ayah >= 1) ayah else null)
+                            )
+                        }
                     }
                 )
                 if (showBottomBar) {

@@ -70,6 +70,7 @@ import com.islamichub.app.ui.components.PremiumHeroCard
 import com.islamichub.app.ui.components.PremiumSectionHeader
 import com.islamichub.app.ui.components.rememberAssetBitmap
 import com.islamichub.app.ui.theme.PremiumProgressBar
+import com.islamichub.app.util.PrayerTimeFormatter
 import com.islamichub.app.ui.theme.staggerEntrance
 import androidx.compose.ui.graphics.asImageBitmap
 import com.islamichub.app.ui.theme.premiumTap
@@ -294,7 +295,7 @@ fun PrayerScreen(container: AppContainer) {
                                             color = MaterialTheme.colorScheme.onSecondaryContainer
                                         )
                                         Text(
-                                            text = info.time,
+                                            text = PrayerTimeFormatter.to12HourBangla(info.time),
                                             style = MaterialTheme.typography.titleSmall,
                                             fontWeight = FontWeight.Bold,
                                             color = MaterialTheme.colorScheme.primary
@@ -311,8 +312,9 @@ fun PrayerScreen(container: AppContainer) {
                     }
                     itemsIndexed(rows, key = { _, row -> row.first }) { index, row ->
                         val jamat = jamatTimes.firstOrNull { it.prayerName == row.first }
+                        // v5.14.0 — 12-hour Bangla display ("ভোর ৪:৪৫"), 24h dropped
                         PrayerRowPremium(
-                            row.first, row.second, row.third, jamat, context,
+                            row.first, PrayerTimeFormatter.to12HourBangla(row.second), row.third, jamat, context,
                             modifier = Modifier.staggerEntrance(index)
                         )
                     }
@@ -445,7 +447,7 @@ private fun PrayerRowPremium(
                         )
                         if (jamat != null && jamat.enabled) {
                             Text(
-                                text = "🕌 জামাত: ${jamat.jamatTime}",
+                                text = "🕌 জামাত: ${PrayerTimeFormatter.to12HourBangla(jamat.jamatTime)}",
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -486,7 +488,7 @@ private fun JamatTimeCard(jamat: JamatTime, onEdit: () -> Unit) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(jamat.prayerName, style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
-                Text("জামাত: ${jamat.jamatTime}", style = MaterialTheme.typography.bodyMedium,
+                Text("জামাত: ${PrayerTimeFormatter.to12HourBangla(jamat.jamatTime)}", style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.primary)
                 if (jamat.mosqueName.isNotBlank()) {
                     Text(jamat.mosqueName, style = MaterialTheme.typography.labelSmall,

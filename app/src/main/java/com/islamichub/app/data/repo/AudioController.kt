@@ -60,6 +60,16 @@ class AudioController(
     private val _state = MutableStateFlow(AudioState())
     val state: StateFlow<AudioState> = _state.asStateFlow()
 
+    // v5.14.0 — pulse channel: the FloatingAudioPlayer click fires this when the
+    // reader for the playing surah is ALREADY open, so the reader re-scrolls to
+    // the exact playing ayah (navigation would recreate the screen instead).
+    private val _readerScrollRequests = MutableStateFlow(0L)
+    val readerScrollRequests: StateFlow<Long> = _readerScrollRequests.asStateFlow()
+
+    fun requestReaderScroll() {
+        _readerScrollRequests.value = _readerScrollRequests.value + 1
+    }
+
     private val handler = Handler(Looper.getMainLooper())
 
     val availableReciters: List<Reciter> = availableRecitersStatic

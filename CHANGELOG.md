@@ -2,6 +2,35 @@
 
 All notable changes to the Islamic Hub project.
 
+## [v5.14.0] - 2026-09-27
+
+### 📖 Surah Al-Fatiha loading — fixed
+- The ONLY data anomaly in all 114 bundled surah files was an invisible `U+FEFF` character glued to the start of Al-Fatiha's ayah 1 Arabic text — stripped now (verified every file programmatically).
+- Per-surah loader hardened: an empty/malformed parse now falls back to the full-Quran dataset instead of surfacing an empty surah (defence in depth on top of the v5.13.1 timeout + retry UI).
+- `QuranListScreen` "চালান" button: broken reciter-selection predicate (compared against `null`) replaced with the default reciter — playback starts reliably from the list.
+
+### 🎧 Reading while listening (auto-follow)
+- While an ayah plays, the reader now AUTO-SCROLLS to each playing ayah — hands-free tilawat follow-along.
+- Tapping the FloatingAudioPlayer lands you on the EXACT playing ayah: if the same surah's reader is already open it pulses a scroll (no screen recreation); otherwise it navigates to `quran/{surah}?ayah={ayah}`.
+- The ayah's own play button is now a real play/pause toggle (Pause icon while that ayah is playing).
+
+### 🎨 Calm reading — glow removed (user request)
+- The pulsing highlight animation (`premiumPulseHighlight`) and the glow on the play button (`premiumGlow`) are gone from the reader.
+- The playing ayah now wears a single soft tint (`primary @ 10%`) — quiet enough to read along comfortably, visible enough to find the verse.
+
+### 🕐 Namaz times — 12-hour Bangla everywhere (24h dropped)
+- New shared formatter: `04:45` → "ভোর ৪:৪৫", `12:30` → "দুপুর ১২:৩০", `16:30` → "বিকাল ৪:৩০", `18:10` → "সন্ধ্যা ৬:১০".
+- Applied on: Home hero "পরবর্তী নামাজ", Prayer screen rows, next-prayer card, jamat-time displays (row + card), and the notification "next prayer" title. Data storage & alarms still use `HH:mm` internally — nothing breaks.
+
+### 📚 Thematic Quran — 7 → 17 topics (10 new, user-requested subjects)
+- নামাজ, স্বামী-স্ত্রী সম্পর্ক, সংগম ও পবিত্রতা (modest, fiqh-accurate), সমাজ ব্যবস্থা, পিতা-মাতার অধিকার, সন্তান প্রতিপালন, দান ও সদকা, জিকির ও দোয়া, হালাল আহার, মৃত্যু ও আখিরাত.
+- Every topic: 3-language metadata, overview, 3 key ayahs with Bangla tafsir + full ayah set (all 90+ new ayah references validated against the bundled Quran dataset).
+- Legacy data repairs: 2 invalid ayah refs in old topics (Luqman 87 → 31:18; Ad-Duha 21 → 93:11) and all dangling related-topic slugs resolved.
+
+### 📚 Hadith topic study — 31 → 39 topics (8 new)
+- দাম্পত্য জীবন, সংগম ও পবিত্রতা, সমাজ ব্যবস্থা, প্রতিবেশীর হক, আতিথ্য সেবা, কথা বলার আদব, নারীর মর্যাদা, এতিম ও অভাবী.
+- 24 authentic hadiths (Bukhari, Muslim, Tirmidhi, Abu Dawud) each with Arabic, Bangla translation, reference, explanation and grade.
+
 ## [v5.13.1] - 2026-09-25
 
 ### 🔐 Biometric unlock — FIXED (critical)

@@ -80,8 +80,6 @@ import com.islamichub.app.ui.theme.AppIconSizes
 import com.islamichub.app.ui.theme.arabicSp
 import com.islamichub.app.ui.theme.banglaSp
 import com.islamichub.app.ui.theme.englishSp
-import com.islamichub.app.ui.theme.premiumGlow
-import com.islamichub.app.ui.theme.premiumPulseHighlight
 import com.islamichub.app.ui.theme.premiumTap
 import com.islamichub.app.ui.theme.staggerEntrance
 import androidx.compose.foundation.layout.height
@@ -147,6 +145,34 @@ fun QuranReaderScreen(
             val nonAyah = (total - surah.ayahCount).coerceAtLeast(0)
             val index = (nonAyah + target - 1).coerceIn(0, (total - 1).coerceAtLeast(0))
             listState.scrollToItem(index)
+        }
+    }
+
+    // v5.14.0 — bring `ayah` into view (shared by playback auto-follow and the
+    // FloatingAudioPlayer click pulse)
+    suspend fun scrollToAyah(ayah: Int) {
+        val surah = state.surah ?: return
+        if (ayah !in 1..surah.ayahCount) return
+        val total = listState.layoutInfo.totalItemsCount
+        if (total <= 0) return
+        val nonAyah = (total - surah.ayahCount).coerceAtLeast(0)
+        val index = (nonAyah + ayah - 1).coerceIn(0, (total - 1).coerceAtLeast(0))
+        listState.animateScrollToItem(index)
+    }
+
+    // v5.14.0 — AUTO-FOLLOW: while audio plays, the screen moves to each
+    // playing ayah so the user can read along without searching
+    androidx.compose.runtime.LaunchedEffect(state.currentPlayingAyah) {
+        val target = state.currentPlayingAyah ?: return@LaunchedEffect
+        scrollToAyah(target)
+    }
+
+    // v5.14.0 — FloatingAudioPlayer clicked while THIS reader is already open:
+    // jump to the exact playing ayah without recreating the screen
+    androidx.compose.runtime.LaunchedEffect(state.surah) {
+        container.audioController.readerScrollRequests.collect {
+            val target = vm.state.value.currentPlayingAyah
+            if (target != null) scrollToAyah(target)
         }
     }
 
@@ -483,7 +509,14 @@ fun QuranReaderScreen(
                             showUccaron = state.showUccaron,
                             isPlayingAyah = state.currentPlayingAyah == ayah.numberInSurah,
                             isBookmarked = ayah.numberInSurah in state.bookmarkedAyahs,
-                            onPlayAyah = { vm.playAyah(ayah.numberInSurah) },
+                            onPlayAyah = {
+                                // v5.14.0 — ayah-level play/pause toggle
+                                if (state.currentPlayingAyah == ayah.numberInSurah && state.isPlayingAudio) {
+                                    vm.pauseAudio()
+                                } else {
+                                    vm.playAyah(ayah.numberInSurah)
+                                }
+                            },
                             onToggleBookmark = { vm.toggleBookmark(ayah.numberInSurah) },
                             onShowTafsir = { showTafsirFor = ayah.numberInSurah },
                             onShowWordByWord = { showWordByWordFor = ayah.numberInSurah },
@@ -630,19 +663,17 @@ private fun AyahCard(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(18.dp),
         colors = CardDefaults.cardColors(
+            // v5.14.0 — calm reading mode: the playing ayah gets a soft,
+            // single-color tint instead of pulsing/glowing animation so the
+            // user can read along comfortably (user request)
             containerColor = if (isPlayingAyah)
-                MaterialTheme.colorScheme.secondaryContainer
+                MaterialTheme.colorScheme.primary.copy(alpha = 0.10f)
             else MaterialTheme.colorScheme.surfaceContainerLow
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Column(
             modifier = Modifier
-                .premiumPulseHighlight(
-                    active = isPlayingAyah,
-                    color = MaterialTheme.colorScheme.primary,
-                    cornerRadius = 18.dp
-                )
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
@@ -665,15 +696,10 @@ private fun AyahCard(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     IconButton(
                         onClick = onPlayAyah,
-                        modifier = Modifier
-                            .size(36.dp)
-                            .premiumGlow(
-                                active = isPlayingAyah,
-                                color = MaterialTheme.colorScheme.primary
-                            )
+                        modifier = Modifier.size(36.dp)
                     ) {
                         Icon(
-                            imageVector = Icons.Filled.PlayArrow,
+                            imageVector = if (isPlayingAyah) Icons.Filled.Pause else Icons.Filled.PlayArrow,
                             contentDescription = "আয়াত চালান",
                             tint = MaterialTheme.colorScheme.primary
                         )

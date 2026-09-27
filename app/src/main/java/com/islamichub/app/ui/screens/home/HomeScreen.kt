@@ -106,6 +106,7 @@ import com.islamichub.app.ui.theme.AppFontSizes
 import com.islamichub.app.ui.theme.PremiumProgressBar
 import com.islamichub.app.ui.theme.staggerEntrance
 import com.islamichub.app.ui.theme.premiumTap
+import com.islamichub.app.util.PrayerTimeFormatter
 
 @Composable
 fun HomeScreen(
@@ -219,7 +220,8 @@ fun HomeScreen(
                             Text(state.nextPrayerName.ifBlank { "—" },
                                 style = MaterialTheme.typography.headlineMedium,
                                 fontWeight = FontWeight.Bold, color = Color.White)
-                            Text(state.nextPrayerTime.ifBlank { "--:--" },
+                            // v5.14.0 — 12-hour Bangla time on the hero (24h dropped)
+                            Text(PrayerTimeFormatter.to12HourBangla(state.nextPrayerTime).ifBlank { "--:--" },
                                 style = MaterialTheme.typography.titleMedium,
                                 color = Color.White.copy(alpha = 0.9f))
                             homeNextPrayerProgress(state)?.let { fraction ->

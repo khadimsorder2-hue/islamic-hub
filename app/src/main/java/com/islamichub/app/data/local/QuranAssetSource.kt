@@ -67,7 +67,12 @@ class QuranAssetSource(private val context: Context) {
                 } catch (e: JsonSyntaxException) {
                     null
                 }
-                if (parsed != null) return@withContext parsed.toDomain()
+                // v5.14.0 — validate the parsed surah actually has ayahs; a
+                // malformed/empty per-surah file now falls back to the full
+                // Quran parse instead of surfacing an empty surah.
+                if (parsed != null && parsed.ayahs.isNotEmpty()) {
+                    return@withContext parsed.toDomain()
+                }
             } catch (_: Exception) {
                 // fall through to full-Quran parse
             }
