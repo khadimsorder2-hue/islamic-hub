@@ -22,6 +22,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.AutoStories
 import androidx.compose.material.icons.filled.Cached
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CleaningServices
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.FormatSize
@@ -609,7 +610,7 @@ fun SettingsScreen(
                                     // v5.13.1 — selected-model check (replaces the removed border)
                                     if (state.aiModel == preset.modelName) {
                                         androidx.compose.material3.Icon(
-                                            imageVector = androidx.compose.material.icons.Icons.Filled.CheckCircle,
+                                            imageVector = Icons.Filled.Check,
                                             contentDescription = null,
                                             tint = MaterialTheme.colorScheme.primary
                                         )
