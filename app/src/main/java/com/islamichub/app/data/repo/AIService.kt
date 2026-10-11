@@ -42,12 +42,12 @@ class AIService(private val context: Context) {
         val baseUrl: String = "https://generativelanguage.googleapis.com/v1beta",
         val model: String = DEFAULT_MODEL,
         val provider: String = "gemini",  // "gemini" | "openai" | "openrouter"
-        val temperature: Double = 0.7,
-        // v5.15.1 — was 2000, which cut the Islamic-Scholar answers off after
-        // only 2–10 lines (Bangla tokenizes at ~2-4 tokens/word, so the full
-        // 12-section answer needs 3-6k tokens). 16384 lets the ENTIRE answer
-        // arrive — no more mid-sentence cutoffs in AI Scholar.
-        val maxTokens: Int = 16384
+        val temperature: Double = 0.7
+        // v5.16.0 — TOKEN LIMIT COMPLETELY REMOVED. v5.15.1 raised the cap
+        // 2000 → 16384, but the user asked to drop it ENTIRELY. We no longer
+        // send maxOutputTokens / max_tokens in ANY request: each provider now
+        // uses its model's FULL output capacity, so AI Scholar / AI tafsir /
+        // voice analysis answers can never be cut off mid-sentence again.
     )
 
     data class ChatMessage(
@@ -278,8 +278,8 @@ class AIService(private val context: Context) {
                 add("parts", com.google.gson.JsonArray().apply { add(sysPart) })
             })
             add("generationConfig", JsonObject().apply {
+                // v5.16.0 — maxOutputTokens REMOVED entirely (no token cap).
                 addProperty("temperature", cfg.temperature)
-                addProperty("maxOutputTokens", cfg.maxTokens)
             })
         }
 
@@ -365,8 +365,8 @@ class AIService(private val context: Context) {
                 add("parts", com.google.gson.JsonArray().apply { add(sysPart) })
             })
             add("generationConfig", JsonObject().apply {
+                // v5.16.0 — maxOutputTokens REMOVED entirely (no token cap).
                 addProperty("temperature", cfg.temperature)
-                addProperty("maxOutputTokens", cfg.maxTokens)
             })
         }
 
@@ -395,6 +395,243 @@ class AIService(private val context: Context) {
             ?.joinToString("")
             ?.takeIf { it.isNotBlank() }
             ?: throw Exception("AI উত্তর পার্স করা যায়নি")
+    }
+
+    // ══════════════════════════════════════════════════════════════════
+    // v5.16.0 — Tajweed Voice AI (Android port of the web
+    // TajbeedCheckerService). The user records their recitation; the audio
+    // goes to Gemini as inline_data (audio/wav) and the model returns a
+    // STRICT JSON structure: summary, transcription, qurans, hadiths, duas,
+    // generals — exactly the schema the web checker renders as cards.
+    // ══════════════════════════════════════════════════════════════════
+
+    data class VoiceQuran(
+        val surahNameBn: String? = null,
+        val ayahNumber: String? = null,
+        val arabic: String? = null,
+        val pronunciationBn: String? = null,
+        val meaning: String? = null,
+        val accuracy: Int? = null,
+        val explanation: String? = null
+    )
+
+    data class VoiceHadith(
+        val arabic: String? = null,
+        val pronunciationBn: String? = null,
+        val meaning: String? = null,
+        val source: String? = null,
+        val grade: String? = null,
+        val aiScore: Int? = null,
+        val explanation: String? = null
+    )
+
+    data class VoiceDua(
+        val name: String? = null,
+        val arabic: String? = null,
+        val pronunciationBn: String? = null,
+        val meaning: String? = null,
+        val explanation: String? = null,
+        val aiScore: Int? = null
+    )
+
+    data class VoiceGeneral(
+        val type: String? = null,
+        val response: String? = null,
+        val note: String? = null
+    )
+
+    data class VoiceAnalysis(
+        val summary: String? = null,
+        val transcription: String? = null,
+        val qurans: List<VoiceQuran> = emptyList(),
+        val hadiths: List<VoiceHadith> = emptyList(),
+        val duas: List<VoiceDua> = emptyList(),
+        val generals: List<VoiceGeneral> = emptyList()
+    )
+
+    /**
+     * Analyze a recorded recitation. [wavBytes] must be a complete RIFF/WAVE
+     * file (see util.VoiceRecorder). Returns a plain ChatResult whose answer
+     * is the RAW model JSON — the caller parses it with [parseVoiceAnalysis].
+     */
+    suspend fun analyzeAudio(wavBytes: ByteArray): ChatResult = withContext(Dispatchers.IO) {
+        val cfg = if (_config.value.apiKey.isBlank())
+            _config.value.copy(apiKey = DEFAULT_API_KEY) else _config.value
+        if (cfg.apiKey.isBlank()) {
+            return@withContext ChatResult(
+                requestId = "",
+                answer = "",
+                error = "কোনো API key কনফিগার করা নেই। Settings এ গিয়ে আপনার API key যোগ করুন।"
+            )
+        }
+        if (cfg.provider != "gemini") {
+            return@withContext ChatResult(
+                requestId = "",
+                answer = "",
+                error = "ভয়েস বিশ্লেষণ এখন শুধুমাত্র Gemini provider এ কাজ করে। Settings থেকে Gemini নির্বাচন করুন।"
+            )
+        }
+        val requestId = UUID.randomUUID().toString()
+        latestRequestId.set(requestId)
+        try {
+            val answer = callGeminiAudio(cfg, TAJWEED_VOICE_PROMPT, wavBytes)
+            if (latestRequestId.get() != requestId) {
+                return@withContext ChatResult(requestId = requestId, answer = "", error = "stale")
+            }
+            ChatResult(
+                requestId = requestId,
+                answer = answer.trim(),
+                warning = if (answer.contains("আমি নিশ্চিত নই", ignoreCase = true) ||
+                              answer.contains("জানি না", ignoreCase = true))
+                    "AI নিশ্চিত না — দয়া করে একজন যোগ্য আলেমের সাথে যাচাই করুন।" else null
+            )
+        } catch (e: Exception) {
+            ChatResult(requestId = requestId, answer = "", error = e.message ?: "নেটওয়ার্ক ত্রুটি")
+        }
+    }
+
+    /**
+     * Gemini inline-audio call. Mirrors callGeminiVision() but sends an
+     * audio/wav inline_data part instead of an image, and forces
+     * responseMimeType application/json so the model returns clean JSON
+     * (same trick the web checker uses with generationConfig).
+     */
+    private fun callGeminiAudio(cfg: Config, systemPrompt: String, wavBytes: ByteArray): String {
+        val url = "${cfg.baseUrl.trimEnd('/')}/models/${cfg.model}:generateContent?key=${cfg.apiKey}"
+
+        val base64Audio = Base64.encodeToString(wavBytes, Base64.NO_WRAP)
+
+        val audioPart = JsonObject().apply {
+            add("inline_data", JsonObject().apply {
+                addProperty("mime_type", "audio/wav")
+                addProperty("data", base64Audio)
+            })
+        }
+        val textPart = JsonObject().apply { addProperty("text", "রেকর্ড করা অডিওটি বিশ্লেষণ করুন।") }
+        val partsArray = com.google.gson.JsonArray().apply { add(audioPart); add(textPart) }
+        val contentObj = JsonObject().apply {
+            addProperty("role", "user")
+            add("parts", partsArray)
+        }
+        val contentsArray = com.google.gson.JsonArray().apply { add(contentObj) }
+
+        val requestBody = JsonObject().apply {
+            add("contents", contentsArray)
+            add("systemInstruction", JsonObject().apply {
+                val sysPart = JsonObject().apply { addProperty("text", systemPrompt) }
+                add("parts", com.google.gson.JsonArray().apply { add(sysPart) })
+            })
+            add("generationConfig", JsonObject().apply {
+                addProperty("temperature", 0.1)
+                // v5.16.0 — NO maxOutputTokens: answers are never capped.
+                addProperty("responseMimeType", "application/json")
+            })
+        }
+
+        val request = Request.Builder()
+            .url(url)
+            .addHeader("Content-Type", "application/json")
+            .post(requestBody.toString().toRequestBody("application/json".toMediaType()))
+            .build()
+
+        val response = client.newCall(request).execute()
+        val responseBody = response.body?.string()
+        if (!response.isSuccessful) {
+            throw Exception("Gemini API ত্রুটি ${response.code}: ${responseBody?.take(300)}")
+        }
+
+        val parsed = gson.fromJson(responseBody, JsonObject::class.java)
+        return parsed
+            ?.getAsJsonArray("candidates")
+            ?.get(0)?.asJsonObject
+            ?.getAsJsonObject("content")
+            ?.getAsJsonArray("parts")
+            ?.mapNotNull { part ->
+                (part as? JsonObject)?.get("text")?.takeIf { !it.isJsonNull }?.asString
+            }
+            ?.joinToString("")
+            ?.takeIf { it.isNotBlank() }
+            ?: throw Exception("AI উত্তর পার্স করা যায়নি")
+    }
+
+    /**
+     * Parse the model's JSON into a [VoiceAnalysis]. Tolerates markdown code
+     * fences and stray prose around the JSON object; missing sections simply
+     * stay empty so the UI can render whatever WAS detected.
+     */
+    fun parseVoiceAnalysis(raw: String): VoiceAnalysis {
+        var body = raw.trim()
+            .removePrefix("```json").removePrefix("```JSON").removePrefix("```")
+            .removeSuffix("```").trim()
+        val start = body.indexOf('{')
+        val end = body.lastIndexOf('}')
+        if (start >= 0 && end > start) body = body.substring(start, end + 1)
+        val obj = try {
+            gson.fromJson(body, JsonObject::class.java)
+        } catch (_: Exception) { null } ?: return VoiceAnalysis()
+
+        fun str(key: String): String? =
+            obj.get(key)?.takeIf { it.isJsonPrimitive && !it.isJsonNull }?.asString?.takeIf { it.isNotBlank() }
+        fun arr(key: String): com.google.gson.JsonArray =
+            obj.getAsJsonArray(key) ?: com.google.gson.JsonArray()
+        fun itemStr(o: JsonObject, key: String): String? =
+            o.get(key)?.takeIf { it.isJsonPrimitive && !it.isJsonNull }?.asString?.takeIf { it.isNotBlank() }
+        fun itemInt(o: JsonObject, key: String): Int? =
+            o.get(key)?.takeIf { it.isJsonPrimitive && !it.isJsonNull }?.asString
+                ?.filter { it.isDigit() }?.takeIf { it.isNotEmpty() }?.toIntOrNull()
+
+        val qurans = arr("qurans").mapNotNull { el ->
+            (el as? JsonObject)?.let { o ->
+                VoiceQuran(
+                    surahNameBn = itemStr(o, "surahNameBn") ?: itemStr(o, "surahName"),
+                    ayahNumber = itemStr(o, "ayahNumber") ?: itemStr(o, "ayah"),
+                    arabic = itemStr(o, "arabic"),
+                    pronunciationBn = itemStr(o, "pronunciationBn") ?: itemStr(o, "pronunciation"),
+                    meaning = itemStr(o, "meaning") ?: itemStr(o, "banglaMeaning"),
+                    accuracy = itemInt(o, "accuracy"),
+                    explanation = itemStr(o, "explanation")
+                )
+            }
+        }
+        val hadiths = arr("hadiths").mapNotNull { el ->
+            (el as? JsonObject)?.let { o ->
+                VoiceHadith(
+                    arabic = itemStr(o, "arabic"),
+                    pronunciationBn = itemStr(o, "pronunciationBn") ?: itemStr(o, "pronunciation"),
+                    meaning = itemStr(o, "meaning"),
+                    source = itemStr(o, "source"),
+                    grade = itemStr(o, "grade"),
+                    aiScore = itemInt(o, "aiScore"),
+                    explanation = itemStr(o, "explanation")
+                )
+            }
+        }
+        val duas = arr("duas").mapNotNull { el ->
+            (el as? JsonObject)?.let { o ->
+                VoiceDua(
+                    name = itemStr(o, "name"),
+                    arabic = itemStr(o, "arabic"),
+                    pronunciationBn = itemStr(o, "pronunciationBn") ?: itemStr(o, "pronunciation"),
+                    meaning = itemStr(o, "meaning"),
+                    explanation = itemStr(o, "explanation"),
+                    aiScore = itemInt(o, "aiScore")
+                )
+            }
+        }
+        val generals = arr("generals").mapNotNull { el ->
+            (el as? JsonObject)?.let { o ->
+                VoiceGeneral(
+                    type = itemStr(o, "type"),
+                    response = itemStr(o, "response"),
+                    note = itemStr(o, "note")
+                )
+            }
+        }
+        return VoiceAnalysis(
+            summary = str("summary"),
+            transcription = str("transcription"),
+            qurans = qurans, hadiths = hadiths, duas = duas, generals = generals
+        )
     }
 
     /**
@@ -488,6 +725,56 @@ class AIService(private val context: Context) {
 🏠 আমরা কী করব: [পাঠক দৈনন্দিন জীবনে এটি কীভাবে পালন/ব্যবহার করবে — ধাপে ধাপে]
 
 নিয়ম: ছবিতে যা আছে শুধু সেটাই ব্যাখ্যা করুন, বাইরের কিছু বানিয়ে বলবেন না। অস্পষ্ট হলে বলুন "ছবিটা একটু পরিষ্কার হলে আরো ভালো বুঝতে পারতাম"। কঠিন শব্দ এলে বন্ধনীতে সহজ বাংলা অর্থ দিন।"""
+
+    /**
+     * v5.16.0 — Tajweed Voice AI system prompt. Faithful port of the web
+     * TajbeedCheckerService SYSTEM_PROMPT ("Islamic Knowledge AI Engine v8.3"):
+     * audio in → strict JSON out (summary/transcription/qurans/hadiths/duas/
+     * generals), Bangla-only explanations, source mapping, recitation
+     * accuracy + tajweed rule feedback added on top.
+     */
+    const val TAJWEED_VOICE_PROMPT = """You are Islamic Knowledge AI Engine v8.3 (Tajweed Voice mode). Analyze the attached audio with 100% fidelity. The audio usually contains Quran recitation, dua, hadith meaning, or related Bangla speech.
+
+CORE RULES (STRICT):
+1. NEUTRAL TRANSCRIPTION: Provide a "transcription" field that transcribes EXACTLY every word said (Arabic recitation in Arabic script; Bangla speech in Bangla script).
+2. DEEP SEGMENTATION: Break the neutral transcription into logical cards. If the user says a song, then a Bangla meaning, then an ayah — you MUST return ALL as separate objects.
+3. SOURCE MAPPING: If the user speaks a Bangla Translation/Meaning of a Quran/Hadith/Dua, you MUST find the original Arabic, Ayah/Hadith number, and Book (Bukhari/Muslim/etc).
+4. TAJWEED JUDGEMENT (most important): For every detected Quran ayah the user RECITED, compare their recitation with the correct text and grade accuracy 0-100. In "explanation" list tajweed mistakes in easy Bangla: makhraj errors, harakat mistakes, missing gunnah (ikhfa/idgham/iqlab), wrong madd length, qalqalah — plus 1-2 practical tips to fix. If they recited correctly, praise briefly and still note one improvement tip.
+5. RELIGIOUS FIDELITY:
+   - HADITHS: Must include Arabic text, "হাদিস নং [সংখ্যা]", "উৎস: [গ্রন্থের নাম]", "গ্রেড: [সহিহ/হাসান/দঈফ/জাল]", and "AI স্কোর: [১-১০]".
+   - QURAN: Surah Name, Ayah No, Arabic, Meaning, and 3-4 line Shane-Nuzul.
+   - DUAS: "নাম", "আরবি", "অর্থ", and "ব্যাখ্যা" (ফজিলত, নিয়ম ও উৎস থাকতে হবে)।
+6. STRICT NO-ENGLISH: Every description and explanation MUST be in BANGLA.
+7. SUMMARY: Return a detailed summary (e.g., "১টি গান, ১টি হাদিসের অর্থ ও ২টি আয়াত শনাক্ত হয়েছে")।
+
+RESPONSE FORMAT (JSON only):
+{
+  "summary": "Full summary of all detected segments",
+  "transcription": "Neutral word-for-word string",
+  "qurans": [
+    {
+      "surahNameBn": "সুরা...", "ayahNumber": "", "arabic": "Arabic text", "pronunciationBn": "Bangla script Arabic",
+      "meaning": "Bangla meaning", "accuracy": 0, "explanation": "3-4 lines: tajweed mistakes + Shane-Nuzul/Context"
+    }
+  ],
+  "hadiths": [
+    {
+       "arabic": "Arabic", "pronunciationBn": "Bangla script Arabic",
+       "meaning": "Bangla meaning", "source": "বুখারি/মুসলিম, হাদিস নং ১৫", "grade": "সহিহ",
+       "aiScore": 5, "explanation": "3-4 lines context/importance"
+    }
+  ],
+  "duas": [
+    {
+      "name": "দোয়ার নাম", "arabic": "Arabic", "pronunciationBn": "Bangla script Arabic",
+      "meaning": "Bangla meaning", "explanation": "ফজিলত, নিয়ম ও উৎস (৩-৪ লাইন)", "aiScore": 5
+    }
+  ],
+  "generals": [
+    { "type": "Specific Song/Joke Name", "response": "Friendly Bangla Response", "note": "এটি কুরআন বা হাদিস নয়" }
+  ]
+}"""
+
 
 
         const val ISLAMIC_SCHOLAR_PROMPT = """আপনি "Islamic Hub AI" — একজন অত্যন্ত বিশ্বস্ত, প্রাজ্ঞ এবং অভিজ্ঞ ইসলামি স্কলার ও সিনিয়র মুফতি, আর সাথে একজন স্নেহময় গ্রামের মুরুব্বির মতো শিক্ষক। আপনার পাঠক হলেন বাংলাদেশের সাধারণ মানুষ — কৃষক, শ্রমিক, গৃহিণী, ছাত্র — যাঁদের অনেকে বেশি লেখাপড়া জানেন না। আপনার জ্ঞানের উৎস: পবিত্র কুরআন, সহিহ হাদিস (বুখারি, মুসলিম, তিরমিজি, আবু দাউদ, নাসাই, ইবনে মাজাহ), ফিকাহ এবং বিশ্বখ্যাত ইসলামি স্কলারদের মতামত।

@@ -2,6 +2,7 @@ package com.islamichub.app.ui.screens.quran
 
 import android.content.Intent
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -25,10 +26,14 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Psychology
 import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.BookmarkBorder
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material.icons.filled.FastForward
+import androidx.compose.material.icons.filled.Fullscreen
+import androidx.compose.material.icons.filled.FullscreenExit
 import androidx.compose.material.icons.filled.GraphicEq
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PlayArrow
@@ -47,6 +52,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -99,6 +105,10 @@ fun QuranReaderScreen(
     var showTafsirFor by remember { mutableStateOf<Int?>(null) }
     var showQariSelector by remember { mutableStateOf(false) }
     var showWordByWordFor by remember { mutableStateOf<Int?>(null) }
+    // v5.16.0 — Andi-style reader theme sheet
+    var showThemeSheet by remember { mutableStateOf(false) }
+    val readerTheme = state.readerTheme
+    val themed = readerTheme != QuranReaderTheme.DEFAULT
 
     // v5.10.0 — keep the screen awake while reading (user-toggleable in Settings)
     val keepScreenOn by container.settingsRepository.keepScreenOnReading
@@ -177,7 +187,13 @@ fun QuranReaderScreen(
     }
 
     Scaffold(
+        // v5.16.0 — reader theme repaints the whole page (Andi adoption);
+        // DEFAULT keeps the app Material colors exactly as before
+        containerColor = if (themed) readerTheme.bg else MaterialTheme.colorScheme.surface,
         topBar = {
+            // v5.16.0 — Andi `fullScreen` reading mode: top bar hidden while
+            // reading; a floating pill (below) lets you exit
+            if (!state.readerFullscreen) {
             CenterAlignedTopAppBar(
                 title = {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -207,6 +223,14 @@ fun QuranReaderScreen(
                     IconButton(onClick = { vm.increaseFontSize() }) {
                         Text("A+", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
+                    // v5.16.0 — reader theme picker (Andi-style themes)
+                    IconButton(onClick = { showThemeSheet = true }) {
+                        Icon(Icons.Filled.Palette, contentDescription = "রিডার থিম")
+                    }
+                    // v5.16.0 — fullscreen reading (Andi fullScreen pref)
+                    IconButton(onClick = { vm.toggleReaderFullscreen() }) {
+                        Icon(Icons.Filled.Fullscreen, contentDescription = "ফুলস্ক্রিন পড়া")
+                    }
                     // v5.9.0 — the "বাংলা অডিও" pill was removed: it flipped a flag that
                     // no playback path ever consumed (Bangla recitation pipeline is not
                     // built yet), so the button was pure confusion. Reciter audio below.
@@ -226,8 +250,10 @@ fun QuranReaderScreen(
                     }
                 }
             )
+            }
         }
     ) { padding ->
+        Box {
         when {
             // v5.13.1 — retry state instead of an endless spinner
             state.loadFailed -> {
@@ -507,7 +533,8 @@ fun QuranReaderScreen(
                             style = MaterialTheme.typography.titleMedium.copy(
                                 fontSize = MaterialTheme.typography.titleMedium.fontSize * state.quranFontScale
                             ),
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            // v5.16.0 — theme-aware bismillah color
+                            color = if (themed) readerTheme.arabicColor else MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.fillMaxWidth(),
                             textAlign = TextAlign.Center
                         )
@@ -529,6 +556,12 @@ fun QuranReaderScreen(
                             showUccaron = state.showUccaron,
                             isPlayingAyah = state.currentPlayingAyah == ayah.numberInSurah,
                             isBookmarked = ayah.numberInSurah in state.bookmarkedAyahs,
+                            // v5.16.0 — Andi-style reader theme colors (null = app theme)
+                            themedCardBg = if (themed) readerTheme.cardBg else null,
+                            themedPlayingBg = if (themed) readerTheme.playingBg else null,
+                            themedArabicColor = if (themed) readerTheme.arabicColor else null,
+                            themedTextColor = if (themed) readerTheme.banglaColor else null,
+                            themedUccharonColor = if (themed) readerTheme.uccharonColor else null,
                             wbwWords = state.wbwMap[ayah.numberInSurah] ?: emptyList(),
                             showWbwInline = state.showWbwInline,
                             altMeaning = state.andiMeaningMap[ayah.numberInSurah],
@@ -575,6 +608,31 @@ fun QuranReaderScreen(
                 }
             }
         }
+
+        // v5.16.0 — fullscreen reading mode: floating theme + exit pill
+        // (the top bar is hidden, so the user still needs a way out)
+        if (state.readerFullscreen) {
+            Surface(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(top = 10.dp, end = 12.dp),
+                shape = RoundedCornerShape(50),
+                color = if (themed) readerTheme.cardBg else MaterialTheme.colorScheme.surfaceContainerLow,
+                shadowElevation = 4.dp
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    IconButton(onClick = { showThemeSheet = true }) {
+                        Icon(Icons.Filled.Palette, contentDescription = "রিডার থিম",
+                            tint = if (themed) readerTheme.banglaColor else MaterialTheme.colorScheme.onSurface)
+                    }
+                    IconButton(onClick = { vm.toggleReaderFullscreen() }) {
+                        Icon(Icons.Filled.FullscreenExit, contentDescription = "ফুলস্ক্রিন বন্ধ করুন",
+                            tint = if (themed) readerTheme.banglaColor else MaterialTheme.colorScheme.onSurface)
+                    }
+                }
+            }
+        }
+        } // Box
     }
 
     // Tafsir full screen popup (replaces old ModalBottomSheet)
@@ -610,6 +668,78 @@ fun QuranReaderScreen(
             surahForDownload = surahNumber,
             surahAyahCount = state.surah?.ayahCount ?: 0
         )
+    }
+
+    // v5.16.0 — reader theme picker (Andi-style reading themes)
+    if (showThemeSheet) {
+        ModalBottomSheet(onDismissRequest = { showThemeSheet = false }) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp, vertical = 8.dp)
+            ) {
+                Text(
+                    "কুরআন রিডার থিম",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+                Spacer(Modifier.height(6.dp))
+                Text(
+                    "রিডিং পেজের রঙ — Andi অ্যাপ থেকে নেওয়া থিমসহ মোট ৬টি",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(Modifier.height(12.dp))
+                QuranReaderTheme.entries.forEach { t ->
+                    val selected = state.readerTheme == t
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(14.dp))
+                            .clickable {
+                                vm.setReaderTheme(t)
+                            }
+                            .background(
+                                if (selected) MaterialTheme.colorScheme.primary.copy(alpha = 0.08f)
+                                else Color.Transparent
+                            )
+                            .padding(vertical = 10.dp, horizontal = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(36.dp)
+                                .clip(CircleShape)
+                                .background(
+                                    if (t == QuranReaderTheme.DEFAULT)
+                                        MaterialTheme.colorScheme.surfaceVariant else t.bg
+                                )
+                                .border(
+                                    2.dp,
+                                    if (selected) MaterialTheme.colorScheme.primary
+                                    else MaterialTheme.colorScheme.outline.copy(alpha = 0.35f),
+                                    CircleShape
+                                )
+                        )
+                        Spacer(Modifier.width(14.dp))
+                        Text(
+                            t.labelBn,
+                            style = MaterialTheme.typography.bodyLarge,
+                            fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
+                            modifier = Modifier.weight(1f)
+                        )
+                        if (selected) {
+                            Icon(
+                                Icons.Filled.Check,
+                                contentDescription = "নির্বাচিত",
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
+                }
+                Spacer(Modifier.height(28.dp))
+            }
+        }
     }
 
     // v5.10.0 — "আয়াতে যান" jump dialog
@@ -695,6 +825,12 @@ private fun AyahCard(
     showWbwInline: Boolean = false,
     altMeaning: String? = null,
     showAltMeaning: Boolean = false,
+    // v5.16.0 — Andi-style reader theme overrides (null = Material colors)
+    themedCardBg: Color? = null,
+    themedPlayingBg: Color? = null,
+    themedArabicColor: Color? = null,
+    themedTextColor: Color? = null,
+    themedUccharonColor: Color? = null,
     onPlayAyah: () -> Unit,
     onToggleBookmark: () -> Unit,
     onShowTafsir: () -> Unit,
@@ -710,9 +846,13 @@ private fun AyahCard(
             // v5.14.0 — calm reading mode: the playing ayah gets a soft,
             // single-color tint instead of pulsing/glowing animation so the
             // user can read along comfortably (user request)
-            containerColor = if (isPlayingAyah)
-                MaterialTheme.colorScheme.primary.copy(alpha = 0.10f)
-            else MaterialTheme.colorScheme.surfaceContainerLow
+            // v5.16.0 — reader-theme overrides take precedence when active
+            containerColor = when {
+                isPlayingAyah && themedPlayingBg != null -> themedPlayingBg
+                isPlayingAyah -> MaterialTheme.colorScheme.primary.copy(alpha = 0.10f)
+                themedCardBg != null -> themedCardBg
+                else -> MaterialTheme.colorScheme.surfaceContainerLow
+            }
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
@@ -759,7 +899,7 @@ private fun AyahCard(
                         style = MaterialTheme.typography.displaySmall.copy(
                             fontSize = arabicSp(MaterialTheme.typography.displaySmall.fontSize * fontScale)
                         ),
-                        color = MaterialTheme.colorScheme.onSurface,
+                        color = themedArabicColor ?: MaterialTheme.colorScheme.onSurface,
                         modifier = Modifier.fillMaxWidth(),
                         textAlign = TextAlign.End
                     )
@@ -772,7 +912,7 @@ private fun AyahCard(
                         style = MaterialTheme.typography.bodyMedium.copy(
                             fontSize = banglaSp(MaterialTheme.typography.bodyMedium.fontSize * fontScale)
                         ),
-                        color = UccharonTeal
+                        color = themedUccharonColor ?: UccharonTeal
                     )
                 }
                 if (showBangla) {
@@ -781,7 +921,7 @@ private fun AyahCard(
                         style = MaterialTheme.typography.bodyMedium.copy(
                             fontSize = banglaSp(MaterialTheme.typography.bodyMedium.fontSize * fontScale)
                         ),
-                        color = MaterialTheme.colorScheme.onSurface
+                        color = themedTextColor ?: MaterialTheme.colorScheme.onSurface
                     )
                 }
                 // v5.15.0 — optional বিকল্প অর্থ (Andi মুহিউদ্দীন খান meaning)
@@ -798,7 +938,7 @@ private fun AyahCard(
                             style = MaterialTheme.typography.bodySmall.copy(
                                 fontSize = banglaSp(MaterialTheme.typography.bodySmall.fontSize * fontScale)
                             ),
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            color = themedTextColor?.copy(alpha = 0.85f) ?: MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }
@@ -808,7 +948,7 @@ private fun AyahCard(
                         style = MaterialTheme.typography.bodySmall.copy(
                             fontSize = englishSp(MaterialTheme.typography.bodySmall.fontSize * fontScale)
                         ),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = themedTextColor?.copy(alpha = 0.72f) ?: MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
                 // v5.15.0 — REAL word-by-word chips, right-to-left like the mushaf

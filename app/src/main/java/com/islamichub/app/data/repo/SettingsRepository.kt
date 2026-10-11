@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.Dispatchers
+import com.islamichub.app.ui.screens.quran.QuranReaderTheme
 
 private val Context.settingsStore: androidx.datastore.core.DataStore<Preferences> by preferencesDataStore(name = "settings_prefs")
 
@@ -97,6 +98,24 @@ class SettingsRepository(private val context: Context) {
     // v5.9.0 — biometric App Lock (face/fingerprint/device credential)
     val appLockEnabled: Flow<Boolean> = context.settingsStore.data.map {
         it[APP_LOCK_ENABLED] ?: false
+    }
+
+    // v5.16.0 — Andi-style Quran reader theme (6 looks, see ReaderThemes.kt)
+    val quranReaderTheme: Flow<QuranReaderTheme> = context.settingsStore.data.map {
+        QuranReaderTheme.fromId(it[QURAN_READER_THEME])
+    }
+
+    // v5.16.0 — Andi `fullScreen` reading mode: hide the reader top bar
+    val readerFullscreen: Flow<Boolean> = context.settingsStore.data.map {
+        it[READER_FULLSCREEN] ?: false
+    }
+
+    suspend fun setQuranReaderTheme(theme: QuranReaderTheme) = withContext(Dispatchers.IO) {
+        context.settingsStore.edit { it[QURAN_READER_THEME] = theme.id }
+    }
+
+    suspend fun setReaderFullscreen(full: Boolean) = withContext(Dispatchers.IO) {
+        context.settingsStore.edit { it[READER_FULLSCREEN] = full }
     }
 
     // Show Arabic text in Quran reader
@@ -269,6 +288,9 @@ class SettingsRepository(private val context: Context) {
         private val ENGLISH_FONT_SCALE = floatPreferencesKey("english_font_scale")
         private val SHOW_TRANSLITERATION = booleanPreferencesKey("show_transliteration")
         private val BACKGROUND_MODE = stringPreferencesKey("background_mode")
+        // v5.16.0 — Andi-style reader themes + fullscreen reading
+        private val QURAN_READER_THEME = stringPreferencesKey("quran_reader_theme")
+        private val READER_FULLSCREEN = booleanPreferencesKey("reader_fullscreen")
         private val THEME_MODE = stringPreferencesKey("theme_mode")
         private val RECITER = stringPreferencesKey("selected_reciter")
         private val TAFSIR_SOURCE = stringPreferencesKey("tafsir_source")

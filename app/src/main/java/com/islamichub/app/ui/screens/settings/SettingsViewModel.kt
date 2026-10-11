@@ -13,6 +13,7 @@ import com.islamichub.app.data.repo.AutoPauseOption
 import com.islamichub.app.data.repo.BackgroundMode
 import com.islamichub.app.data.repo.TafsirSource
 import com.islamichub.app.data.repo.UpdateChecker
+import com.islamichub.app.ui.screens.quran.QuranReaderTheme
 
 data class SettingsUiState(
     val quranFontScale: Float = 1.0f,
@@ -37,6 +38,9 @@ data class SettingsUiState(
     val banglaFontScale: Float = 1.0f,
     val englishFontScale: Float = 1.0f,
     val showTransliteration: Boolean = true,
+    // v5.16.0 — Andi-style reader theme + fullscreen reading
+    val quranReaderTheme: QuranReaderTheme = QuranReaderTheme.DEFAULT,
+    val readerFullscreen: Boolean = false,
     val cacheSizeBytes: Long = 0L,
     val aiApiKey: String = com.islamichub.app.data.repo.AIService.DEFAULT_API_KEY,
     val aiBaseUrl: String = "https://generativelanguage.googleapis.com/v1beta",
@@ -96,6 +100,9 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
             val banglaScale = container.settingsRepository.banglaFontScale.first()
             val englishScale = container.settingsRepository.englishFontScale.first()
             val showTranslit = container.settingsRepository.showTransliteration.first()
+            // v5.16.0 — Andi-style reader theme + fullscreen
+            val readerTheme = container.settingsRepository.quranReaderTheme.first()
+            val readerFull = container.settingsRepository.readerFullscreen.first()
             // v5.11.0 — cache meter now includes the translation cache (Settings
             // "ক্যাশ মুছুন" already deletes it; the meter just never counted it)
             val cacheSize = container.tafsirRepository.cacheSizeBytes() +
@@ -129,6 +136,8 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
                 banglaFontScale = banglaScale,
                 englishFontScale = englishScale,
                 showTransliteration = showTranslit,
+                quranReaderTheme = readerTheme,
+                readerFullscreen = readerFull,
                 cacheSizeBytes = cacheSize,
                 aiApiKey = aiKey,
                 aiBaseUrl = aiUrl,
@@ -253,6 +262,21 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
         viewModelScope.launch {
             container.settingsRepository.setBackgroundMode(mode)
             _state.value = _state.value.copy(backgroundMode = mode)
+        }
+    }
+
+    // v5.16.0 — Andi-style reader theme + fullscreen reading
+    fun setQuranReaderTheme(theme: QuranReaderTheme) {
+        viewModelScope.launch {
+            container.settingsRepository.setQuranReaderTheme(theme)
+            _state.value = _state.value.copy(quranReaderTheme = theme)
+        }
+    }
+
+    fun setReaderFullscreen(full: Boolean) {
+        viewModelScope.launch {
+            container.settingsRepository.setReaderFullscreen(full)
+            _state.value = _state.value.copy(readerFullscreen = full)
         }
     }
     fun setSelectedReciter(id: String) {

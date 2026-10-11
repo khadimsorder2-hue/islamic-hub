@@ -51,7 +51,10 @@ data class QuranReaderUiState(
     val selectedTranslationIndex: Int = 0,
     val onlineTranslationsMap: Map<Int, List<String>> = emptyMap(), // ayahNumber → [text1, text2, ...]
     val isLoadingOnlineTranslations: Boolean = false,
-    val onlineTranslationsLoaded: Boolean = false
+    val onlineTranslationsLoaded: Boolean = false,
+    // v5.16.0 — Andi-style reader theme + fullscreen reading
+    val readerTheme: QuranReaderTheme = QuranReaderTheme.DEFAULT,
+    val readerFullscreen: Boolean = false
 )
 
 class QuranReaderViewModel(
@@ -173,6 +176,17 @@ class QuranReaderViewModel(
                 _state.value = _state.value.copy(showUccaron = show)
             }
         }
+        // v5.16.0 — Andi-style reader theme + fullscreen mode
+        viewModelScope.launch {
+            container.settingsRepository.quranReaderTheme.collect { theme ->
+                _state.value = _state.value.copy(readerTheme = theme)
+            }
+        }
+        viewModelScope.launch {
+            container.settingsRepository.readerFullscreen.collect { full ->
+                _state.value = _state.value.copy(readerFullscreen = full)
+            }
+        }
         viewModelScope.launch {
             container.settingsRepository.selectedReciter.collect { id ->
                 val reciter = AudioController.availableRecitersStatic.firstOrNull {
@@ -183,6 +197,19 @@ class QuranReaderViewModel(
                     selectedReciterName = reciter.displayName
                 )
             }
+        }
+    }
+
+    fun setReaderTheme(theme: QuranReaderTheme) {
+        viewModelScope.launch {
+            container.settingsRepository.setQuranReaderTheme(theme)
+        }
+    }
+
+    fun toggleReaderFullscreen() {
+        viewModelScope.launch {
+            val next = !_state.value.readerFullscreen
+            container.settingsRepository.setReaderFullscreen(next)
         }
     }
 

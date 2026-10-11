@@ -71,6 +71,7 @@ import com.islamichub.app.data.AppContainer
 import com.islamichub.app.data.repo.AudioController
 import com.islamichub.app.data.repo.AutoPauseOption
 import com.islamichub.app.data.repo.BackgroundMode
+import com.islamichub.app.ui.screens.quran.QuranReaderTheme
 import com.islamichub.app.data.repo.TafsirSource
 import com.islamichub.app.ui.theme.AppColors
 import com.islamichub.app.ui.theme.arabicSp
@@ -221,6 +222,46 @@ fun SettingsScreen(
                             )
                         }
                     }
+                    Spacer(8.dp)
+
+                    // v5.16.0 — Andi-style Quran reader theme (6 looks)
+                    Text(
+                        text = "কুরআন রিডার থিম (Andi স্টাইল)",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        QuranReaderTheme.entries.take(3).forEach { theme ->
+                            FilterChip(
+                                selected = state.quranReaderTheme == theme,
+                                onClick = { vm.setQuranReaderTheme(theme) },
+                                label = { Text(theme.labelBn) }
+                            )
+                        }
+                    }
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        QuranReaderTheme.entries.drop(3).forEach { theme ->
+                            FilterChip(
+                                selected = state.quranReaderTheme == theme,
+                                onClick = { vm.setQuranReaderTheme(theme) },
+                                label = { Text(theme.labelBn) }
+                            )
+                        }
+                    }
+                    Spacer(8.dp)
+
+                    // v5.16.0 — Andi fullScreen reading mode
+                    ToggleRow(
+                        label = "ফুলস্ক্রিন রিডিং (রিডারে টপবার লুকাবে)",
+                        checked = state.readerFullscreen,
+                        onCheckedChange = vm::setReaderFullscreen
+                    )
                     Spacer(8.dp)
 
                     // Show toggles

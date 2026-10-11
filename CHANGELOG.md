@@ -2,6 +2,29 @@
 
 All notable changes to the Islamic Hub project.
 
+## [v5.16.0] - 2026-10-11
+
+### 🎙 Tajweed Checker — VOICE mode (full port of the web Tajbeed Checker)
+- **Type nothing — just recite.** The tajbeed checker from islamic.html is now in the app as a complete voice-AI flow (1:1 port of `TajbeedCheckerService`): record up to 30 seconds with a live pulsing mic + giant timer, review the audio with playback, send it to the AI, and get segmented result cards in Bangla.
+- The AI listens with 100% fidelity and returns: **মূল ট্রান্সক্রিপশন**, **কুরআন আয়াত** (সুরা/আয়াত নম্বর, আরবি, বাংলা উচ্চারণ, অর্থ, **তেলাওয়াতের শুদ্ধতা %** + তাজবীদ ভুল ও শান-এ-নুজুল ব্যাখ্যা), **হাদিস** (গ্রেড সহিহ/হাসান/দঈফ + AI স্কোর), **দোয়া** (ফজিলত ও নিয়ম), and **সাধারণ কথোপকথন** cards — the exact same schema and card design as the web checker, in the signature deep-green + gold voice-AI theme.
+- 30-second auto-stop with the same "রেকর্ডিং সময় শেষ (৩০ সেকেন্ড)" toast, trash/cancel, re-record, and "AI কে পাঠান" flow — all parity with the site.
+- Recording pipeline: AudioRecord 16 kHz mono PCM wrapped into a WAV header (`util/VoiceRecorder.kt`), sent to Gemini as `inline_data audio/wav` with `responseMimeType: application/json`. Runtime `RECORD_AUDIO` permission added.
+- The old typing mode is still there — the checker now opens on **🎙 ভয়েস দিয়ে চেক** with a **⌨ লিখে চেক** tab beside it. Nothing removed.
+
+### 🤖 AI token limit COMPLETELY removed
+- v5.15.1 raised the cap 2000 → 16384; per this request the cap is now **gone entirely**. `maxOutputTokens` / `max_tokens` are no longer sent in ANY request (Gemini chat, Gemini vision, Gemini voice, OpenAI-compatible). Every AI Scholar / AI tafsir / voice answer now runs to the model's full output capacity — an answer can never be cut off by a token budget again.
+
+### 🎨 Quran reader — 6 reading themes + fullscreen (Andi app adoption)
+- Adopted the decoded **Al Quran Bangla (Andi)** reading-experience ideas: the reader now has **6 full-page themes** — অ্যাপ থিম (default), **ক্লাসিক ক্রিম** (Andi's warm `bgListAlternate` paper), **সাদা**, **সেপিয়া** (old mushaf page), **নীলাভ রাত** (Andi's `bgHomeGradient` teal-dark family) and **মুসহাফ রাত (গোল্ড)** (night mushaf with gold Arabic). Background, ayah cards, Arabic/Bangla/English text, uccharon teal and bismillah all repaint together.
+- Theme picker lives in the reader toolbar (🎨 palette button) as a bottom sheet, and also in Settings → কুরআন রিডার থিম. The old dead "background mode" chips now have a real, live companion setting.
+- **ফুলস্ক্রিন রিডিং** (Andi `fullScreen` preference): hide the reader top bar for distraction-free reading — a floating pill with the theme + exit buttons appears top-right. Toggle from the reader toolbar or Settings.
+
+### 🔧 Architecture
+- `util/VoiceRecorder.kt` — coroutine-friendly PCM→WAV recorder with live RMS amplitude + 30s auto-stop.
+- `AIService.analyzeAudio()` + `callGeminiAudio()` + strict-JSON `parseVoiceAnalysis()` + `TAJWEED_VOICE_PROMPT` (web SYSTEM_PROMPT port with added tajweed-judgement rules).
+- `TajweedVoiceViewModel` — web-parity state machine (intro → recording → review → analyzing → result).
+- `QuranReaderTheme` enum + `SettingsRepository.quranReaderTheme/readerFullscreen` flows.
+
 ## [v5.15.1] - 2026-10-11
 
 ### 🤖 AI Scholar — full-length answers (no more 2–10 line cutoffs)
