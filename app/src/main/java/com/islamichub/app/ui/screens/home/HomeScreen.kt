@@ -127,7 +127,7 @@ fun HomeScreen(
         contentPadding = PaddingValues(
             start = AppSpacing.screenPadding,
             end = AppSpacing.screenPadding,
-            top = statusBarTop + 12.dp + AppSpacing.screenPadding, // v5.16.1 — taller status-bar area
+            top = statusBarTop + AppSpacing.screenPadding, // v5.17.1 — tight edge-to-edge (no extra spacer)
             bottom = AppSpacing.screenPadding
         ),
         verticalArrangement = Arrangement.spacedBy(AppSpacing.sectionGap)

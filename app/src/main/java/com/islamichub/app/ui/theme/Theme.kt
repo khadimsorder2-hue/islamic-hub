@@ -1,5 +1,7 @@
 package com.islamichub.app.ui.theme
 
+import android.app.Activity
+import android.content.ContextWrapper
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
@@ -7,8 +9,13 @@ import androidx.compose.material3.Shapes
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.dp
+import androidx.core.view.WindowCompat
+import android.view.Window
 
 // Light theme — v5.7.0 "invisible box" design: the canvas and the card surface
 // share the SAME white color, so cards have no visible box at all — grouping is
@@ -132,10 +139,49 @@ fun IslamicHubTheme(
         "warm_light" -> WarmLightColors
         else -> if (darkTheme) DarkColors else LightColors  // auto
     }
+
+    // v5.17.1 — SYSTEM INFO ALWAYS VISIBLE (root fix for "theme dile system
+    // info dekha jay nah"). enableEdgeToEdge(SystemBarStyle.auto) follows the
+    // SYSTEM dark mode, but the app theme can differ from the system — with
+    // the app in Light and the system in Dark the clock/battery were drawn
+    // WHITE on the app's white canvas and vanished completely. The status/nav
+    // bar icon appearance now follows the APP's canvas luminance instead:
+    // light canvas -> dark icons, dark canvas -> light icons, reactively.
+    val view = LocalView.current
+    val lightCanvas = colors.background.luminance() > 0.5f
+    if (!view.isInEditMode) {
+        SideEffect {
+            activityWindowOf(view.context)?.let { window ->
+                val controller = WindowCompat.getInsetsController(window, view)
+                controller.isAppearanceLightStatusBars = lightCanvas
+                controller.isAppearanceLightNavigationBars = lightCanvas
+            }
+        }
+    }
+
     MaterialTheme(
         colorScheme = colors,
         typography = IslamicHubTypography,
         shapes = IslamicHubShapes,
         content = content
     )
+}
+
+/**
+ * v5.17.1 — unwraps ContextWrapper chains (ContextThemeWrapper etc.) to find
+ * the hosting Activity's window. Returns null defensively — never crash over
+ * system-bar tinting.
+ */
+private fun activityWindowOf(context: android.content.Context): Window? {
+    var ctx = context
+    var guard = 0
+    while (guard < 8) {
+        when (ctx) {
+            is Activity -> return ctx.window
+            is ContextWrapper -> ctx = ctx.baseContext
+            else -> return null
+        }
+        guard++
+    }
+    return null
 }

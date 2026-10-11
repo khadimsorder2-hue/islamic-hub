@@ -50,6 +50,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.AnnotatedString
@@ -75,7 +76,8 @@ fun TafsirFullScreen(
     container: AppContainer,
     surah: Int,
     ayah: Int,
-    onClose: () -> Unit
+    onClose: () -> Unit,
+    restoreCanvasLight: Boolean? = null
 ) {
     val vm = remember { TafsirViewModel(container, surah, ayah) }
     val state by vm.state.collectAsState()
@@ -98,6 +100,28 @@ fun TafsirFullScreen(
         }
         onDispose {
             window?.clearFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        }
+    }
+
+    // v5.17.1 — system icons must contrast with the TAFSIR canvas while this
+    // full-screen page is open (otherwise the clock/battery vanish when the
+    // app theme luminance differs from the reading theme behind it). On
+    // close, restore the READER's reading-theme appearance — the reader may
+    // legitimately run dark icons over a cream canvas while the app theme is
+    // dark. Falls back to the app-theme canvas for non-reader call sites.
+    val tafsirCanvasLight = MaterialTheme.colorScheme.surface.luminance() > 0.5f
+    DisposableEffect(tafsirCanvasLight) {
+        val window = (tafsirView.context as? android.app.Activity)?.window
+        val controller = window?.let {
+            androidx.core.view.WindowCompat.getInsetsController(window, tafsirView)
+        }
+        controller?.isAppearanceLightStatusBars = tafsirCanvasLight
+        controller?.isAppearanceLightNavigationBars = tafsirCanvasLight
+        onDispose {
+            val restore = restoreCanvasLight
+                ?: (MaterialTheme.colorScheme.background.luminance() > 0.5f)
+            controller?.isAppearanceLightStatusBars = restore
+            controller?.isAppearanceLightNavigationBars = restore
         }
     }
 

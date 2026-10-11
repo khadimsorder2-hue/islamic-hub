@@ -10,9 +10,9 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -42,7 +42,6 @@ import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -61,7 +60,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -129,6 +127,29 @@ fun QuranReaderScreen(
         }
         onDispose {
             window?.clearFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        }
+    }
+
+    // v5.17.1 — SYSTEM INFO VISIBLE ON EVERY READING THEME (user: "theme
+    // dile uporer system info dekha jay nah"). The system clock/battery
+    // icons must contrast with the READER canvas — cream/sepia are light
+    // (needs dark icons), night themes are dark (needs white icons). The
+    // global theme effect only knows the APP canvas, so the reader asserts
+    // its own reading-theme appearance here and restores the app-theme one
+    // on exit (TafsirFullScreen restores this value when it closes).
+    val readerCanvasLight = if (themed) readerTheme.bg.luminance() > 0.5f
+        else MaterialTheme.colorScheme.background.luminance() > 0.5f
+    androidx.compose.runtime.DisposableEffect(readerCanvasLight) {
+        val window = (view.context as? android.app.Activity)?.window
+        val controller = window?.let {
+            androidx.core.view.WindowCompat.getInsetsController(it, view)
+        }
+        controller?.isAppearanceLightStatusBars = readerCanvasLight
+        controller?.isAppearanceLightNavigationBars = readerCanvasLight
+        onDispose {
+            val appCanvasLight = MaterialTheme.colorScheme.background.luminance() > 0.5f
+            controller?.isAppearanceLightStatusBars = appCanvasLight
+            controller?.isAppearanceLightNavigationBars = appCanvasLight
         }
     }
 
@@ -202,63 +223,77 @@ fun QuranReaderScreen(
             // v5.16.0 — Andi `fullScreen` reading mode: top bar hidden while
             // reading; a floating pill (below) lets you exit
             if (!state.readerFullscreen) {
-            CenterAlignedTopAppBar(
-                // v5.16.1 — taller, fully-synced status-bar area: the bar itself
-                // adds a fixed 12dp on top of the system inset (windowInsets
-                // zeroed to avoid double padding) so the transparent strip with
-                // the system clock matches the reader page below.
-                // v5.17.0 — the bar is now fully TRANSPARENT so the reader theme
-                // color (cream / sepia / night...) flows behind the status bar
-                // exactly like the body — no more dark strip over light themes.
-                modifier = Modifier.statusBarsPadding().padding(top = 12.dp),
-                windowInsets = WindowInsets(0, 0, 0, 0),
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = Color.Transparent,
-                    titleContentColor = if (themed) {
-                        if (readerTheme.bg.luminance() < 0.5f) Color.White else Color(0xFF241A10)
-                    } else MaterialTheme.colorScheme.onSurface,
-                    navigationIconContentColor = if (themed) {
-                        if (readerTheme.bg.luminance() < 0.5f) Color.White else Color(0xFF241A10)
-                    } else MaterialTheme.colorScheme.onSurface,
-                    actionIconContentColor = if (themed) {
-                        if (readerTheme.bg.luminance() < 0.5f) Color.White else Color(0xFF241A10)
-                    } else MaterialTheme.colorScheme.onSurface
-                ),
-                title = {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                // v5.17.1 — COMPACT PREMIUM HEADER (user: "kono space thakbe
+                // nah, ekdom full screen" + arrows on the dead strip above the
+                // toolbar). The v5.16.1 +12dp spacer is gone and the fixed 64dp
+                // M3 bar is now a tight 52dp row — total top chrome drops from
+                // ~101dp to ~77dp. The system clock/battery float directly on
+                // the reading-theme canvas: ONE continuous header, no separate
+                // status-bar layout (the bar is transparent by sitting on the
+                // Scaffold's own themed containerColor).
+                val onCanvas = if (themed) {
+                    if (readerTheme.bg.luminance() < 0.5f) Color.White else Color(0xFF241A10)
+                } else MaterialTheme.colorScheme.onSurface
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .statusBarsPadding()
+                        .height(52.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.align(Alignment.Center),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
                         Text(
                             text = state.surah?.nameEnglish ?: "",
                             style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.SemiBold
+                            fontWeight = FontWeight.SemiBold,
+                            color = onCanvas,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                         Text(
                             text = state.surah?.englishMeaning ?: "",
                             style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            color = if (themed) onCanvas.copy(alpha = 0.80f)
+                                    else MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                     }
-                },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                    }
-                },
-                actions = {
-                    // v5.17.0 — MINIMAL toolbar (user: "oi control gulo dekhte
-                    // valo lagche nah"). Was 7 crowded icons (A-, A+, palette,
-                    // fullscreen, reciter, jump, play) — now only Play (primary
-                    // action) + one Tune icon. Every other control lives in the
-                    // clean reader-settings sheet below.
-                    if (state.surah != null) {
-                        IconButton(onClick = { vm.playSurah() }) {
-                            Icon(Icons.Filled.GraphicEq, contentDescription = "Play full surah")
+                    Row(modifier = Modifier.align(Alignment.CenterStart)) {
+                        IconButton(onClick = onBack) {
+                            Icon(
+                                Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = "Back",
+                                tint = onCanvas
+                            )
                         }
                     }
-                    IconButton(onClick = { showThemeSheet = true }) {
-                        Icon(Icons.Filled.Tune, contentDescription = "রিডার সেটিংস")
+                    Row(modifier = Modifier.align(Alignment.CenterEnd)) {
+                        // v5.17.0 — MINIMAL toolbar (user: "oi control gulo dekhte
+                        // valo lagche nah"). Was 7 crowded icons (A-, A+, palette,
+                        // fullscreen, reciter, jump, play) — now only Play (primary
+                        // action) + one Tune icon. Every other control lives in the
+                        // clean reader-settings sheet below.
+                        if (state.surah != null) {
+                            IconButton(onClick = { vm.playSurah() }) {
+                                Icon(
+                                    Icons.Filled.GraphicEq,
+                                    contentDescription = "Play full surah",
+                                    tint = onCanvas
+                                )
+                            }
+                        }
+                        IconButton(onClick = { showThemeSheet = true }) {
+                            Icon(
+                                Icons.Filled.Tune,
+                                contentDescription = "রিডার সেটিংস",
+                                tint = onCanvas
+                            )
+                        }
                     }
                 }
-            )
             }
         }
     ) { padding ->
@@ -569,7 +604,8 @@ fun QuranReaderScreen(
             Surface(
                 modifier = Modifier
                     .align(Alignment.TopEnd)
-                    .padding(top = 10.dp, end = 12.dp),
+                    .statusBarsPadding()
+                    .padding(top = 4.dp, end = 12.dp),
                 shape = RoundedCornerShape(50),
                 color = if (themed) readerTheme.cardBg else MaterialTheme.colorScheme.surfaceContainerLow,
                 shadowElevation = 4.dp
@@ -595,7 +631,10 @@ fun QuranReaderScreen(
             container = container,
             surah = surahNumber,
             ayah = ayah,
-            onClose = { showTafsirFor = null }
+            onClose = { showTafsirFor = null },
+            // v5.17.1 — when the tafsir page closes, restore THIS reader's
+            // reading-theme status-bar appearance (cream canvas -> dark icons)
+            restoreCanvasLight = readerCanvasLight
         )
     }
 

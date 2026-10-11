@@ -2,6 +2,17 @@
 
 All notable changes to the Islamic Hub project.
 
+## [v5.17.1] - 2026-10-12
+
+### 🌗 System info visible on EVERY theme (root fix)
+- **The disappearing clock/battery is fixed for good.** Edge-to-edge followed the *system* dark mode for status-bar icon color — but the app theme can differ from the system. With the app in Light (or a cream reading theme) while the system was in Dark, the white clock/battery icons sat on a white canvas and vanished completely. The status & navigation bar icon appearance now **follows the app's own canvas luminance, reactively** — light canvas → dark icons, dark canvas → white icons.
+- The Quran reader asserts its own **reading-theme** appearance while open (cream/sepia → dark icons, night themes → white icons) and restores the app-theme appearance on exit — including when the AI তাফসীর full screen closes back into the reader.
+
+### 📱 Zero dead space — one continuous fullscreen header
+- The reader toolbar's extra **+12dp status-bar spacer (v5.16.1) is removed** and the fixed 64dp Material bar is replaced with a **tight 52dp compact header** — top chrome drops from ~101dp to ~77dp. Back / centered surah title / Play + Tune float directly on the reading-theme canvas: **one continuous header, no separate status-bar layout**.
+- The fullscreen-reading floating pill no longer overlaps the system clock (now status-bar aware).
+- Home, Prayer times and 99 Names screens lost their extra +12dp top spacers — content starts right below the system info, exactly like the reference app.
+
 ## [v5.17.0] - 2026-10-12
 
 ### 🎨 One unified premium canvas — system info on every screen (PrimeTube-style)

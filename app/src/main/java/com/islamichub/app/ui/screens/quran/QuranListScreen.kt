@@ -79,8 +79,7 @@ fun QuranListScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
-            .statusBarsPadding() // v5.11.0 — edge-to-edge fix
-            .padding(top = 12.dp) // v5.16.1 — taller status-bar area
+            .statusBarsPadding() // v5.11.0 — edge-to-edge fix // v5.17.1 — tight edge-to-edge (12dp spacer removed)
     ) {
         // ─── Premium Hero Header ───
         com.islamichub.app.ui.components.PremiumHeroCard(
