@@ -90,6 +90,52 @@ class QuranRepository(
         }
     }
 
+    /**
+     * v5.15.0 — Andi-quality Bangla uccharon map (from the decoded reference
+     * app). Preferred over the legacy dataset by the reader when non-empty.
+     */
+    suspend fun andiUccharonMap(surah: Int): Map<Int, String> = withContext(Dispatchers.IO) {
+        if (assetSource == null) return@withContext emptyMap()
+        try {
+            assetSource.loadAndiUccharon()[surah]
+                ?.filterKeys { it > 0 }
+                ?.filterValues { it.isNotBlank() }
+                ?: emptyMap()
+        } catch (_: Exception) {
+            emptyMap()
+        }
+    }
+
+    /**
+     * v5.15.0 — Andi Bangla meaning (মুহিউদ্দীন খান style) map for the
+     * optional "বিকল্প অর্থ" reader line and the word-by-word sheet.
+     */
+    suspend fun andiMeaningMap(surah: Int): Map<Int, String> = withContext(Dispatchers.IO) {
+        if (assetSource == null) return@withContext emptyMap()
+        try {
+            assetSource.loadAndiMeaning()[surah]
+                ?.filterKeys { it > 0 }
+                ?.filterValues { it.isNotBlank() }
+                ?: emptyMap()
+        } catch (_: Exception) {
+            emptyMap()
+        }
+    }
+
+    /**
+     * v5.15.0 — REAL word-by-word pairs for one surah (ayah → ordered
+     * [arabic, Bangla] list) straight from the ported wbw database.
+     */
+    suspend fun wordByWord(surah: Int): Map<Int, List<com.islamichub.app.data.local.WbwWord>> =
+        withContext(Dispatchers.IO) {
+            if (assetSource == null) return@withContext emptyMap()
+            try {
+                assetSource.loadWordByWord(surah)
+            } catch (_: Exception) {
+                emptyMap()
+            }
+        }
+
     suspend fun searchSurahs(query: String): List<SurahSummary> = withContext(Dispatchers.IO) {
         if (query.isBlank()) return@withContext listSurahs()
         val q = query.trim().lowercase()

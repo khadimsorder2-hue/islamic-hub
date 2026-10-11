@@ -2,6 +2,29 @@
 
 All notable changes to the Islamic Hub project.
 
+## [v5.15.0] - 2026-10-11
+
+### 📖 Al Quran Bangla (Andi) reference app — fully decoded & ported
+- The reference APK the user shared was decompiled end-to-end and its Quran stack ported into Islamic Hub — **only new files added, nothing removed**:
+  - **বাংলা উচ্চারণ (uccharon)** for all 6,236 ayahs (`quran/andi/uccharon.json`) — the classic Andi phonetic rendering ("বিছমিল্লাহির রাহমানির রাহিম।") now preferred in the reader, with the legacy dataset as automatic fallback.
+  - **বাংলা অর্থ (meaning)** for all 6,236 ayahs (`quran/andi/meaning.json`) — the classic মুহিউদ্দীন খান-style meaning, shown as an optional "বিকল্প অর্থ" line (new reader chip toggle) and inside the word-by-word sheet.
+  - **শব্দের অর্থ (word-by-word)** — the full 77,425-entry mushaf-accurate database (`quran/wbw/surah_001…114.json`, arabic word + Bangla meaning), replacing guessed dictionary splits with real per-word pairs.
+
+### 🎨 Andi-style Quran reader UI (rebuilt natively in Compose)
+- Every ayah card now mirrors the reference app's layout: an **ornamental octagonal number badge** (cream fill + gold frame) with a per-ayah **play button** in the left rail, Arabic mushaf text, teal uccharon line, Bangla meaning, and optional English.
+- New "🔤 শব্দে শব্দ" chip toggle renders the REAL word-by-word pairs as **right-to-left flowing chips** on the card, exactly like the printed mushaf.
+- Word-by-word bottom sheet upgraded: header now carries the ayah's uccharon + বিকল্প অর্থ, and the word list uses the real wbw data (dictionary fallback kept).
+
+### 🎧 Andi-style audio UI
+- The floating player gains **previous/next ayah skip buttons** — bounds clamped inside the surah, hopping to the adjacent surah at the edges, sequential mode preserved while skipping.
+- Reader playback follow-along, seek, repeat, speed and error surfacing all unchanged.
+
+### 🫥 Header system-info area — fully transparent
+- The always-on top time/date panel on the Home hero no longer draws any pill/box background — it now floats **fully transparent** over the hero image (user request), staying readable against the hero gradient.
+
+### 🔧 Data integrity
+- Every ported dataset verified programmatically: 114 surah files, 6,236 ayahs each dataset, 77,425 word pairs, zero missing entries.
+
 ## [v5.14.1] - 2026-09-27
 
 ### 🕌 Surah Al-Fatiha — REAL root cause found & fixed

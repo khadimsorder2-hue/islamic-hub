@@ -353,6 +353,31 @@ class AudioController(
     }
 
     /**
+     * v5.15.0 — Andi-style audio UI: prev/next ayah skip for the floating
+     * player. Preserves the active playback mode (sequential keeps auto-
+     * advancing from the new position), clamps inside the surah, and hops
+     * to the adjacent surah at the boundaries.
+     */
+    fun skipAyah(offset: Int) {
+        val st = _state.value
+        val surah = st.currentSurah ?: return
+        val current = st.currentAyah ?: return
+        val count = getAyahCount(surah)
+        val target = current + offset
+        when {
+            target < 1 -> if (surah > 1) playSurah(surah - 1, currentReciter)
+            target > count -> if (surah < 114) playSurah(surah + 1, currentReciter)
+            else -> {
+                errorRetryCount = 0
+                surahSequentialCurrentAyah = target
+                surahSequentialAyahCount = count
+                _state.value = _state.value.copy(error = null)
+                playAyahAudioInternal(surah, target, currentReciter)
+            }
+        }
+    }
+
+    /**
      * Internal: play Arabic ayah audio. Prefers an offline-downloaded copy
      * (audio_cache) when available, otherwise streams from the CDN.
      * URL uses the global ayah index computed from the verified AYAH_COUNTS

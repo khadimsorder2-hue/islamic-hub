@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import com.islamichub.app.data.AppContainer
 import com.islamichub.app.data.model.Surah
+import com.islamichub.app.data.local.WbwWord
 import com.islamichub.app.data.repo.AudioController
 import com.islamichub.app.data.repo.Bookmark
 import com.islamichub.app.data.repo.LastRead
@@ -32,6 +33,13 @@ data class QuranReaderUiState(
     // v5.5 — Bangla transliteration (uccaron) line under each Arabic ayah
     val showUccaron: Boolean = true,
     val uccaronMap: Map<Int, String> = emptyMap(),
+    // v5.15.0 — Andi reference-app data: better uccharon, optional বিকল্প অর্থ,
+    // and REAL word-by-word pairs shown inline on the ayah card
+    val andiUccharonMap: Map<Int, String> = emptyMap(),
+    val andiMeaningMap: Map<Int, String> = emptyMap(),
+    val wbwMap: Map<Int, List<WbwWord>> = emptyMap(),
+    val showWbwInline: Boolean = false,
+    val showAltMeaning: Boolean = false,
     val selectedReciterId: String = "ar.alafasy",
     val selectedReciterName: String = "Mishary Rashid Alafasy",
     val banglaAudioEnabled: Boolean = false,
@@ -60,6 +68,7 @@ class QuranReaderViewModel(
         observeBookmarks()
         loadOnlineTranslations()
         loadUccaron()
+        loadAndiData()
     }
 
     private fun load() {
@@ -233,6 +242,50 @@ class QuranReaderViewModel(
                 // uccaron is a display enhancement — never break the reader
             }
         }
+    }
+
+    /**
+     * v5.15.0 — load the Andi reference-app dataset for this surah: better
+     * Bangla uccharon, the classic মুহিউদ্দীন খান meaning, and the real
+     * word-by-word pairs. All are display enhancements; any failure leaves
+     * the previous maps untouched so the reader never breaks.
+     */
+    private fun loadAndiData() {
+        viewModelScope.launch {
+            try {
+                val uccharon = container.quranRepository.andiUccharonMap(surahNumber)
+                _state.value = _state.value.copy(andiUccharonMap = uccharon)
+            } catch (_: Exception) { }
+        }
+        viewModelScope.launch {
+            try {
+                val meaning = container.quranRepository.andiMeaningMap(surahNumber)
+                _state.value = _state.value.copy(andiMeaningMap = meaning)
+            } catch (_: Exception) { }
+        }
+        viewModelScope.launch {
+            try {
+                val wbw = container.quranRepository.wordByWord(surahNumber)
+                _state.value = _state.value.copy(wbwMap = wbw)
+            } catch (_: Exception) { }
+        }
+    }
+
+    /** v5.15.0 — toggle inline word-by-word chips on the ayah cards. */
+    fun toggleWbwInline() {
+        _state.value = _state.value.copy(showWbwInline = !_state.value.showWbwInline)
+    }
+
+    /** v5.15.0 — toggle the optional বিকল্প অর্থ (Andi meaning) line. */
+    fun toggleAltMeaning() {
+        _state.value = _state.value.copy(showAltMeaning = !_state.value.showAltMeaning)
+    }
+
+    /** v5.15.0 — effective uccharon: Andi data preferred, legacy fallback. */
+    fun effectiveUccharon(ayahNumber: Int): String? {
+        val s = _state.value
+        return s.andiUccharonMap[ayahNumber]?.takeIf { it.isNotBlank() }
+            ?: s.uccaronMap[ayahNumber]?.takeIf { it.isNotBlank() }
     }
 
     fun toggleBookmark(ayahNumber: Int) {

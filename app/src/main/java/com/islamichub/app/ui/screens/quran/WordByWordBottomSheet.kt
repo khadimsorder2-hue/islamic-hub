@@ -31,30 +31,37 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.islamichub.app.data.model.Ayah
+import com.islamichub.app.data.local.WbwWord
 import com.islamichub.app.ui.theme.arabicSp
 import com.islamichub.app.ui.theme.banglaSp
+
+// v5.15.0 — Andi reference palette (shared with the reader card)
+private val UccharonTeal = androidx.compose.ui.graphics.Color(0xFF4B7E7A)
 
 /**
  * Word-by-word bottom sheet for an ayah.
  *
- * Splits the Arabic text into words and shows:
- *  - Arabic word
- *  - Transliteration (Bangla phonetic)
- *  - Bangla meaning
- *
- * Uses a comprehensive word dictionary for common Quranic words.
+ * v5.15.0 — now powered by the REAL wbw dataset ported from the decoded
+ * "Al Quran Bangla" reference app (77,425 mushaf-accurate pairs): when
+ * `wbwWords` is present each row shows the exact arabic word + its Bangla
+ * meaning. The old dictionary-split fallback stays for safety, and the
+ * header gains the Andi uccharon + বিকল্প অর্থ lines.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WordByWordBottomSheet(
     ayah: Ayah,
+    wbwWords: List<WbwWord>? = null,
+    uccharon: String? = null,
+    altMeaning: String? = null,
     onPlayAudio: () -> Unit,
     onDismiss: () -> Unit
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
-    // Split Arabic into words (ignore empty strings)
+    // Split Arabic into words (ignore empty strings) — fallback path only
     val words = ayah.arabic.trim().split(Regex("\\s+")).filter { it.isNotBlank() }
+    val hasRealData = !wbwWords.isNullOrEmpty()
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -79,7 +86,10 @@ fun WordByWordBottomSheet(
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
-                        text = "আয়াত ${ayah.numberInSurah} • ${words.size} শব্দ",
+                        text = if (hasRealData)
+                            "আয়াত ${ayah.numberInSurah} • ${wbwWords!!.size} শব্দ • মুশাফ অনুযায়ী"
+                        else
+                            "আয়াত ${ayah.numberInSurah} • ${words.size} শব্দ",
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -129,11 +139,27 @@ fun WordByWordBottomSheet(
                         modifier = Modifier.fillMaxWidth(),
                         textAlign = TextAlign.End
                     )
+                    // v5.15.0 — Andi uccharon line (teal) inside the sheet header
+                    if (!uccharon.isNullOrBlank()) {
+                        Text(
+                            text = uccharon,
+                            style = MaterialTheme.typography.bodySmall.copy(fontSize = banglaSp(MaterialTheme.typography.bodySmall.fontSize)),
+                            color = UccharonTeal
+                        )
+                    }
                     Text(
                         text = ayah.bengali,
                         style = MaterialTheme.typography.bodySmall.copy(fontSize = banglaSp(MaterialTheme.typography.bodySmall.fontSize)),
                         color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.85f)
                     )
+                    // v5.15.0 — optional Andi বিকল্প অর্থ line
+                    if (!altMeaning.isNullOrBlank()) {
+                        Text(
+                            text = altMeaning,
+                            style = MaterialTheme.typography.bodySmall.copy(fontSize = banglaSp(MaterialTheme.typography.bodySmall.fontSize)),
+                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.75f)
+                        )
+                    }
                 }
             }
 
@@ -145,21 +171,33 @@ fun WordByWordBottomSheet(
                 modifier = Modifier.padding(top = 16.dp, bottom = 8.dp)
             )
 
-            // Word-by-word list
+            // Word-by-word list — REAL wbw pairs when available, dictionary fallback otherwise
             LazyColumn(
                 verticalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier.padding(bottom = 24.dp)
             ) {
-                items(words.size) { idx ->
-                    val word = words[idx]
-                    val translit = QuranWordDictionary.getTransliteration(word)
-                    val meaning = QuranWordDictionary.getMeaning(word)
-                    WordRow(
-                        index = idx + 1,
-                        arabicWord = word,
-                        transliteration = translit,
-                        meaning = meaning
-                    )
+                if (hasRealData) {
+                    items(wbwWords!!.size) { idx ->
+                        val w = wbwWords[idx]
+                        WordRow(
+                            index = idx + 1,
+                            arabicWord = w.ar,
+                            transliteration = "",
+                            meaning = w.tr
+                        )
+                    }
+                } else {
+                    items(words.size) { idx ->
+                        val word = words[idx]
+                        val translit = QuranWordDictionary.getTransliteration(word)
+                        val meaning = QuranWordDictionary.getMeaning(word)
+                        WordRow(
+                            index = idx + 1,
+                            arabicWord = word,
+                            transliteration = translit,
+                            meaning = meaning
+                        )
+                    }
                 }
             }
         }
@@ -210,16 +248,18 @@ private fun WordRow(
             )
             // Transliteration + meaning
             Column(modifier = Modifier.weight(1.5f)) {
-                Text(
-                    text = transliteration,
-                    style = MaterialTheme.typography.bodySmall.copy(fontSize = banglaSp(MaterialTheme.typography.bodySmall.fontSize)),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                if (transliteration.isNotBlank()) {
+                    Text(
+                        text = transliteration,
+                        style = MaterialTheme.typography.bodySmall.copy(fontSize = banglaSp(MaterialTheme.typography.bodySmall.fontSize)),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
                 Text(
                     text = meaning,
                     style = MaterialTheme.typography.bodyMedium.copy(fontSize = banglaSp(MaterialTheme.typography.bodyMedium.fontSize)),
                     fontWeight = FontWeight.Medium,
-                    color = MaterialTheme.colorScheme.primary
+                    color = UccharonTeal
                 )
             }
         }

@@ -150,6 +150,73 @@ class QuranAssetSource(private val context: Context) {
         mapped
     }
 
+    /**
+     * v5.15.0 — Andi-style Bangla uccharon (quran/andi/uccharon.json).
+     * Ported from the decoded Al Quran Bangla reference app — a higher
+     * quality Bangla phonetic rendering than the legacy v5.5 dataset
+     * (e.g. "বিছমিল্লাহির রাহমানির রাহিম।"). Loaded once, cached forever;
+     * an empty map on any failure keeps the reader unaffected.
+     */
+    suspend fun loadAndiUccharon(): Map<Int, Map<Int, String>> = withContext(Dispatchers.IO) {
+        andiUccharonCache?.let { return@withContext it }
+        val parsed: Map<String, Map<String, String>>? = try {
+            gson.fromJson(readAsset("quran/andi/uccharon.json"), uccaronType)
+        } catch (_: Exception) {
+            null
+        }
+        val mapped = parsed?.mapKeys { (k, _) -> k.toIntOrNull() ?: 0 }
+            ?.mapValues { (_, v) -> v.mapKeys { (k, _) -> k.toIntOrNull() ?: 0 } }
+            ?: emptyMap()
+        andiUccharonCache = mapped
+        mapped
+    }
+
+    /**
+     * v5.15.0 — Andi Bangla meaning (quran/andi/meaning.json), the classic
+     * মুহিউদ্দীন খান-style rendering from the reference app. Shown as the
+     * optional "বিকল্প অর্থ" line and inside the word-by-word sheet.
+     */
+    suspend fun loadAndiMeaning(): Map<Int, Map<Int, String>> = withContext(Dispatchers.IO) {
+        andiMeaningCache?.let { return@withContext it }
+        val parsed: Map<String, Map<String, String>>? = try {
+            gson.fromJson(readAsset("quran/andi/meaning.json"), uccaronType)
+        } catch (_: Exception) {
+            null
+        }
+        val mapped = parsed?.mapKeys { (k, _) -> k.toIntOrNull() ?: 0 }
+            ?.mapValues { (_, v) -> v.mapKeys { (k, _) -> k.toIntOrNull() ?: 0 } }
+            ?: emptyMap()
+        andiMeaningCache = mapped
+        mapped
+    }
+
+    /**
+     * v5.15.0 — REAL Quranic word-by-word data (quran/wbw/surah_NNN.json),
+     * ported from the reference app's 77,425-entry wbw database. Each ayah
+     * maps to an ordered list of (arabic word, Bangla meaning) pairs taken
+     * from the same segmentation as the printed mushaf — no more guessing
+     * meanings by splitting raw text. Per-surah files keep the parse small;
+     * results are cached per surah for instant re-opens.
+     */
+    suspend fun loadWordByWord(surah: Int): Map<Int, List<WbwWord>> = withContext(Dispatchers.IO) {
+        wbwCache[surah]?.let { return@withContext it }
+        if (surah !in 1..114) return@withContext emptyMap()
+        val parsed: WbwPayload? = try {
+            gson.fromJson(
+                readAsset("quran/wbw/surah_" + surah.toString().padStart(3, '0') + ".json"),
+                WbwPayload::class.java
+            )
+        } catch (_: Exception) {
+            null
+        }
+        val mapped: Map<Int, List<WbwWord>> = parsed?.ayahs
+            ?.mapKeys { (k, _) -> k.toIntOrNull() ?: 0 }
+            ?.mapValues { (_, words) -> words.filter { it.ar.isNotBlank() } }
+            ?: emptyMap()
+        wbwCache[surah] = mapped
+        mapped
+    }
+
     private fun readAsset(path: String): String {
         // v5.14.1 — trim a leading U+FEFF (BOM/zero-width) defensively so a
         // stray marker can never confuse Gson at the very first token.
@@ -163,6 +230,10 @@ class QuranAssetSource(private val context: Context) {
     }
 
     @Volatile private var bnUccaronCache: Map<Int, Map<Int, String>>? = null
+
+    @Volatile private var andiUccharonCache: Map<Int, Map<Int, String>>? = null
+    @Volatile private var andiMeaningCache: Map<Int, Map<Int, String>>? = null
+    private val wbwCache = java.util.concurrent.ConcurrentHashMap<Int, Map<Int, List<WbwWord>>>()
 
     /** v5.7.0 — parsed per-surah domain cache (surah number → Surah). */
     private val perSurahCache = java.util.concurrent.ConcurrentHashMap<Int, Surah>()
@@ -227,4 +298,16 @@ data class AyahJson(
     @SerializedName("arabic") val arabic: String,
     @SerializedName("english") val english: String,
     @SerializedName("bengali") val bengali: String
+)
+
+/** v5.15.0 — one word of the word-by-word dataset: arabic word + Bangla meaning. */
+data class WbwWord(
+    @SerializedName("ar") val ar: String,
+    @SerializedName("tr") val tr: String
+)
+
+/** v5.15.0 — DTO for quran/wbw/surah_NNN.json ({"surah":N,"ayahs":{"1":[{ar,tr}…]}}). */
+data class WbwPayload(
+    @SerializedName("surah") val surah: Int,
+    @SerializedName("ayahs") val ayahs: Map<String, List<WbwWord>>
 )

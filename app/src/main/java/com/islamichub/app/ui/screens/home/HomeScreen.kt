@@ -199,11 +199,12 @@ fun HomeScreen(
                         // full Bangla date. Works fully offline (device clock),
                         // so the "system panel" the user missed can never vanish
                         // again when the prayer API is unreachable.
+                        // v5.15.0 — FULLY TRANSPARENT: the pill background is
+                        // gone (user request) — the row floats directly on the
+                        // hero, with a soft shadow keeping the text readable.
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier
-                                .clip(RoundedCornerShape(50))
-                                .background(Color.White.copy(alpha = 0.16f))
                                 .padding(horizontal = 14.dp, vertical = 7.dp)
                                 .staggerEntrance(0)
                         ) {
