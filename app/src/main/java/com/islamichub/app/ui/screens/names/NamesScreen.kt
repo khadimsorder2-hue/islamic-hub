@@ -62,7 +62,7 @@ fun NamesScreen(container: AppContainer) {
     // v5.11.0 — status-bar-aware top padding (edge-to-edge fix)
     val statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
     LazyColumn(
-        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = statusBarTop + 16.dp, bottom = 16.dp),
+        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = statusBarTop + 12.dp + 16.dp, bottom = 16.dp), // v5.16.1 — taller status-bar area
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         // Premium hero

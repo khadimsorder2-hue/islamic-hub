@@ -80,6 +80,7 @@ fun QuranListScreen(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
             .statusBarsPadding() // v5.11.0 — edge-to-edge fix
+            .padding(top = 12.dp) // v5.16.1 — taller status-bar area
     ) {
         // ─── Premium Hero Header ───
         com.islamichub.app.ui.components.PremiumHeroCard(

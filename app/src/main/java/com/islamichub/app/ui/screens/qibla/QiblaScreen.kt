@@ -88,6 +88,7 @@ fun QiblaScreen(container: AppContainer) {
         modifier = Modifier
             .fillMaxSize()
             .statusBarsPadding() // v5.11.0 — edge-to-edge fix
+            .padding(top = 12.dp) // v5.16.1 — taller status-bar area
             .padding(24.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally

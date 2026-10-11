@@ -141,6 +141,7 @@ fun OnboardingScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .statusBarsPadding() // v5.11.0 — edge-to-edge fix
+                .padding(top = 12.dp) // v5.16.1 — taller status-bar area
                 .padding(32.dp),
             verticalArrangement = Arrangement.SpaceBetween,
             horizontalAlignment = Alignment.CenterHorizontally

@@ -27,6 +27,9 @@ data class TafsirUiState(
     val isLoading: Boolean = true,
     val tafsirText: String? = null,
     val aiExplanation: String? = null,
+    // v5.16.1 — real AI failure reason (network / quota / model / key) so the
+    // UI can show an honest error + retry instead of blaming the API key.
+    val aiError: String? = null,
     val isAILoading: Boolean = false,
     val source: TafsirSource = TafsirSource.BN_BENGALI,
     val isCached: Boolean = false,
@@ -179,13 +182,15 @@ class TafsirViewModel(
         }
     }
 
-    private fun loadAIExplanation() {
+    private fun loadAIExplanation(useCache: Boolean = true) {
         viewModelScope.launch {
             // v5.15.1 — no more settings-key gate here: AIService.ask() now
             // falls back to the built-in key when the Settings key is blank,
             // so the Quran AI tafsir works with EITHER key. (The old early-
             // return killed Quran AI entirely when no custom key was set.)
-            _state.value = _state.value.copy(isAILoading = true)
+            // v5.16.1 — retryAI() passes useCache=false so a failed/cached
+            // response can never stick; every retry is a fresh request.
+            _state.value = _state.value.copy(isAILoading = true, aiError = null)
             try {
                 val surahData = container.quranRepository.getSurah(surah)
                 val ayahData = surahData?.ayahs?.firstOrNull { it.numberInSurah == ayah }
@@ -206,16 +211,26 @@ class TafsirViewModel(
 🎯 এক লাইনে সারকথা
 
 ভাষা এমন সহজ হবে যেন একজন একদম নিরক্ষর বা মুর্খ গ্রামের মানুষও প্রথমবারেই বুঝে — ছোট ছোট বাক্য, দৈনন্দিন উদাহরণ, কঠিন আরবি শব্দের পাশে বন্ধনীতে বাংলা অর্থ।""".trimIndent()
-                val result = container.aiService.ask(prompt, cacheType = "tafsir")
+                val result = container.aiService.ask(prompt, useCache = useCache, cacheType = "tafsir")
                 if (result.error == null) {
                     _state.value = _state.value.copy(isAILoading = false, aiExplanation = result.answer)
                 } else {
-                    _state.value = _state.value.copy(isAILoading = false)
+                    // v5.16.1 — surface the REAL reason (network/quota/model/key)
+                    // instead of the old static "add API key" card.
+                    _state.value = _state.value.copy(isAILoading = false, aiError = result.error)
                 }
-            } catch (_: Exception) {
-                _state.value = _state.value.copy(isAILoading = false)
+            } catch (e: Exception) {
+                _state.value = _state.value.copy(
+                    isAILoading = false,
+                    aiError = e.message ?: "নেটওয়ার্ক সমস্যা — আবার চেষ্টা করুন।"
+                )
             }
         }
+    }
+
+    /** v5.16.1 — manual retry button; always bypasses the cache. */
+    fun retryAI() {
+        loadAIExplanation(useCache = false)
     }
 
     private fun loadNote() {

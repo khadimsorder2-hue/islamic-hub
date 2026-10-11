@@ -2,6 +2,23 @@
 
 All notable changes to the Islamic Hub project.
 
+## [v5.16.1] - 2026-10-11
+
+### 🤖 Quran AI tafsir — no more false "API key যোগ করুন" + self-healing AI layer
+- **The key card lied.** Whenever the AI request failed for ANY reason (network drop, quota, retired model, bad paste), the tafsir screen showed a static "AI তাফসীর ব্যবহার করতে Settings এ API key যোগ করুন" card — even when the key was already set in Settings. Now the card shows the **REAL reason** in plain Bangla + a **🔄 আবার চেষ্টা করুন** retry button (bypasses cache, always a fresh request).
+- **Pasted keys are trimmed** end-to-end (Settings save + every request): a trailing space/newline from copying the key used to silently break the request URL, and the app blamed the missing key.
+- **Gemini model auto-fallback**: if the configured model id is retired/renamed server-side (HTTP 404 / "not found" / "not supported"), the app transparently walks a fallback chain — `gemini-flash-latest → gemini-2.5-flash → gemini-2.0-flash` — so a dead model id can never break AI tafsir / Scholar / Tajweed voice.
+- **Transient network retry**: one immediate retry on the same model for momentary mobile-network drops.
+- **Honest error messages**: raw JSON dumps replaced with actionable Bangla — key invalid / quota finished (429) / server busy (5xx) / network problem.
+- Applies to ALL AI paths: chat (`ask`), vision (`analyzeImage`) and tajweed voice (`analyzeAudio`).
+
+### 📱 Status-bar area — taller + fully synced with every screen
+- The transparent status-bar strip (system clock/battery area) is now **12dp taller** on Home, Quran list, Quran reader, Prayer times, 99 Names, Tasbih, Qibla, App Lock and Onboarding — content no longer crowds the clock.
+- **Fully synced colors**: the app's root Surface now paints `colorScheme.background` (was `surface`), so the status-bar area shows the EXACT same color as the screen below in both light and dark mode — no more off-tone strip on top. The reader top bar is zero-inset + status-padded so it matches too.
+
+### 🔢 Quran ayat number — smaller + slightly transparent
+- The ornamental octagon ayat-number badge was too dominant: now compact (44×52dp → **34×40dp**, labelLarge → labelMedium, rail 52dp → 42dp) and rendered at **70% opacity** so it blends into the page. While the ayah is playing it stays near-opaque (95%) so the follow-along highlight still pops.
+
 ## [v5.16.0] - 2026-10-11
 
 ### 🎙 Tajweed Checker — VOICE mode (full port of the web Tajbeed Checker)

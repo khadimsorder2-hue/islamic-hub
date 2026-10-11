@@ -405,13 +405,42 @@ fun TafsirFullScreen(
                 }
             }
             if (state.aiExplanation == null && !state.isAILoading) {
+                // v5.16.1 — honest failure card: shows the REAL reason from the
+                // AI layer (network / quota / model / key) + a retry button.
+                // The old static text blamed the API key even when the user had
+                // already set one in Settings.
                 Surface(
                     modifier = Modifier.fillMaxWidth().staggerEntrance(5), shape = RoundedCornerShape(16.dp),
                     color = MaterialTheme.colorScheme.surfaceContainerLow
                 ) {
-                    Text("AI তাফসীর ব্যবহার করতে Settings এ API key যোগ করুন",
-                        style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        textAlign = TextAlign.Center, modifier = Modifier.padding(16.dp))
+                    Column(
+                        modifier = Modifier.fillMaxWidth().padding(16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Text("⚠️", style = MaterialTheme.typography.titleMedium)
+                        Text(
+                            state.aiError ?: "AI তাফসীর এখনো প্রস্তুত হয়নি — আবার চেষ্টা করুন।",
+                            style = MaterialTheme.typography.bodySmall.copy(
+                                fontSize = banglaSp(MaterialTheme.typography.bodySmall.fontSize)
+                            ),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = TextAlign.Center
+                        )
+                        Surface(
+                            shape = RoundedCornerShape(20.dp),
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.premiumTap { vm.retryAI() }
+                        ) {
+                            Text(
+                                "🔄 আবার চেষ্টা করুন",
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.SemiBold,
+                                color = Color.White,
+                                modifier = Modifier.padding(horizontal = 18.dp, vertical = 8.dp)
+                            )
+                        }
+                    }
                 }
             }
 

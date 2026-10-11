@@ -10,10 +10,12 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -66,6 +68,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -195,6 +198,12 @@ fun QuranReaderScreen(
             // reading; a floating pill (below) lets you exit
             if (!state.readerFullscreen) {
             CenterAlignedTopAppBar(
+                // v5.16.1 — taller, fully-synced status-bar area: the bar itself
+                // adds a fixed 12dp on top of the system inset (windowInsets
+                // zeroed to avoid double padding) so the transparent strip with
+                // the system clock matches the reader page below.
+                modifier = Modifier.statusBarsPadding().padding(top = 12.dp),
+                windowInsets = WindowInsets(0, 0, 0, 0),
                 title = {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(
@@ -864,7 +873,7 @@ private fun AyahCard(
             // ─── Left rail: ornamental number box + play (Andi layout) ───
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.width(52.dp)
+                modifier = Modifier.width(42.dp)
             ) {
                 AyahNumberBadge(
                     number = ayah.numberInSurah,
@@ -1075,8 +1084,13 @@ private fun AyahNumberBadge(number: Int, isPlaying: Boolean) {
     val fill = if (isPlaying) MaterialTheme.colorScheme.primary else OrnamentCream
     val frame = if (isPlaying) MaterialTheme.colorScheme.primary else OrnamentGold
     val label = if (isPlaying) MaterialTheme.colorScheme.onPrimary else Color(0xFF6B5636)
+    // v5.16.1 — badge was too dominant on the page: compact 34×40 box and a
+    // slight transparency so the ornament blends into the card (full opacity
+    // kept while the ayah is playing so the highlight still pops).
     Box(
-        modifier = Modifier.size(width = 44.dp, height = 52.dp),
+        modifier = Modifier
+            .size(width = 34.dp, height = 40.dp)
+            .alpha(if (isPlaying) 0.95f else 0.70f),
         contentAlignment = Alignment.Center
     ) {
         androidx.compose.foundation.Canvas(modifier = Modifier.matchParentSize()) {
@@ -1097,7 +1111,7 @@ private fun AyahNumberBadge(number: Int, isPlaying: Boolean) {
         }
         Text(
             text = number.toString(),
-            style = MaterialTheme.typography.labelLarge,
+            style = MaterialTheme.typography.labelMedium,
             fontWeight = FontWeight.Bold,
             color = label
         )

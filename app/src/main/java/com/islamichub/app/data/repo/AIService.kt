@@ -87,6 +87,61 @@ class AIService(private val context: Context) {
         _config.value = config
     }
 
+    // ═══════════════ v5.16.1 — AI reliability layer ═══════════════
+
+    /**
+     * ONE normalization point for every AI call (ask / analyzeImage /
+     * analyzeAudio). Paste-in keys very often carry a trailing space or
+     * newline; with `?key=<key with space>` the request fails even though
+     * the key itself is perfectly valid — and the app then blamed "no API
+     * key". Trim everything, then fall back to the built-in key when the
+     * Settings key is blank (v5.15.1 behaviour kept).
+     */
+    private fun normalizedConfig(): Config {
+        val raw = _config.value
+        val trimmed = raw.copy(
+            apiKey = raw.apiKey.trim(),
+            baseUrl = raw.baseUrl.trim(),
+            model = raw.model.trim()
+        )
+        return if (trimmed.apiKey.isBlank())
+            trimmed.copy(apiKey = DEFAULT_API_KEY.trim()) else trimmed
+    }
+
+    /** HTTP failure carrying code+body so the fallback chain can react precisely. */
+    private class GeminiHttpException(val code: Int, val body: String?) :
+        Exception("Gemini API ত্রুটি $code: ${body?.take(300) ?: ""}") {
+        /** True when the configured model id simply no longer exists / is unsupported. */
+        val isModelGone: Boolean
+            get() = code == 404 || (body ?: "").lowercase().let {
+                "not found" in it || "not supported" in it
+            }
+    }
+
+    /**
+     * Translate raw HTTP failures into honest, actionable Bangla. The old
+     * raw-JSON messages made EVERY failure look like a missing API key —
+     * exactly what the user complained about (key already set in Settings,
+     * yet the AI tafsir card said "add API key").
+     */
+    private fun friendlyAiError(code: Int, body: String?): String {
+        val lower = (body ?: "").lowercase()
+        return when {
+            code == 400 && ("api key not valid" in lower || "api_key_invalid" in lower) ->
+                "API key সঠিক নয় — Settings → AI তে গিয়ে key আরেকবার যাচাই করুন।"
+            code == 401 || code == 403 ->
+                "API key গ্রহণ করা হয়নি (HTTP $code) — key বা প্ল্যান যাচাই করুন।"
+            code == 404 || "not found for api version" in lower ->
+                "এই মডেলটি পাওয়া যায়নি — অ্যাপ স্বয়ংক্রিয়ভাবে কাজের মডেলে ফলব্যাক করেছিল; তবুও ব্যর্থ হলে Settings এ মডেল বদলান।"
+            code == 429 ->
+                "AI কোটা/রেট লিমিট শেষ — কিছুক্ষণ পর আবার চেষ্টা করুন।"
+            code >= 500 ->
+                "AI সার্ভারে সাময়িক সমস্যা (HTTP $code) — একটু পরে আবার চেষ্টা করুন।"
+            else ->
+                "AI সংযোগ ব্যর্থ (HTTP $code) — ইন্টারনেট যাচাই করে আবার চেষ্টা করুন।"
+        }
+    }
+
     /**
      * Send a chat message to the LLM. Returns ChatResult with answer or error.
      *
@@ -105,8 +160,7 @@ class AIService(private val context: Context) {
         // back to the built-in key instead of failing every Quran/tafsir AI
         // call with "কোনো API key কনফিগার করা নেই". Fixes the report that the
         // Settings AI key "did not work" inside the Quran section.
-        val cfg = if (_config.value.apiKey.isBlank())
-            _config.value.copy(apiKey = DEFAULT_API_KEY) else _config.value
+        val cfg = normalizedConfig()
         if (cfg.apiKey.isBlank()) {
             return@withContext ChatResult(
                 requestId = "",
@@ -200,8 +254,7 @@ class AIService(private val context: Context) {
         bitmap: Bitmap,
         userMessage: String = VISION_PROMPT
     ): ChatResult = withContext(Dispatchers.IO) {
-        val cfg = if (_config.value.apiKey.isBlank())
-            _config.value.copy(apiKey = DEFAULT_API_KEY) else _config.value
+        val cfg = normalizedConfig()
         if (cfg.apiKey.isBlank()) {
             return@withContext ChatResult(
                 requestId = "",
@@ -292,7 +345,7 @@ class AIService(private val context: Context) {
         val response = client.newCall(request).execute()
         val responseBody = response.body?.string()
         if (!response.isSuccessful) {
-            throw Exception("Gemini API ত্রুটি ${response.code}: ${responseBody?.take(300)}")
+            throw Exception(friendlyAiError(response.code, responseBody))
         }
 
         val parsed = gson.fromJson(responseBody, JsonObject::class.java)
@@ -325,13 +378,63 @@ class AIService(private val context: Context) {
     /**
      * Call Gemini API (generativelanguage.googleapis.com)
      */
+    /**
+     * v5.16.1 — Gemini entry point with self-healing:
+     *  1. Configured model retired/renamed server-side (HTTP 404 / "not
+     *     found" / "not supported") → transparently walks a fallback chain
+     *     so a dead model id NEVER breaks AI features.
+     *  2. Transient IOException (mobile-network blip) → one immediate retry
+     *     on the same model.
+     *  3. Every final failure surfaces as an honest, actionable Bangla
+     *     message instead of a raw JSON dump.
+     */
     private fun callGemini(
         cfg: Config,
         systemPrompt: String,
         userMessage: String,
         history: List<ChatMessage>
     ): String {
-        val url = "${cfg.baseUrl.trimEnd('/')}/models/${cfg.model}:generateContent?key=${cfg.apiKey}"
+        val models = (listOf(cfg.model) + GEMINI_MODEL_FALLBACKS).distinct()
+        var lastHttp: GeminiHttpException? = null
+        var lastIo: java.io.IOException? = null
+        var index = 0
+        while (index < models.size) {
+            val model = models[index]
+            try {
+                return callGeminiOnce(cfg, model, systemPrompt, userMessage, history)
+            } catch (e: GeminiHttpException) {
+                lastHttp = e
+                if (!e.isModelGone) throw Exception(friendlyAiError(e.code, e.body))
+                index++ // model gone → try the next one in the chain
+            } catch (e: java.io.IOException) {
+                lastIo = e
+                try {
+                    // one immediate retry — most mobile-network drops are momentary
+                    return callGeminiOnce(cfg, model, systemPrompt, userMessage, history)
+                } catch (retryHttp: GeminiHttpException) {
+                    lastHttp = retryHttp
+                    if (!retryHttp.isModelGone) throw Exception(friendlyAiError(retryHttp.code, retryHttp.body))
+                    index++
+                } catch (_: java.io.IOException) {
+                    index++ // still offline — keep walking; network message wins at the end
+                }
+            }
+        }
+        throw when {
+            lastHttp != null -> Exception(friendlyAiError(lastHttp.code, lastHttp.body))
+            lastIo != null -> Exception("নেটওয়ার্ক সমস্যা — ইন্টারনেট সংযোগ যাচাই করে আবার চেষ্টা করুন।")
+            else -> Exception("AI সংযোগ ব্যর্থ — আবার চেষ্টা করুন।")
+        }
+    }
+
+    private fun callGeminiOnce(
+        cfg: Config,
+        model: String,
+        systemPrompt: String,
+        userMessage: String,
+        history: List<ChatMessage>
+    ): String {
+        val url = "${cfg.baseUrl.trimEnd('/')}/models/$model:generateContent?key=${cfg.apiKey}"
 
         val contentsArray = com.google.gson.JsonArray()
 
@@ -379,7 +482,7 @@ class AIService(private val context: Context) {
         val response = client.newCall(request).execute()
         val responseBody = response.body?.string()
         if (!response.isSuccessful) {
-            throw Exception("Gemini API ত্রুটি ${response.code}: ${responseBody?.take(300)}")
+            throw GeminiHttpException(response.code, responseBody)
         }
 
         val parsed = gson.fromJson(responseBody, JsonObject::class.java)
@@ -455,8 +558,7 @@ class AIService(private val context: Context) {
      * is the RAW model JSON — the caller parses it with [parseVoiceAnalysis].
      */
     suspend fun analyzeAudio(wavBytes: ByteArray): ChatResult = withContext(Dispatchers.IO) {
-        val cfg = if (_config.value.apiKey.isBlank())
-            _config.value.copy(apiKey = DEFAULT_API_KEY) else _config.value
+        val cfg = normalizedConfig()
         if (cfg.apiKey.isBlank()) {
             return@withContext ChatResult(
                 requestId = "",
@@ -537,7 +639,7 @@ class AIService(private val context: Context) {
         val response = client.newCall(request).execute()
         val responseBody = response.body?.string()
         if (!response.isSuccessful) {
-            throw Exception("Gemini API ত্রুটি ${response.code}: ${responseBody?.take(300)}")
+            throw Exception(friendlyAiError(response.code, responseBody))
         }
 
         val parsed = gson.fromJson(responseBody, JsonObject::class.java)
@@ -704,6 +806,17 @@ class AIService(private val context: Context) {
 
         /** v5.7.0 — default model is from the Gemini 3 series. */
         const val DEFAULT_MODEL = "gemini-3-flash"
+
+        /**
+         * v5.16.1 — ordered fallback chain used when the configured Gemini
+         * model id is retired/renamed server-side: the "-latest" alias plus
+         * the widely-available stable series. First model that answers wins.
+         */
+        val GEMINI_MODEL_FALLBACKS = listOf(
+            "gemini-flash-latest",
+            "gemini-2.5-flash",
+            "gemini-2.0-flash"
+        )
 
         /**
          * v5.9.0 — Scanner screen vision prompt. The user photographs Quran pages,

@@ -150,11 +150,15 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
 
     fun setAiApiKey(key: String) {
         viewModelScope.launch {
-            container.settingsRepository.setAiApiKey(key)
-            _state.value = _state.value.copy(aiApiKey = key)
+            // v5.16.1 — trim paste-in keys: a trailing space/newline (very common
+            // when copying from AI Studio) silently broke every AI request and
+            // the app blamed the missing key even though one was set.
+            val clean = key.trim()
+            container.settingsRepository.setAiApiKey(clean)
+            _state.value = _state.value.copy(aiApiKey = clean)
             container.aiService.updateConfig(
                 com.islamichub.app.data.repo.AIService.Config(
-                    apiKey = key,
+                    apiKey = clean,
                     baseUrl = _state.value.aiBaseUrl,
                     model = _state.value.aiModel,
                     provider = _state.value.aiProvider

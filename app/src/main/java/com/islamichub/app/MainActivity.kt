@@ -93,7 +93,16 @@ class MainActivity : FragmentActivity() {
                 com.islamichub.app.ui.theme.LocalEnglishFontScale provides englishScale
             ) {
                 IslamicHubTheme(themeMode = themeMode) {
-                Surface(modifier = Modifier.fillMaxSize()) {
+                // v5.16.1 — the root Surface now paints colorScheme.background
+                // (was default `surface`). With edge-to-edge the whole window
+                // — INCLUDING the transparent status-bar strip — now shows the
+                // exact same color as every screen's background, so the system
+                // clock/battery area is fully synced with the app screen in
+                // both light and dark mode (no more off-tone strip on top).
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background
+                ) {
                     // Check onboarding status
                     var showOnboarding by remember { mutableStateOf(false) }
                     var showAppLock by remember { mutableStateOf(false) }
