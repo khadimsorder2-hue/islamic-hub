@@ -217,7 +217,10 @@ fun Modifier.premiumShimmer(
         label = "premiumShimmerProgress"
     )
     val base = MaterialTheme.colorScheme.surfaceVariant
-    val highlight = MaterialTheme.colorScheme.surface
+    // v5.17.0 — with surface == background (unified canvas) the old surface
+    // highlight became invisible in dark mode; the highest container step
+    // keeps a clearly visible light band in BOTH themes.
+    val highlight = MaterialTheme.colorScheme.surfaceContainerHighest
     val baseColor = base.copy(alpha = baseAlpha)
     this
         .clip(shape)

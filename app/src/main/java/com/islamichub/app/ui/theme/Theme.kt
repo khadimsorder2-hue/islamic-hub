@@ -81,7 +81,14 @@ private val DarkColors = darkColorScheme(
     tertiary = IslamicVioletNight,
     background = DarkBg,
     onBackground = TextPrimaryDark,
-    surface = DarkSurface,
+    // v5.17.0 — UNIFIED PREMIUM CANVAS (PrimeTube reference): in dark mode
+    // surface used to be #1B1822 while background was #121016, so every
+    // Scaffold/TopAppBar screen showed a slightly lighter tone than the
+    // no-Scaffold screens (Home/Prayer/Names) — the user saw this as "আলাদা
+    // layout". surface now equals background, so the status-bar strip, the
+    // top app bar and the page body are ONE continuous canvas on all 43
+    // screens; cards still stand out via the unchanged surfaceContainer* ramp.
+    surface = DarkBg,
     onSurface = TextPrimaryDark,
     surfaceVariant = DarkSurfaceAlt,
     onSurfaceVariant = TextSecondaryDark,

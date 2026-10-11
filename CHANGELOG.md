@@ -2,6 +2,22 @@
 
 All notable changes to the Islamic Hub project.
 
+## [v5.17.0] - 2026-10-12
+
+### 🎨 One unified premium canvas — system info on every screen (PrimeTube-style)
+- **The dark-mode two-tone is gone.** Dark theme used to draw Scaffold/TopAppBar screens on `surface` (#1B1822) while Home/Prayer/Names/Quran-list sat on `background` (#121016) — hopping between screens showed two slightly different dark layouts, breaking the premium feel. `surface` now equals `background`, so **all 43 screens — including the transparent status-bar strip with the system clock/battery — share ONE continuous dark canvas**, exactly like the reference app screenshot.
+- The Quran reader top bar is now fully **transparent**: the reading-theme color (cream / sepia / night gold...) flows behind the status bar and the toolbar together — no more dark strip floating over light reading themes (title/icon tints adapt automatically to light vs dark reading themes).
+- Skeleton shimmer highlight and the Surah list card colors were retuned to the container ramp so cards and loading states still pop on the unified canvas.
+
+### 📋 Quran AI tafsir — copy button + copy-selected
+- The AI স্কলার card now has a **one-tap copy button** — copies the entire AI tafsir instantly ("AI তাফসীর কপি হয়েছে" toast).
+- **Select any part**: long-press on the AI tafsir text (and every other reading block — ayah preview, translations, tafsir sources, offline tafsir, your note) to select exactly the portion you want and copy it via the system menu.
+
+### 🧘 Quran reader — minimalistic controls
+- The reader toolbar had **7 crowded icons** (A−, A+, palette, fullscreen, reciter, jump, play). Now: **Play + one Tune icon** — that's it.
+- The Tune icon opens a single calm **রিডার সেটিংস** sheet: compact reading-theme color circles, font size (A− / A+ with live %), reading toggles (ফুলস্ক্রিন রিডিং / শব্দে শব্দ অর্থ / বিকল্প অর্থ) and actions (কারী নির্বাচন with current reciter, আয়াতে যান, পুরো সূরা পড়ুন).
+- The fat reciter+font banner and the word-by-word / alt-meaning chips were removed from the top of the reading page — the mushaf page now starts clean with the ayahs.
+
 ## [v5.16.1] - 2026-10-11
 
 ### 🤖 Quran AI tafsir — no more false "API key যোগ করুন" + self-healing AI layer

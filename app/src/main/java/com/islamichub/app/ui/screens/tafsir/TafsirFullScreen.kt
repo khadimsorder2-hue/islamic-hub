@@ -17,6 +17,7 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Bolt
@@ -158,11 +159,14 @@ fun TafsirFullScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             // ─── Ayah Preview (premium gradient hero) ───
+            // v5.17.0 — SelectionContainer: long-press any part of the ayah /
+            // translation to select and copy exactly that portion.
             if (state.arabicText.isNotBlank()) {
                 Surface(
                     modifier = Modifier.fillMaxWidth().staggerEntrance(0), shape = RoundedCornerShape(20.dp),
                     color = Color.Transparent
                 ) {
+                    SelectionContainer {
                     Column(
                         modifier = Modifier
                             .background(
@@ -215,6 +219,7 @@ fun TafsirFullScreen(
                                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f))
                         }
                     }
+                    }
                 }
             }
 
@@ -256,6 +261,7 @@ fun TafsirFullScreen(
                     Surface(
                         modifier = Modifier.fillMaxWidth().staggerEntrance(2), shape = RoundedCornerShape(16.dp), color = bgColor
                     ) {
+                        SelectionContainer {
                         Column(modifier = Modifier.padding(16.dp)) {
                             Text(sel.name, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold,
                                 color = txtColor.copy(alpha = 0.8f))
@@ -263,6 +269,7 @@ fun TafsirFullScreen(
                                 fontSize = if (sel.language == "en") englishSp(MaterialTheme.typography.bodyLarge.fontSize)
                                            else banglaSp(MaterialTheme.typography.bodyLarge.fontSize)
                             ), color = txtColor)
+                        }
                         }
                     }
                 }
@@ -318,11 +325,22 @@ fun TafsirFullScreen(
                                         Text(if (sel.language == "en") "En" else "বাং", style = MaterialTheme.typography.labelSmall, color = Color.White)
                                     }
                                     Text("  ${sel.name}", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, color = txtColor)
+                                    Spacer(Modifier.weight(1f))
+                                    // v5.17.0 — one-tap copy for the selected tafsir source
+                                    IconButton(onClick = {
+                                        clipboardManager.setText(AnnotatedString("${sel.name}\n\n${stripHtml(sel.text)}"))
+                                        Toast.makeText(context, "তাফসীর কপি হয়েছে", Toast.LENGTH_SHORT).show()
+                                    }) {
+                                        Icon(Icons.Filled.ContentCopy, contentDescription = "তাফসীর কপি",
+                                            tint = txtColor.copy(alpha = 0.7f), modifier = Modifier.size(16.dp))
+                                    }
                                 }
+                                SelectionContainer {
                                 Text(stripHtml(sel.text), style = MaterialTheme.typography.bodyMedium.copy(
                                     fontSize = if (sel.language == "en") englishSp(MaterialTheme.typography.bodyMedium.fontSize)
                                                else banglaSp(MaterialTheme.typography.bodyMedium.fontSize)
                                 ), color = txtColor)
+                                }
                             }
                         }
                     } else if (sel.language == "en") {
@@ -348,9 +366,11 @@ fun TafsirFullScreen(
                         if (state.isCached) {
                             Text("✓ অফলাইনে সংরক্ষিত", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
                         }
+                        SelectionContainer {
                         Text(state.tafsirText!!, style = MaterialTheme.typography.bodyLarge.copy(
                             fontSize = banglaSp(MaterialTheme.typography.bodyLarge.fontSize)
                         ), color = MaterialTheme.colorScheme.onSurface)
+                        }
                     }
                 }
             } else if (!state.isLoading && state.error != null) {
@@ -397,10 +417,24 @@ fun TafsirFullScreen(
                                 contentAlignment = Alignment.Center) { Text("🤲", style = MaterialTheme.typography.labelSmall, color = Color.White) }
                             Text("  AI স্কলার", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold,
                                 color = MaterialTheme.colorScheme.onSecondaryContainer)
+                            Spacer(Modifier.weight(1f))
+                            // v5.17.0 — one-tap copy of the WHOLE AI tafsir
+                            IconButton(onClick = {
+                                clipboardManager.setText(AnnotatedString(explanation))
+                                Toast.makeText(context, "AI তাফসীর কপি হয়েছে", Toast.LENGTH_SHORT).show()
+                            }) {
+                                Icon(Icons.Filled.ContentCopy, contentDescription = "AI তাফসীর কপি",
+                                    tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                                    modifier = Modifier.size(16.dp))
+                            }
                         }
+                        // v5.17.0 — select-any-part: long-press to select a portion
+                        // of the AI tafsir and copy it via the system menu
+                        SelectionContainer {
                         Text(explanation, style = MaterialTheme.typography.bodyMedium.copy(
                             fontSize = banglaSp(MaterialTheme.typography.bodyMedium.fontSize)
                         ), color = MaterialTheme.colorScheme.onSecondaryContainer)
+                        }
                     }
                 }
             }
@@ -482,11 +516,13 @@ fun TafsirFullScreen(
                     modifier = Modifier.fillMaxWidth().staggerEntrance(6), shape = RoundedCornerShape(16.dp),
                     color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f)
                 ) {
+                    SelectionContainer {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Text("📝 আপনার নোট", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold,
                             color = MaterialTheme.colorScheme.onSecondaryContainer)
                         Text(state.noteText, style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSecondaryContainer)
+                    }
                     }
                 }
             }

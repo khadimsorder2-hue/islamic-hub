@@ -24,8 +24,8 @@ android {
         applicationId = "com.islamichub.app"
         minSdk = 24
         targetSdk = 34
-        versionCode = 60
-        versionName = "5.16.1"
+        versionCode = 61
+        versionName = "5.17.0"
 
         // v5.7.0 — default Gemini API key injected at build time from the
         // GEMINI_API_KEY repository secret (never committed to git).

@@ -204,7 +204,10 @@ private fun PremiumSurahCard(
             .premiumTap(onClick = onOpen),
         shape = RoundedCornerShape(AppRadius.lg),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
+            // v5.17.0 — surface == background now (unified canvas); the explicit
+            // surface fill would have made this card an invisible box, so it
+            // moves to the container ramp like every other card.
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {

@@ -31,16 +31,15 @@ import androidx.compose.material.icons.filled.BookmarkBorder
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material.icons.filled.FastForward
-import androidx.compose.material.icons.filled.Fullscreen
 import androidx.compose.material.icons.filled.FullscreenExit
 import androidx.compose.material.icons.filled.GraphicEq
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Stop
+import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -50,6 +49,7 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilledTonalIconButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
@@ -58,8 +58,10 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -72,10 +74,13 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.islamichub.app.R
 import com.islamichub.app.data.AppContainer
@@ -202,8 +207,23 @@ fun QuranReaderScreen(
                 // adds a fixed 12dp on top of the system inset (windowInsets
                 // zeroed to avoid double padding) so the transparent strip with
                 // the system clock matches the reader page below.
+                // v5.17.0 — the bar is now fully TRANSPARENT so the reader theme
+                // color (cream / sepia / night...) flows behind the status bar
+                // exactly like the body — no more dark strip over light themes.
                 modifier = Modifier.statusBarsPadding().padding(top = 12.dp),
                 windowInsets = WindowInsets(0, 0, 0, 0),
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                    containerColor = Color.Transparent,
+                    titleContentColor = if (themed) {
+                        if (readerTheme.bg.luminance() < 0.5f) Color.White else Color(0xFF241A10)
+                    } else MaterialTheme.colorScheme.onSurface,
+                    navigationIconContentColor = if (themed) {
+                        if (readerTheme.bg.luminance() < 0.5f) Color.White else Color(0xFF241A10)
+                    } else MaterialTheme.colorScheme.onSurface,
+                    actionIconContentColor = if (themed) {
+                        if (readerTheme.bg.luminance() < 0.5f) Color.White else Color(0xFF241A10)
+                    } else MaterialTheme.colorScheme.onSurface
+                ),
                 title = {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(
@@ -224,38 +244,18 @@ fun QuranReaderScreen(
                     }
                 },
                 actions = {
-                    // Font size decrease
-                    IconButton(onClick = { vm.decreaseFontSize() }) {
-                        Text("A-", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                    // Font size increase
-                    IconButton(onClick = { vm.increaseFontSize() }) {
-                        Text("A+", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                    // v5.16.0 — reader theme picker (Andi-style themes)
-                    IconButton(onClick = { showThemeSheet = true }) {
-                        Icon(Icons.Filled.Palette, contentDescription = "রিডার থিম")
-                    }
-                    // v5.16.0 — fullscreen reading (Andi fullScreen pref)
-                    IconButton(onClick = { vm.toggleReaderFullscreen() }) {
-                        Icon(Icons.Filled.Fullscreen, contentDescription = "ফুলস্ক্রিন পড়া")
-                    }
-                    // v5.9.0 — the "বাংলা অডিও" pill was removed: it flipped a flag that
-                    // no playback path ever consumed (Bangla recitation pipeline is not
-                    // built yet), so the button was pure confusion. Reciter audio below.
-                    // Qari selector button
-                    IconButton(onClick = { showQariSelector = true }) {
-                        Icon(Icons.Filled.Person, contentDescription = "Select reciter")
-                    }
-                    // v5.10.0 — jump to a specific ayah
-                    IconButton(onClick = { showJumpDialog = true }) {
-                        Icon(Icons.Filled.FastForward, contentDescription = "আয়াতে যান")
-                    }
-                    // Play full surah
+                    // v5.17.0 — MINIMAL toolbar (user: "oi control gulo dekhte
+                    // valo lagche nah"). Was 7 crowded icons (A-, A+, palette,
+                    // fullscreen, reciter, jump, play) — now only Play (primary
+                    // action) + one Tune icon. Every other control lives in the
+                    // clean reader-settings sheet below.
                     if (state.surah != null) {
                         IconButton(onClick = { vm.playSurah() }) {
                             Icon(Icons.Filled.GraphicEq, contentDescription = "Play full surah")
                         }
+                    }
+                    IconButton(onClick = { showThemeSheet = true }) {
+                        Icon(Icons.Filled.Tune, contentDescription = "রিডার সেটিংস")
                     }
                 }
             )
@@ -324,72 +324,17 @@ fun QuranReaderScreen(
                     contentPadding = PaddingValues(16.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    // Reciter + Bangla audio + font size banner
-                    item {
-                        Surface(
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(12.dp),
-                            color = MaterialTheme.colorScheme.secondaryContainer
-                        ) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable { showQariSelector = true }
-                                    .padding(12.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Filled.Person,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.onSecondaryContainer
-                                )
-                                Text(
-                                    text = "কারী: ",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSecondaryContainer
-                                )
-                                Text(
-                                    text = state.selectedReciterName,
-                                    style = MaterialTheme.typography.titleSmall,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = MaterialTheme.colorScheme.onSecondaryContainer
-                                )
-                                // v5.9.0 — "বাংলা অডিও চালু" pill removed: the flag behind
-                                // it never influenced playback (no Bangla recitation pipeline
-                                // yet), so it advertised a feature that does not exist.
-                                Text(
-                                    text = "  ফন্ট: ${"%.0f".format(state.quranFontScale * 100)}%",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f)
-                                )
-                            }
-                        }
-                    }
+                    // v5.17.0 — the fat qari+font banner was removed (user: controls
+                    // don't look good). Reciter + font size now live in the reader
+                    // settings sheet (Tune icon).
 
                     // Note: Audio playback is controlled via the app-level
                     // FloatingAudioPlayer (visible across all screens when playing).
                     // Old in-list mini player removed per user request.
 
-                    // v5.15.0 — Andi-style card options: inline REAL word-by-word
-                    // chips + the optional বিকল্প অর্থ (মুহিউদ্দীন খান) meaning line
-                    item {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            FilterChip(
-                                selected = state.showWbwInline,
-                                onClick = { vm.toggleWbwInline() },
-                                label = { Text("🔤 শব্দে শব্দ", style = MaterialTheme.typography.labelSmall) }
-                            )
-                            FilterChip(
-                                selected = state.showAltMeaning,
-                                onClick = { vm.toggleAltMeaning() },
-                                label = { Text("📖 বিকল্প অর্থ", style = MaterialTheme.typography.labelSmall) }
-                            )
-                        }
-                    }
+                    // v5.15.0 — Andi-style card options moved into the settings
+                    // sheet (v5.17.0): the wbw / alt-meaning toggles no longer
+                    // crowd the top of the reading page.
 
                     // ─── Multi Bangla Translation Selector (v5.1+) ───
                     if (state.availableTranslations.isNotEmpty()) {
@@ -631,7 +576,7 @@ fun QuranReaderScreen(
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     IconButton(onClick = { showThemeSheet = true }) {
-                        Icon(Icons.Filled.Palette, contentDescription = "রিডার থিম",
+                        Icon(Icons.Filled.Tune, contentDescription = "রিডার সেটিংস",
                             tint = if (themed) readerTheme.banglaColor else MaterialTheme.colorScheme.onSurface)
                     }
                     IconButton(onClick = { vm.toggleReaderFullscreen() }) {
@@ -679,7 +624,10 @@ fun QuranReaderScreen(
         )
     }
 
-    // v5.16.0 — reader theme picker (Andi-style reading themes)
+    // v5.17.0 — ONE minimal reader-settings sheet (replaces the old theme-only
+    // sheet): compact theme circles, font size, reading toggles, reciter,
+    // jump + full-surah play. Everything the 7 toolbar icons + the fat banner
+    // + the 2 chips used to do, in one calm place behind the Tune icon.
     if (showThemeSheet) {
         ModalBottomSheet(onDismissRequest = { showThemeSheet = false }) {
             Column(
@@ -688,62 +636,160 @@ fun QuranReaderScreen(
                     .padding(horizontal = 20.dp, vertical = 8.dp)
             ) {
                 Text(
-                    "কুরআন রিডার থিম",
+                    "রিডার সেটিংস",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )
-                Spacer(Modifier.height(6.dp))
+                Spacer(Modifier.height(14.dp))
+
+                // ─── 1. Reading theme (compact color circles) ───
                 Text(
-                    "রিডিং পেজের রঙ — Andi অ্যাপ থেকে নেওয়া থিমসহ মোট ৬টি",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    "রিডিং থিম",
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
                 )
-                Spacer(Modifier.height(12.dp))
-                QuranReaderTheme.entries.forEach { t ->
-                    val selected = state.readerTheme == t
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(14.dp))
-                            .clickable {
-                                vm.setReaderTheme(t)
-                            }
-                            .background(
-                                if (selected) MaterialTheme.colorScheme.primary.copy(alpha = 0.08f)
-                                else Color.Transparent
-                            )
-                            .padding(vertical = 10.dp, horizontal = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Box(
+                Spacer(Modifier.height(10.dp))
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+                    items(QuranReaderTheme.entries.size) { tIdx ->
+                        val t = QuranReaderTheme.entries[tIdx]
+                        val selected = state.readerTheme == t
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
                             modifier = Modifier
-                                .size(36.dp)
-                                .clip(CircleShape)
-                                .background(
-                                    if (t == QuranReaderTheme.DEFAULT)
-                                        MaterialTheme.colorScheme.surfaceVariant else t.bg
-                                )
-                                .border(
-                                    2.dp,
-                                    if (selected) MaterialTheme.colorScheme.primary
-                                    else MaterialTheme.colorScheme.outline.copy(alpha = 0.35f),
-                                    CircleShape
-                                )
-                        )
-                        Spacer(Modifier.width(14.dp))
-                        Text(
-                            t.labelBn,
-                            style = MaterialTheme.typography.bodyLarge,
-                            fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
-                            modifier = Modifier.weight(1f)
-                        )
-                        if (selected) {
-                            Icon(
-                                Icons.Filled.Check,
-                                contentDescription = "নির্বাচিত",
-                                tint = MaterialTheme.colorScheme.primary
+                                .clip(RoundedCornerShape(14.dp))
+                                .clickable { vm.setReaderTheme(t) }
+                                .padding(horizontal = 4.dp, vertical = 6.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(40.dp)
+                                    .clip(CircleShape)
+                                    .background(
+                                        if (t == QuranReaderTheme.DEFAULT)
+                                            MaterialTheme.colorScheme.surfaceVariant else t.bg
+                                    )
+                                    .border(
+                                        2.dp,
+                                        if (selected) MaterialTheme.colorScheme.primary
+                                        else MaterialTheme.colorScheme.outline.copy(alpha = 0.35f),
+                                        CircleShape
+                                    ),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                if (selected) {
+                                    Icon(
+                                        Icons.Filled.Check,
+                                        contentDescription = "নির্বাচিত",
+                                        tint = if (t == QuranReaderTheme.DEFAULT)
+                                            MaterialTheme.colorScheme.primary
+                                        else if (t.bg.luminance() < 0.5f) Color.White
+                                        else Color.Black,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                }
+                            }
+                            Spacer(Modifier.height(4.dp))
+                            Text(
+                                t.labelBn,
+                                style = MaterialTheme.typography.labelSmall,
+                                maxLines = 1,
+                                color = if (selected) MaterialTheme.colorScheme.onSurface
+                                        else MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
+                    }
+                }
+
+                Spacer(Modifier.height(8.dp))
+                HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.15f))
+                Spacer(Modifier.height(8.dp))
+
+                // ─── 2. Font size ───
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        "ফন্ট সাইজ",
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Spacer(Modifier.weight(1f))
+                    FilledTonalIconButton(
+                        onClick = { vm.decreaseFontSize() },
+                        modifier = Modifier.size(38.dp)
+                    ) {
+                        Text("A−", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
+                    }
+                    Text(
+                        "%.0f".format(state.quranFontScale * 100) + "%",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier.padding(horizontal = 12.dp)
+                    )
+                    FilledTonalIconButton(
+                        onClick = { vm.increaseFontSize() },
+                        modifier = Modifier.size(38.dp)
+                    ) {
+                        Text("A+", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
+                    }
+                }
+
+                Spacer(Modifier.height(8.dp))
+                HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.15f))
+                Spacer(Modifier.height(8.dp))
+
+                // ─── 3. Reading toggles ───
+                ReaderToggleRow(
+                    title = "ফুলস্ক্রিন রিডিং",
+                    subtitle = "টুলবার লুকিয়ে পুরো পেজে পড়ুন",
+                    checked = state.readerFullscreen,
+                    onChange = { vm.toggleReaderFullscreen() }
+                )
+                ReaderToggleRow(
+                    title = "শব্দে শব্দ অর্থ",
+                    subtitle = "প্রতিটি আরবি শব্দের নিচে অর্থ",
+                    checked = state.showWbwInline,
+                    onChange = { vm.toggleWbwInline() }
+                )
+                ReaderToggleRow(
+                    title = "বিকল্প অর্থ",
+                    subtitle = "মুহিউদ্দীন খানের অর্থ লাইন",
+                    checked = state.showAltMeaning,
+                    onChange = { vm.toggleAltMeaning() }
+                )
+
+                Spacer(Modifier.height(8.dp))
+                HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.15f))
+                Spacer(Modifier.height(8.dp))
+
+                // ─── 4. Actions ───
+                ReaderActionRow(
+                    icon = Icons.Filled.Person,
+                    title = "কারী নির্বাচন",
+                    value = state.selectedReciterName
+                ) {
+                    showThemeSheet = false
+                    showQariSelector = true
+                }
+                ReaderActionRow(
+                    icon = Icons.Filled.FastForward,
+                    title = "আয়াতে যান",
+                    value = null
+                ) {
+                    showThemeSheet = false
+                    showJumpDialog = true
+                }
+                if (state.surah != null) {
+                    ReaderActionRow(
+                        icon = Icons.Filled.GraphicEq,
+                        title = "পুরো সূরা পড়ুন",
+                        value = null
+                    ) {
+                        showThemeSheet = false
+                        vm.playSurah()
                     }
                 }
                 Spacer(Modifier.height(28.dp))
@@ -1159,6 +1205,83 @@ private fun WbwChipsInline(words: List<com.islamichub.app.data.local.WbwWord>) {
                     }
                 }
             }
+        }
+    }
+}
+
+// ─── v5.17.0 — reader-settings sheet row helpers ────────────────────────────
+
+/**
+ * v5.17.0 — minimal toggle row for the reader settings sheet
+ * (fullscreen / word-by-word / alt meaning).
+ */
+@Composable
+private fun ReaderToggleRow(
+    title: String,
+    subtitle: String,
+    checked: Boolean,
+    onChange: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 6.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(title, style = MaterialTheme.typography.bodyLarge)
+            if (subtitle.isNotBlank()) {
+                Text(
+                    subtitle,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+        Switch(checked = checked, onCheckedChange = { onChange() })
+    }
+}
+
+/**
+ * v5.17.0 — minimal action row for the reader settings sheet
+ * (reciter / jump-to-ayah / play surah).
+ */
+@Composable
+private fun ReaderActionRow(
+    icon: ImageVector,
+    title: String,
+    value: String?,
+    onClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .clickable(onClick = onClick)
+            .padding(vertical = 12.dp, horizontal = 4.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            icon,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.size(22.dp)
+        )
+        Spacer(Modifier.width(14.dp))
+        Text(
+            title,
+            style = MaterialTheme.typography.bodyLarge,
+            modifier = Modifier.weight(1f)
+        )
+        if (!value.isNullOrBlank()) {
+            Text(
+                value,
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.padding(end = 4.dp)
+            )
         }
     }
 }
