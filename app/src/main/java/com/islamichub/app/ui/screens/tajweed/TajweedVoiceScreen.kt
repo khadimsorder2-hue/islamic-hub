@@ -777,7 +777,7 @@ private fun CountPill(emoji: String, count: Int, label: String, bg: Color) {
                 .background(bg.copy(alpha = 0.5f))
                 .padding(horizontal = 10.dp, vertical = 5.dp)
         ) {
-            Text("$emoji $countটি $label", color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+            Text("$emoji ${count}টি $label", color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Bold)
         }
     }
 }

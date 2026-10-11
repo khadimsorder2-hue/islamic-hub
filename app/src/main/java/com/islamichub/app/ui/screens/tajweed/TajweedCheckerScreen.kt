@@ -34,8 +34,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
 import com.islamichub.app.data.AppContainer
 import com.islamichub.app.ui.components.PremiumSectionHeader
 import com.islamichub.app.ui.theme.staggerEntrance

@@ -103,7 +103,9 @@ class VoiceRecorder {
                         isRecording.set(false)
                         break
                     }
-                    val read = record.read(buffer, buffer.size)
+                    // 3-arg ShortArray overload: (data, offsetInShorts, sizeInShorts)
+                    // — the 2-arg form resolves to ByteBuffer and fails to compile
+                    val read = record.read(buffer, 0, buffer.size)
                     if (read <= 0) continue
                     // RMS → 0..1 amplitude for the live mic pulse
                     var sum = 0.0
