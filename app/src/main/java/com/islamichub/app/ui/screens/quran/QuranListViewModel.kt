@@ -29,6 +29,14 @@ class QuranListViewModel(private val container: AppContainer) : ViewModel() {
     }
 
     private fun load() {
+        // v5.15.1 — seed instantly from the repository's session cache so
+        // re-entering the Quran list NEVER flashes a fresh loading spinner.
+        val seeded = container.quranRepository.cachedSurahList()
+        if (!seeded.isNullOrEmpty() && _state.value.surahs.isEmpty()) {
+            _state.value = _state.value.copy(
+                surahs = seeded, isLoading = false, loadFailed = false
+            )
+        }
         viewModelScope.launch {
             // v5.13.1 — HARDENED: timeout + full exception guard. Whatever
             // happens, the spinner always resolves to content or a retry state.
@@ -39,10 +47,13 @@ class QuranListViewModel(private val container: AppContainer) : ViewModel() {
                 _state.value = _state.value.copy(
                     surahs = list,
                     isLoading = false,
-                    loadFailed = list.isEmpty()
+                    loadFailed = list.isEmpty() && seeded.isNullOrEmpty()
                 )
             } catch (_: Exception) {
-                _state.value = _state.value.copy(isLoading = false, loadFailed = true)
+                _state.value = _state.value.copy(
+                    isLoading = false,
+                    loadFailed = _state.value.surahs.isEmpty()
+                )
             }
         }
     }

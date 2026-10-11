@@ -59,6 +59,11 @@ class QuranAssetSource(private val context: Context) {
      * first open. Falls back to the bundled full-Quran file if missing.
      */
     suspend fun loadSurah(number: Int): Surah? = withContext(Dispatchers.IO) {
+        // v5.15.1 — serve repeat opens from the parsed per-surah cache. This
+        // was THE "Quran reloads from scratch every time you enter" bug:
+        // perSurahCache existed but loadSurah never used it, so every reader
+        // open re-read + re-parsed the JSON asset from disk.
+        perSurahCache[number]?.let { return@withContext it }
         if (number in 1..114) {
             try {
                 // v5.14.1 — CRITICAL BUGFIX: "%03d".format() uses the device's
@@ -81,7 +86,9 @@ class QuranAssetSource(private val context: Context) {
                 // malformed/empty per-surah file now falls back to the full
                 // Quran parse instead of surfacing an empty surah.
                 if (parsed != null && parsed.ayahs.isNotEmpty()) {
-                    return@withContext parsed.toDomain()
+                    val domain = parsed.toDomain()
+                    perSurahCache[number] = domain
+                    return@withContext domain
                 }
             } catch (_: Exception) {
                 // fall through to full-Quran parse
@@ -97,8 +104,18 @@ class QuranAssetSource(private val context: Context) {
             fullQuranCache = parsed
             parsed
         }
-        cache.surahs.firstOrNull { it.number == number }?.toDomain()
+        cache.surahs.firstOrNull { it.number == number }?.toDomain()?.also {
+            // v5.15.1 — cache the fallback result too so the next open is instant.
+            perSurahCache[number] = it
+        }
     }
+
+    /**
+     * v5.15.1 — synchronous peek at an already-parsed surah (no IO). ViewModels
+     * use this to seed their UI instantly on re-entry, killing the flash of a
+     * fresh loading spinner every time the user opens the Quran.
+     */
+    fun peekCachedSurah(number: Int): Surah? = perSurahCache[number]
 
     suspend fun loadAllSurahs(): List<Surah> = withContext(Dispatchers.IO) {
         // v5.7.0 — stream per-surah files when available (lower memory peak).

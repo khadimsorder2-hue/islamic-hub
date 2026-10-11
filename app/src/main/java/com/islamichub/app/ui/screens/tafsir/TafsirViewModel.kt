@@ -181,8 +181,10 @@ class TafsirViewModel(
 
     private fun loadAIExplanation() {
         viewModelScope.launch {
-            val apiKey = container.settingsRepository.aiApiKey.first()
-            if (apiKey.isBlank()) return@launch
+            // v5.15.1 — no more settings-key gate here: AIService.ask() now
+            // falls back to the built-in key when the Settings key is blank,
+            // so the Quran AI tafsir works with EITHER key. (The old early-
+            // return killed Quran AI entirely when no custom key was set.)
             _state.value = _state.value.copy(isAILoading = true)
             try {
                 val surahData = container.quranRepository.getSurah(surah)

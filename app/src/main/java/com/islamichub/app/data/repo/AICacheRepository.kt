@@ -126,10 +126,17 @@ class AICacheRepository(private val context: Context) {
         return readList(prefs)
     }
 
-    /** Build a stable cache key — SHA-256 of provider|model|normalizedPrompt */
+    /**
+     * Build a stable cache key — SHA-256 of version|provider|model|normalizedPrompt.
+     * v5.15.1 — added the schema prefix so every answer cached BEFORE the
+     * truncation fix (old 2000-token cap produced 2–10-line cutoff answers)
+     * can never be served again; those stale entries become unreachable and
+     * are naturally pushed out by the 500-entry cap as fresh full answers
+     * get stored.
+     */
     private fun buildKey(provider: String, model: String, prompt: String): String {
         val normalized = prompt.trim().lowercase().replace("\\s+".toRegex(), " ")
-        val raw = "$provider|$model|$normalized"
+        val raw = "v3-fullanswers|$provider|$model|$normalized"
         val md = java.security.MessageDigest.getInstance("SHA-256")
         val bytes = md.digest(raw.toByteArray(Charsets.UTF_8))
         return bytes.joinToString("") { "%02x".format(it) }

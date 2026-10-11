@@ -17,7 +17,19 @@ class QuranRepository(
     private val assetSource: QuranAssetSource? = null
 ) {
 
+    // v5.15.1 — in-memory caches so re-entering the Quran section never shows
+    // a fresh loading spinner. The repository is a process-wide singleton, so
+    // these survive navigation between screens for the whole app session.
+    @Volatile private var listCache: List<SurahSummary>? = null
+
+    /** v5.15.1 — instant synchronous access to the last built surah list (null before first successful load). */
+    fun cachedSurahList(): List<SurahSummary>? = listCache
+
+    /** v5.15.1 — instant synchronous access to an already-parsed surah (null if not opened yet this session). */
+    fun cachedSurah(number: Int): Surah? = assetSource?.peekCachedSurah(number)
+
     suspend fun listSurahs(): List<SurahSummary> = withContext(Dispatchers.IO) {
+        listCache?.let { return@withContext it }
         if (assetSource != null) {
             try {
                 return@withContext assetSource.loadMeta().map {
@@ -31,7 +43,7 @@ class QuranRepository(
                         ayahCount = it.ayahCount,
                         isFullTextAvailable = true
                     )
-                }
+                }.also { listCache = it }
             } catch (_: Exception) {
                 // fall through to bundled sample
             }
@@ -48,7 +60,7 @@ class QuranRepository(
                 ayahCount = it.ayahCount,
                 isFullTextAvailable = data.fullSurahs.any { s -> s.number == it.number }
             )
-        }
+        }.also { listCache = it }
     }
 
     suspend fun getSurah(number: Int): Surah? = withContext(Dispatchers.IO) {

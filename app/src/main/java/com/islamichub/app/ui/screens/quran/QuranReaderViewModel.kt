@@ -72,6 +72,20 @@ class QuranReaderViewModel(
     }
 
     private fun load() {
+        // v5.15.1 — seed instantly from the session cache: if this surah was
+        // opened before in this app session, the reader shows it immediately
+        // with NO loading spinner, then confirms via the normal load below.
+        // This kills the "fresh loading every time I open the Quran" report.
+        val seeded = container.quranRepository.cachedSurah(surahNumber)
+        if (seeded != null) {
+            _state.value = _state.value.copy(
+                surah = seeded,
+                isLoading = false,
+                notAvailable = false,
+                loadFailed = false,
+                totalAyahsInSurah = seeded.ayahCount
+            )
+        }
         viewModelScope.launch {
             // v5.13.1 — HARDENED: bound the load with a timeout, catch ANY
             // throwable, and always clear the spinner. The endless-"loading"

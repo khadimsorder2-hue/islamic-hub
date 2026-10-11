@@ -43,7 +43,11 @@ class AIService(private val context: Context) {
         val model: String = DEFAULT_MODEL,
         val provider: String = "gemini",  // "gemini" | "openai" | "openrouter"
         val temperature: Double = 0.7,
-        val maxTokens: Int = 2000
+        // v5.15.1 — was 2000, which cut the Islamic-Scholar answers off after
+        // only 2–10 lines (Bangla tokenizes at ~2-4 tokens/word, so the full
+        // 12-section answer needs 3-6k tokens). 16384 lets the ENTIRE answer
+        // arrive — no more mid-sentence cutoffs in AI Scholar.
+        val maxTokens: Int = 16384
     )
 
     data class ChatMessage(
@@ -71,7 +75,9 @@ class AIService(private val context: Context) {
     private val client: OkHttpClient by lazy {
         OkHttpClient.Builder()
             .connectTimeout(30, TimeUnit.SECONDS)
-            .readTimeout(120, TimeUnit.SECONDS)
+            // v5.15.1 — 180s (was 120s): full-length Bangla scholar answers at
+            // 16k output tokens can legitimately take longer on slow networks.
+            .readTimeout(180, TimeUnit.SECONDS)
             .build()
     }
 
@@ -95,7 +101,12 @@ class AIService(private val context: Context) {
         useCache: Boolean = true,
         cacheType: String = "general"
     ): ChatResult = withContext(Dispatchers.IO) {
-        val cfg = _config.value
+        // v5.15.1 — if the user's Settings key is missing/blank, silently fall
+        // back to the built-in key instead of failing every Quran/tafsir AI
+        // call with "কোনো API key কনফিগার করা নেই". Fixes the report that the
+        // Settings AI key "did not work" inside the Quran section.
+        val cfg = if (_config.value.apiKey.isBlank())
+            _config.value.copy(apiKey = DEFAULT_API_KEY) else _config.value
         if (cfg.apiKey.isBlank()) {
             return@withContext ChatResult(
                 requestId = "",
@@ -189,7 +200,8 @@ class AIService(private val context: Context) {
         bitmap: Bitmap,
         userMessage: String = VISION_PROMPT
     ): ChatResult = withContext(Dispatchers.IO) {
-        val cfg = _config.value
+        val cfg = if (_config.value.apiKey.isBlank())
+            _config.value.copy(apiKey = DEFAULT_API_KEY) else _config.value
         if (cfg.apiKey.isBlank()) {
             return@withContext ChatResult(
                 requestId = "",
@@ -284,13 +296,19 @@ class AIService(private val context: Context) {
         }
 
         val parsed = gson.fromJson(responseBody, JsonObject::class.java)
+        // v5.15.1 — join ALL text parts (was parts[0] only). Some responses
+        // split the answer across multiple parts; taking only the first part
+        // silently dropped the rest of the answer.
         return parsed
             ?.getAsJsonArray("candidates")
             ?.get(0)?.asJsonObject
             ?.getAsJsonObject("content")
             ?.getAsJsonArray("parts")
-            ?.get(0)?.asJsonObject
-            ?.get("text")?.asString
+            ?.mapNotNull { part ->
+                (part as? JsonObject)?.get("text")?.takeIf { !it.isJsonNull }?.asString
+            }
+            ?.joinToString("")
+            ?.takeIf { it.isNotBlank() }
             ?: throw Exception("AI উত্তর পার্স করা যায়নি")
     }
 
@@ -365,13 +383,17 @@ class AIService(private val context: Context) {
         }
 
         val parsed = gson.fromJson(responseBody, JsonObject::class.java)
+        // v5.15.1 — join ALL text parts (was parts[0] only).
         return parsed
             ?.getAsJsonArray("candidates")
             ?.get(0)?.asJsonObject
             ?.getAsJsonObject("content")
             ?.getAsJsonArray("parts")
-            ?.get(0)?.asJsonObject
-            ?.get("text")?.asString
+            ?.mapNotNull { part ->
+                (part as? JsonObject)?.get("text")?.takeIf { !it.isJsonNull }?.asString
+            }
+            ?.joinToString("")
+            ?.takeIf { it.isNotBlank() }
             ?: throw Exception("AI উত্তর পার্স করা যায়নি")
     }
 
@@ -395,7 +417,9 @@ class AIService(private val context: Context) {
         val requestBody = JsonObject().apply {
             addProperty("model", model)
             addProperty("temperature", 0.7)
-            addProperty("max_tokens", 2000)
+            // v5.15.1 — max_tokens REMOVED: it was hardcoded at 2000, truncating
+            // every long Bangla answer. Omitting it lets each provider use the
+            // model's full output capacity.
             add("messages", gson.toJsonTree(messages.map { msg ->
                 JsonObject().apply {
                     addProperty("role", msg.role)

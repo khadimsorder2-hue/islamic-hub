@@ -2,6 +2,25 @@
 
 All notable changes to the Islamic Hub project.
 
+## [v5.15.1] - 2026-10-11
+
+### 🤖 AI Scholar — full-length answers (no more 2–10 line cutoffs)
+- **Root cause found**: `maxOutputTokens` was capped at 2000 — Bangla tokenizes at ~2–4 tokens/word, so the full 12-section Islamic-Scholar answer was silently truncated mid-sentence after only 2–10 lines. Raised to **16384 tokens** so the ENTIRE answer arrives.
+- Gemini responses now **join ALL text parts** (previously only `parts[0]` was read — multi-part answers silently lost their remainder).
+- OpenAI-compatible providers: hardcoded `max_tokens: 2000` removed — each model now uses its full output capacity.
+- Read timeout raised 120s → 180s for long Bangla answers on slow networks.
+- **Stale-answer cache invalidated**: every AI answer cached before this fix (the truncated ones) can no longer be served — new full answers replace them automatically.
+
+### 📖 Quran — AI key from Settings now works everywhere
+- Fixed the report that the AI key set in Settings "did not work" in the Quran section: `AIService` now **falls back to the built-in key whenever the Settings key is blank**, and the tafsir screen no longer refuses to run AI just because no custom key was saved. Either key — Settings key OR built-in — drives the per-ayah "AI তাফসীর" chip, the AI explanation popup and AI Scholar.
+
+### ⚡ Quran — instant re-entry (no fresh loading every time)
+- **Root cause found**: the per-surah parse cache existed but `loadSurah()` never used it — every reader open re-read + re-parsed the JSON asset from disk. Now repeat opens are served from the parsed in-memory cache (zero disk IO).
+- Surah list also cached for the whole app session; both the Quran list and the reader **seed their UI instantly** from the cache on re-entry — the fresh loading spinner on every entry is gone. First-ever open of a surah still shows the normal (brief) load.
+
+### 🇬🇧 English meaning — untouched & confirmed
+- The reader still shows the English meaning line under each ayah (toggleable) plus the English meaning in the surah header — now alongside the Andi Bangla uccharon/meaning/word-by-word stack.
+
 ## [v5.15.0] - 2026-10-11
 
 ### 📖 Al Quran Bangla (Andi) reference app — fully decoded & ported
