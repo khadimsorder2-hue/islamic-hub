@@ -109,7 +109,10 @@ fun TafsirFullScreen(
     // close, restore the READER's reading-theme appearance — the reader may
     // legitimately run dark icons over a cream canvas while the app theme is
     // dark. Falls back to the app-theme canvas for non-reader call sites.
+    // NOTE: MaterialTheme is @Composable — capture both values in the
+    // composable scope BEFORE the effect body runs.
     val tafsirCanvasLight = MaterialTheme.colorScheme.surface.luminance() > 0.5f
+    val fallbackAppCanvasLight = MaterialTheme.colorScheme.background.luminance() > 0.5f
     DisposableEffect(tafsirCanvasLight) {
         val window = (tafsirView.context as? android.app.Activity)?.window
         val controller = window?.let {
@@ -118,8 +121,7 @@ fun TafsirFullScreen(
         controller?.isAppearanceLightStatusBars = tafsirCanvasLight
         controller?.isAppearanceLightNavigationBars = tafsirCanvasLight
         onDispose {
-            val restore = restoreCanvasLight
-                ?: (MaterialTheme.colorScheme.background.luminance() > 0.5f)
+            val restore = restoreCanvasLight ?: fallbackAppCanvasLight
             controller?.isAppearanceLightStatusBars = restore
             controller?.isAppearanceLightNavigationBars = restore
         }

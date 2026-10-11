@@ -137,8 +137,10 @@ fun QuranReaderScreen(
     // global theme effect only knows the APP canvas, so the reader asserts
     // its own reading-theme appearance here and restores the app-theme one
     // on exit (TafsirFullScreen restores this value when it closes).
-    val readerCanvasLight = if (themed) readerTheme.bg.luminance() > 0.5f
-        else MaterialTheme.colorScheme.background.luminance() > 0.5f
+    // NOTE: MaterialTheme is @Composable — both values are captured in the
+    // composable scope BEFORE the effect body runs.
+    val appCanvasLight = MaterialTheme.colorScheme.background.luminance() > 0.5f
+    val readerCanvasLight = if (themed) readerTheme.bg.luminance() > 0.5f else appCanvasLight
     androidx.compose.runtime.DisposableEffect(readerCanvasLight) {
         val window = (view.context as? android.app.Activity)?.window
         val controller = window?.let {
@@ -147,7 +149,6 @@ fun QuranReaderScreen(
         controller?.isAppearanceLightStatusBars = readerCanvasLight
         controller?.isAppearanceLightNavigationBars = readerCanvasLight
         onDispose {
-            val appCanvasLight = MaterialTheme.colorScheme.background.luminance() > 0.5f
             controller?.isAppearanceLightStatusBars = appCanvasLight
             controller?.isAppearanceLightNavigationBars = appCanvasLight
         }
