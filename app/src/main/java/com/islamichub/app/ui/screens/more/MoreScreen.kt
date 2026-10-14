@@ -32,8 +32,10 @@ import androidx.compose.material.icons.filled.MenuBook
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.SelfImprovement
 import androidx.compose.material.icons.filled.Spa
 import androidx.compose.material.icons.filled.SystemUpdate
+import androidx.compose.material.icons.filled.Translate
 import androidx.compose.material.icons.filled.WbSunny
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -73,6 +75,9 @@ fun MoreScreen(
         MoreItem(R.string.more_tasbih, Icons.Filled.Spa, Screen.Tasbih.route, Color(0xFFB36283)),
         MoreItem(R.string.more_99_names, Icons.Filled.Favorite, Screen.Names.route, Color(0xFFE91E63)),
         MoreItem(R.string.more_duas, Icons.Filled.Book, Screen.Duas.route, Color(0xFF6B6E91)),
+        // v5.18.0 — Zikr hub (Muslimeen adoption) + Arabic alphabet
+        MoreItem(R.string.more_zikr_hub, Icons.Filled.SelfImprovement, Screen.ZikrHub.route, Color(0xFF0E7C5A)),
+        MoreItem(R.string.more_alphabet, Icons.Filled.Translate, Screen.Alphabet.route, Color(0xFF3949AB)),
         MoreItem(R.string.more_calendar, Icons.Filled.DateRange, Screen.Calendar.route, Color(0xFF7E57C2)),
         MoreItem(R.string.more_hadith, Icons.Filled.Book, Screen.Hadith.route, Color(0xFF1B5E20)),
         MoreItem(R.string.more_qada, Icons.Filled.History, Screen.Qada.route, Color(0xFFD84315)),

@@ -5,6 +5,7 @@ import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.border
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -71,6 +72,7 @@ import com.islamichub.app.ui.components.PremiumSectionHeader
 import com.islamichub.app.ui.components.rememberAssetBitmap
 import com.islamichub.app.ui.theme.PremiumProgressBar
 import com.islamichub.app.util.PrayerTimeFormatter
+import com.islamichub.app.ui.theme.banglaSp
 import com.islamichub.app.ui.theme.staggerEntrance
 import androidx.compose.ui.graphics.asImageBitmap
 import com.islamichub.app.ui.theme.premiumTap
@@ -112,9 +114,24 @@ fun PrayerScreen(container: AppContainer) {
     val loadingText = stringResource(R.string.prayer_loading)
     val errorText = stringResource(R.string.prayer_error)
 
+    // v5.18.0 — Muslimeen-style live countdown: tick every 30s so the hero
+    // card and the highlighted next-prayer row stay fresh while on screen.
+    var nowTick by remember { mutableStateOf(System.currentTimeMillis()) }
+    LaunchedEffect(Unit) {
+        while (true) {
+            kotlinx.coroutines.delay(30_000)
+            nowTick = System.currentTimeMillis()
+        }
+    }
+
     // Next-prayer progress (fraction between previous and next prayer)
-    val nextPrayerInfo = state.times?.let {
-        computeNextPrayerProgress(it, fajrName, dhuhrName, asrName, maghribName, ishaName)
+    // v5.18.0 — reading nowTick here makes the computation (and the whole
+    // hero countdown) re-run on every 30s tick; the tick value itself is
+    // only a recomposition key.
+    val nextPrayerInfo = nowTick.let {
+        state.times?.let { t ->
+            computeNextPrayerProgress(t, fajrName, dhuhrName, asrName, maghribName, ishaName)
+        }
     }
 
     // v5.11.0 — status-bar-aware top padding (edge-to-edge fix)
@@ -125,64 +142,93 @@ fun PrayerScreen(container: AppContainer) {
     ) {
         // Premium hero with bg image (kept per user request)
         item {
-            val bgBitmap = rememberAssetBitmap(context, "img/prayer-premium-bg.webp")
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(200.dp)
-                    .clip(RoundedCornerShape(28.dp))
+            // v5.18.0 — MUSLIMEEN-STYLE HERO: one big gradient card that leads
+            // with the NEXT prayer + a live hour/minute countdown (their prayer
+            // screen's signature), location + hijri date below. Replaces the
+            // image banner + the separate progress card.
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(28.dp),
+                color = Color.Transparent
             ) {
-                if (bgBitmap != null) {
-                    Image(
-                        bitmap = bgBitmap.asImageBitmap(),
-                        contentDescription = null,
-                        modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Crop
-                    )
-                    Box(
-                        modifier = Modifier.fillMaxSize().background(
-                            brush = Brush.verticalGradient(
-                                colors = listOf(Color.Black.copy(alpha = 0.3f), Color.Black.copy(alpha = 0.7f))
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(
+                            Brush.horizontalGradient(
+                                colors = listOf(
+                                    Color(0xFF0E7C5A),
+                                    Color(0xFF14A374),
+                                    Color(0xFF1565C0)
+                                )
                             )
                         )
-                    )
-                } else {
-                    Box(modifier = Modifier.fillMaxSize().background(
-                        Brush.horizontalGradient(
-                            colors = listOf(
-                                MaterialTheme.colorScheme.primary,
-                                MaterialTheme.colorScheme.secondary
-                            )
-                        )
-                    ))
-                }
-                Column(
-                    modifier = Modifier.fillMaxSize().padding(20.dp),
-                    verticalArrangement = Arrangement.Center
+                        .padding(20.dp)
                 ) {
-                    Text(
-                        text = stringResource(R.string.prayer_title),
-                        style = MaterialTheme.typography.headlineMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
-                    )
-                    Spacer(Modifier.height(4.dp))
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        Icon(Icons.Filled.LocationOn, contentDescription = null,
-                            tint = Color.White.copy(alpha = 0.9f), modifier = Modifier.size(16.dp))
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Icon(Icons.Filled.LocationOn, contentDescription = null,
+                                tint = Color.White.copy(alpha = 0.9f), modifier = Modifier.size(14.dp))
+                            Text(
+                                text = state.times?.locationName ?: locationFallback,
+                                style = MaterialTheme.typography.labelMedium,
+                                color = Color.White.copy(alpha = 0.95f)
+                            )
+                        }
                         Text(
-                            text = state.times?.locationName ?: locationFallback,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = Color.White.copy(alpha = 0.95f)
+                            text = "পরবর্তী নামাজ",
+                            style = MaterialTheme.typography.labelLarge,
+                            color = Color.White.copy(alpha = 0.85f)
                         )
-                    }
-                    state.times?.hijriDate?.let {
-                        Text(it,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = Color.White.copy(alpha = 0.85f))
+                        if (nextPrayerInfo != null) {
+                            Row(
+                                verticalAlignment = Alignment.Bottom,
+                                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                            ) {
+                                Text(
+                                    text = nextPrayerInfo.name,
+                                    style = MaterialTheme.typography.headlineMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.White
+                                )
+                                Text(
+                                    text = PrayerTimeFormatter.to12HourBangla(nextPrayerInfo.time),
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = Color.White.copy(alpha = 0.9f)
+                                )
+                            }
+                            val remain = nextPrayerInfo.remainingMinutes
+                            if (remain in 1..(24 * 60)) {
+                                val h = remain / 60
+                                val m = remain % 60
+                                Text(
+                                    text = if (h > 0) "বাকি $h ঘণ্টা $m মিনিট" else "বাকি $m মিনিট",
+                                    style = MaterialTheme.typography.titleSmall.copy(fontSize = banglaSp(MaterialTheme.typography.titleSmall.fontSize)),
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = Color(0xFFFFE082)
+                                )
+                            }
+                            PremiumProgressBar(
+                                progress = nextPrayerInfo.fraction,
+                                modifier = Modifier.fillMaxWidth(),
+                                fillColor = Color.White
+                            )
+                        } else {
+                            Text(
+                                text = stringResource(R.string.prayer_title),
+                                style = MaterialTheme.typography.headlineMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
+                            )
+                        }
+                        state.times?.hijriDate?.let {
+                            Text(it,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = Color.White.copy(alpha = 0.85f))
+                        }
                     }
                 }
             }
@@ -272,49 +318,13 @@ fun PrayerScreen(container: AppContainer) {
                         Triple(maghribName, t.maghrib, true),
                         Triple(ishaName, t.isha, true)
                     )
-                    nextPrayerInfo?.let { info ->
-                        item(key = "next_prayer_progress") {
-                            Surface(
-                                modifier = Modifier.fillMaxWidth(),
-                                shape = RoundedCornerShape(16.dp),
-                                color = MaterialTheme.colorScheme.secondaryContainer
-                            ) {
-                                Column(
-                                    modifier = Modifier.fillMaxWidth().padding(16.dp),
-                                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                                ) {
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.SpaceBetween,
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Text(
-                                            text = "পরবর্তী নামাজ: ${info.name}",
-                                            style = MaterialTheme.typography.titleSmall,
-                                            fontWeight = FontWeight.SemiBold,
-                                            color = MaterialTheme.colorScheme.onSecondaryContainer
-                                        )
-                                        Text(
-                                            text = PrayerTimeFormatter.to12HourBangla(info.time),
-                                            style = MaterialTheme.typography.titleSmall,
-                                            fontWeight = FontWeight.Bold,
-                                            color = MaterialTheme.colorScheme.primary
-                                        )
-                                    }
-                                    PremiumProgressBar(
-                                        progress = info.fraction,
-                                        modifier = Modifier.fillMaxWidth(),
-                                        fillColor = MaterialTheme.colorScheme.primary
-                                    )
-                                }
-                            }
-                        }
-                    }
                     itemsIndexed(rows, key = { _, row -> row.first }) { index, row ->
                         val jamat = jamatTimes.firstOrNull { it.prayerName == row.first }
-                        // v5.14.0 — 12-hour Bangla display ("ভোর ৪:৪৫"), 24h dropped
+                        // v5.18.0 — Muslimeen style: the NEXT prayer row is
+                        // highlighted with an accent ring + "পরবর্তী" chip
                         PrayerRowPremium(
                             row.first, PrayerTimeFormatter.to12HourBangla(row.second), row.third, jamat, context,
+                            isNext = nextPrayerInfo?.name == row.first,
                             modifier = Modifier.staggerEntrance(index)
                         )
                     }
@@ -383,6 +393,7 @@ fun PrayerScreen(container: AppContainer) {
 private fun PrayerRowPremium(
     name: String, time: String, isFard: Boolean,
     jamat: JamatTime?, context: android.content.Context,
+    isNext: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     // Minimal compact design — no image, gradient only
@@ -407,7 +418,9 @@ private fun PrayerRowPremium(
         modifier = modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = Color.Transparent),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = if (isNext) 4.dp else 0.dp
+        )
     ) {
         Box(
             modifier = Modifier
@@ -420,13 +433,19 @@ private fun PrayerRowPremium(
                         )
                     )
                 )
+                // v5.18.0 — Muslimeen style: accent ring around the next prayer
+                .then(
+                    if (isNext) Modifier.border(
+                        2.dp, prayerColor, RoundedCornerShape(16.dp)
+                    ) else Modifier
+                )
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                // Left: emoji + name
+                // Left: emoji + name (+ "পরবর্তী" chip when this is next)
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Box(
                         modifier = Modifier
@@ -439,12 +458,30 @@ private fun PrayerRowPremium(
                     }
                     Spacer(Modifier.size(12.dp))
                     Column {
-                        Text(
-                            text = name,
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = name,
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            if (isNext) {
+                                Spacer(Modifier.size(6.dp))
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(50))
+                                        .background(prayerColor)
+                                        .padding(horizontal = 8.dp, vertical = 2.dp)
+                                ) {
+                                    Text(
+                                        "পরবর্তী",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = Color.White,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
+                        }
                         if (jamat != null && jamat.enabled) {
                             Text(
                                 text = "🕌 জামাত: ${PrayerTimeFormatter.to12HourBangla(jamat.jamatTime)}",
@@ -579,7 +616,9 @@ private fun JamatTimeDialog(
 private data class NextPrayerProgress(
     val name: String,
     val time: String,
-    val fraction: Float
+    val fraction: Float,
+    /** v5.18.0 — minutes until the next prayer, for the live countdown. */
+    val remainingMinutes: Int = 0
 )
 
 /**
@@ -624,12 +663,12 @@ private fun computeNextPrayerProgress(
         val next = parsed[nextIdx]
         val prevMin = if (nextIdx > 0) parsed[nextIdx - 1].second else parsed.last().second - 24 * 60
         val span = (next.second - prevMin).coerceAtLeast(1)
-        NextPrayerProgress(next.first, next.third, ((nowMin - prevMin).toFloat() / span).coerceIn(0f, 1f))
+        NextPrayerProgress(next.first, next.third, ((nowMin - prevMin).toFloat() / span).coerceIn(0f, 1f), next.second - nowMin)
     } else {
         // After Isha — the next prayer is tomorrow's Fajr
         val fajr = parsed.first()
         val isha = parsed.last()
         val span = (fajr.second + 24 * 60 - isha.second).coerceAtLeast(1)
-        NextPrayerProgress(fajr.first, fajr.third, ((nowMin - isha.second).toFloat() / span).coerceIn(0f, 1f))
+        NextPrayerProgress(fajr.first, fajr.third, ((nowMin - isha.second).toFloat() / span).coerceIn(0f, 1f), fajr.second + 24 * 60 - nowMin)
     }
 }

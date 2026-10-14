@@ -2,6 +2,35 @@
 
 All notable changes to the Islamic Hub project.
 
+## [v5.18.0] - 2026-10-13
+
+### 🕌 Zikr & Dua Hub — fully adopted from the Muslimeen app
+- **37 categories → 208 topics → 265 adhkar**, the complete Muslimeen dataset, every meaning translated into Bangla. Categories (সব সময়, সকালের যিকর, সন্ধ্যার যিকর, নামাজ-পরবর্তী, ক্ষমা, রিজিক, হেফাজত, সফর, রোগ-শোক, জ্ঞান, রমজান, হজ-ওমরাহ, মৃত… ) open into topic lists, and each adhkar card shows the Arabic, transliteration, Bangla meaning + reference.
+- **Daily counter built in** — tap the + pill on any adhkar to count (persists per day, resets at midnight), with a per-adhkar reset. Counting also feeds the app-wide daily zikr stat.
+- One-tap **copy** and **share** on every adhkar.
+
+### 🔤 Arabic Alphabet — adopted with all 29 letter sounds
+- New **আরবি বর্ণমালা** screen: 29 letter cards (আলিফ থেকে হামজা) with Bangla names. Tap any letter to hear its authentic recorded sound (the Muslimeen app's letter_sounds set); the card pulses while playing.
+
+### 🌙 Quran — translation + transliteration + 6 new reciters + reciter preview
+- **ইংরেজি উচ্চারণ (Latin transliteration)** toggle in the reader settings — all 6236 ayahs (Sahih International transliteration from the same source dataset) rendered as an italic line under the Bangla uccharon.
+- **6 new reciters**: Husary (Mujawwad), Minshawi (Mujawwad), Abdul Basit Abdus Samad, Hani Ar-Rifai, Abdullah Basfar, Ayman Sowaid — the CDN availability of every edition was verified first (64kbps CDN used where 128 is not hosted), for both streaming and offline download.
+- **Reciter preview**: a play button on every reciter row in the কারী নির্বাচন sheet streams ayah 1 of that reciter so you can LISTEN before selecting — the Muslimeen app's signature reciter-picker UX.
+
+### 🕌 Namaz time UI — Muslimeen style
+- The prayer screen now leads with one big **পরবর্তী নামাজ hero card**: next prayer name, its time, a live "বাকি ২ ঘণ্টা ১৪ মিনিট" countdown (refreshes every 30s), a progress bar, location + hijri date — on a green-teal gradient.
+- The **next prayer row is highlighted** with an accent ring, elevation and a "পরবর্তী" chip, exactly like the reference app's current-prayer emphasis.
+
+### 📊 Tracker — weekly prayer chart
+- New **গত ৭ দিনের চার্ট**: 7 gradient bars (oldest → today), height = prayers completed that day, Bangla weekday labels, today highlighted — adopted from the Muslimeen tracker's chart concept.
+
+### 📚 Thematic hadith — copy, AI, share + 1-10 trusted score
+- Every hadith in হাদিস বিষয়াদি now shows a **বিশ্বাসযোগ্যতা score 1-10** with a color-coded badge (deep green 10 for Sahih Bukhari/Muslim → red 1 for fabricated), derived from the hadith grade and the collection in the reference line.
+- **Copy** and **Share** buttons per hadith (Arabic + Bangla + reference), and an **AI ব্যাখ্যা** expander that explains the hadith in simple Bangla (মূল কথা → প্রেক্ষাপট → জীবনে শিক্ষা → সারকথা), same built-in key fallback as the Quran AI tafsir.
+
+### 📱 Even less top blank space
+- The Quran reader compact header shrinks **52dp → 44dp** and the surah meaning is merged into the title line — one slim single-line header over the reading canvas (top chrome now ~69dp from the original ~101dp).
+
 ## [v5.17.1] - 2026-10-12
 
 ### 🌗 System info visible on EVERY theme (root fix)

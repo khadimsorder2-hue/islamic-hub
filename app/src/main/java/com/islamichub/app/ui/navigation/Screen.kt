@@ -88,6 +88,18 @@ sealed class Screen(val route: String) {
     data object HadithTopicStudyDetail : Screen("hadith_topic_study/{slug}") {
         fun createRoute(slug: String) = "hadith_topic_study/$slug"
     }
+
+    // v5.18.0 — Zikr & Dua hub (Muslimeen-style: category → topic → adhkar)
+    data object ZikrHub : Screen("zikr_hub")
+    data object ZikrTopics : Screen("zikr_topics/{categoryId}") {
+        fun createRoute(categoryId: Int) = "zikr_topics/$categoryId"
+    }
+    data object ZikrDetail : Screen("zikr_detail/{topicId}") {
+        fun createRoute(topicId: Int) = "zikr_detail/$topicId"
+    }
+
+    // v5.18.0 — Arabic alphabet learning (letter sounds)
+    data object Alphabet : Screen("alphabet")
 }
 
 data class BottomNavItem(

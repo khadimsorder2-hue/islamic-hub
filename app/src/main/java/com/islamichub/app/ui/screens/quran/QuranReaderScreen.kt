@@ -227,11 +227,14 @@ fun QuranReaderScreen(
                 // v5.17.1 — COMPACT PREMIUM HEADER (user: "kono space thakbe
                 // nah, ekdom full screen" + arrows on the dead strip above the
                 // toolbar). The v5.16.1 +12dp spacer is gone and the fixed 64dp
-                // M3 bar is now a tight 52dp row — total top chrome drops from
-                // ~101dp to ~77dp. The system clock/battery float directly on
+                // M3 bar is now a tight row — total top chrome drops from
+                // ~101dp to ~73dp. The system clock/battery float directly on
                 // the reading-theme canvas: ONE continuous header, no separate
                 // status-bar layout (the bar is transparent by sitting on the
                 // Scaffold's own themed containerColor).
+                // v5.18.0 — header 52dp → 44dp + subtitle merged into the title
+                // line (user: "uporer faka jaiga aro komao"). One slim line,
+                // two-line info only when a meaning exists.
                 val onCanvas = if (themed) {
                     if (readerTheme.bg.luminance() < 0.5f) Color.White else Color(0xFF241A10)
                 } else MaterialTheme.colorScheme.onSurface
@@ -239,25 +242,21 @@ fun QuranReaderScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .statusBarsPadding()
-                        .height(52.dp)
+                        .height(44.dp)
                 ) {
                     Column(
                         modifier = Modifier.align(Alignment.Center),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Text(
-                            text = state.surah?.nameEnglish ?: "",
-                            style = MaterialTheme.typography.titleMedium,
+                            text = buildString {
+                                append(state.surah?.nameEnglish ?: "")
+                                val meaning = state.surah?.englishMeaning ?: ""
+                                if (meaning.isNotBlank()) append(" • $meaning")
+                            },
+                            style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.SemiBold,
                             color = onCanvas,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                        Text(
-                            text = state.surah?.englishMeaning ?: "",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = if (themed) onCanvas.copy(alpha = 0.80f)
-                                    else MaterialTheme.colorScheme.onSurfaceVariant,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
                         )
@@ -556,6 +555,8 @@ fun QuranReaderScreen(
                             showWbwInline = state.showWbwInline,
                             altMeaning = state.andiMeaningMap[ayah.numberInSurah],
                             showAltMeaning = state.showAltMeaning,
+                            latinTranslit = state.latinTranslitMap[ayah.numberInSurah],
+                            showLatinTranslit = state.showLatinTranslit,
                             onPlayAyah = {
                                 // v5.14.0 — ayah-level play/pause toggle
                                 if (state.currentPlayingAyah == ayah.numberInSurah && state.isPlayingAudio) {
@@ -800,6 +801,12 @@ fun QuranReaderScreen(
                     checked = state.showAltMeaning,
                     onChange = { vm.toggleAltMeaning() }
                 )
+                ReaderToggleRow(
+                    title = "ইংরেজি উচ্চারণ",
+                    subtitle = "Latin transliteration (সহিহ ইন্টারন্যাশনাল)",
+                    checked = state.showLatinTranslit,
+                    onChange = { vm.toggleLatinTranslit() }
+                )
 
                 Spacer(Modifier.height(8.dp))
                 HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.15f))
@@ -920,6 +927,9 @@ private fun AyahCard(
     showWbwInline: Boolean = false,
     altMeaning: String? = null,
     showAltMeaning: Boolean = false,
+    // v5.18.0 — Latin (English) transliteration line
+    latinTranslit: String? = null,
+    showLatinTranslit: Boolean = false,
     // v5.16.0 — Andi-style reader theme overrides (null = Material colors)
     themedCardBg: Color? = null,
     themedPlayingBg: Color? = null,
@@ -1008,6 +1018,18 @@ private fun AyahCard(
                             fontSize = banglaSp(MaterialTheme.typography.bodyMedium.fontSize * fontScale)
                         ),
                         color = themedUccharonColor ?: UccharonTeal
+                    )
+                }
+                // v5.18.0 — Latin transliteration (Muslimeen adoption)
+                if (showLatinTranslit && !latinTranslit.isNullOrBlank()) {
+                    Text(
+                        text = latinTranslit,
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            fontSize = MaterialTheme.typography.bodySmall.fontSize * fontScale
+                        ),
+                        fontStyle = androidx.compose.ui.text.font.FontStyle.Italic,
+                        color = themedUccharonColor?.copy(alpha = 0.85f)
+                            ?: UccharonTeal.copy(alpha = 0.85f)
                     )
                 }
                 if (showBangla) {

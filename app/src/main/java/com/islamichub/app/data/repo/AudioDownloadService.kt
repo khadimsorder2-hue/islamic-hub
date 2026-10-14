@@ -46,8 +46,9 @@ class AudioDownloadService(private val context: Context) {
             )
         }
 
-        // Download from CDN
-        val url = "https://cdn.islamic.network/quran/audio/128/$reciterEditionId/$globalAyahNumber.mp3"
+        // Download from CDN — v5.18.0: some editions only exist on the 64kbps CDN
+        val bitrate = bitrateFor(reciterEditionId)
+        val url = "https://cdn.islamic.network/quran/audio/$bitrate/$reciterEditionId/$globalAyahNumber.mp3"
         try {
             val conn = URL(url).openConnection() as HttpURLConnection
             conn.connectTimeout = 15000
@@ -139,6 +140,13 @@ class AudioDownloadService(private val context: Context) {
     fun clearDownloads() {
         downloadDir.deleteRecursively()
         downloadDir.mkdirs()
+    }
+
+    /** v5.18.0 — editions that only exist on the 64kbps CDN (verified via HEAD). */
+    private fun bitrateFor(editionId: String): Int = when (editionId) {
+        "ar.minshawimujawwad", "ar.abdulsamad", "ar.hanirifai",
+        "ar.abdullahbasfar", "ar.aymanswoaid" -> 64
+        else -> 128
     }
 
     private fun globalAyahNumber(surah: Int, ayah: Int): Int {

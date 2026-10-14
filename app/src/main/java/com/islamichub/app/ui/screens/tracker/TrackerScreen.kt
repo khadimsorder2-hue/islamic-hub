@@ -208,6 +208,95 @@ fun TrackerScreen(
                 )
             }
 
+            // ─── v5.18.0 — Weekly chart (Muslimeen adoption: their chart icon) ───
+            item {
+                PremiumSectionHeader(
+                    title = "গত ৭ দিনের চার্ট",
+                    modifier = Modifier.padding(top = 8.dp)
+                )
+            }
+            item {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(20.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+                    )
+                ) {
+                    Column(
+                        modifier = Modifier.padding(20.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.Bottom
+                        ) {
+                            val dayLabels = listOf("রবি", "সোম", "মঙ্গল", "বুধ", "বৃহঃ", "শুক্র", "শনি")
+                            state.week.forEachIndexed { i, day ->
+                                val done = day.prayersDone()
+                                val frac = done / 5f
+                                // weekday index of this day (Calendar.DAY_OF_WEEK: 1=Sunday)
+                                val cal2 = java.util.Calendar.getInstance().apply {
+                                    add(java.util.Calendar.DAY_OF_YEAR, -(state.week.size - 1 - i))
+                                }
+                                val label = dayLabels[cal2.get(java.util.Calendar.DAY_OF_WEEK) - 1]
+                                val isToday = i == state.week.lastIndex
+                                Column(
+                                    modifier = Modifier.weight(1f),
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    Text(
+                                        "${done.toBanglaDigits()}",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        fontWeight = if (isToday) FontWeight.Bold else FontWeight.Normal,
+                                        color = if (isToday) MaterialTheme.colorScheme.primary
+                                                else MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                    Spacer(Modifier.height(4.dp))
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(72.dp)
+                                            .clip(RoundedCornerShape(8.dp))
+                                            .background(MaterialTheme.colorScheme.surface)
+                                    ) {
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .height((72 * frac).dp)
+                                                .align(Alignment.BottomCenter)
+                                                .clip(RoundedCornerShape(8.dp))
+                                                .background(
+                                                    Brush.verticalGradient(
+                                                        listOf(
+                                                            MaterialTheme.colorScheme.primary,
+                                                            MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)
+                                                        )
+                                                    )
+                                                )
+                                        )
+                                    }
+                                    Spacer(Modifier.height(4.dp))
+                                    Text(
+                                        label,
+                                        style = MaterialTheme.typography.labelSmall,
+                                        fontWeight = if (isToday) FontWeight.Bold else FontWeight.Normal,
+                                        color = if (isToday) MaterialTheme.colorScheme.primary
+                                                else MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+                        }
+                        Text(
+                            "বারের উচ্চতা = ওই দিনে সম্পন্ন নামাজের সংখ্যা (৫ এর মধ্যে)",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
+
             // ─── Stats Section Header ───
             item {
                 PremiumSectionHeader(

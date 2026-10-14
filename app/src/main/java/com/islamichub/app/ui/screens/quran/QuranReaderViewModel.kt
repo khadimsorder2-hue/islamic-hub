@@ -40,6 +40,9 @@ data class QuranReaderUiState(
     val wbwMap: Map<Int, List<WbwWord>> = emptyMap(),
     val showWbwInline: Boolean = false,
     val showAltMeaning: Boolean = false,
+    // v5.18.0 — Latin (English) transliteration line, adopted from Muslimeen
+    val showLatinTranslit: Boolean = false,
+    val latinTranslitMap: Map<Int, String> = emptyMap(),
     val selectedReciterId: String = "ar.alafasy",
     val selectedReciterName: String = "Mishary Rashid Alafasy",
     val banglaAudioEnabled: Boolean = false,
@@ -310,6 +313,13 @@ class QuranReaderViewModel(
                 _state.value = _state.value.copy(wbwMap = wbw)
             } catch (_: Exception) { }
         }
+        // v5.18.0 — Latin transliteration for this surah (display enhancement)
+        viewModelScope.launch {
+            try {
+                val latin = container.quranRepository.latinTranslitMap(surahNumber)
+                _state.value = _state.value.copy(latinTranslitMap = latin)
+            } catch (_: Exception) { }
+        }
     }
 
     /** v5.15.0 — toggle inline word-by-word chips on the ayah cards. */
@@ -320,6 +330,11 @@ class QuranReaderViewModel(
     /** v5.15.0 — toggle the optional বিকল্প অর্থ (Andi meaning) line. */
     fun toggleAltMeaning() {
         _state.value = _state.value.copy(showAltMeaning = !_state.value.showAltMeaning)
+    }
+
+    /** v5.18.0 — toggle the Latin (English) transliteration line. */
+    fun toggleLatinTranslit() {
+        _state.value = _state.value.copy(showLatinTranslit = !_state.value.showLatinTranslit)
     }
 
     /** v5.15.0 — effective uccharon: Andi data preferred, legacy fallback. */

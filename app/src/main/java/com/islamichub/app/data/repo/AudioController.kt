@@ -390,7 +390,7 @@ class AudioController(
             android.net.Uri.fromFile(java.io.File(localPath))
         } else {
             android.net.Uri.parse(
-                "https://cdn.islamic.network/quran/audio/128/${reciter.editionId}/" +
+                "https://cdn.islamic.network/quran/audio/${reciter.bitrate}/${reciter.editionId}/" +
                     "${globalAyahNumber(surahNumber, ayahNumber)}.mp3"
             )
         }
@@ -690,7 +690,9 @@ class AudioController(
     data class Reciter(
         val editionId: String,
         val displayName: String,
-        val everyAyahPath: String? = null
+        val everyAyahPath: String? = null,
+        /** v5.18.0 — some editions only exist on the 64kbps CDN; default 128. */
+        val bitrate: Int = 128
     )
 
     companion object {
@@ -721,7 +723,14 @@ class AudioController(
             Reciter("ar.mahermuaiqly", "Maher Al Muaiqly", "ar.mahermuaiqly"),
             Reciter("ar.muhammadayyoub", "Muhammad Ayyoub", "ar.muhammadayyoub"),
             Reciter("ar.muhammadjibreel", "Muhammad Jibreel", "ar.muhammadjibreel"),
-            Reciter("ar.saoodshuraym", "Saood bin Ibraaheem Ash-Shuraym", "ar.saoodshuraym")
+            Reciter("ar.saoodshuraym", "Saood bin Ibraaheem Ash-Shuraym", "ar.saoodshuraym"),
+            // v5.18.0 — six more reciters (64kbps CDN verified, 128 unavailable)
+            Reciter("ar.husarymujawwad", "Husary (Mujawwad)", "ar.husarymujawwad", 128),
+            Reciter("ar.minshawimujawwad", "Minshawi (Mujawwad)", "ar.minshawimujawwad", 64),
+            Reciter("ar.abdulsamad", "Abdul Basit Abdus Samad", "ar.abdulsamad", 64),
+            Reciter("ar.hanirifai", "Hani Ar-Rifai", "ar.hanirifai", 64),
+            Reciter("ar.abdullahbasfar", "Abdullah Basfar", "ar.abdullahbasfar", 64),
+            Reciter("ar.aymanswoaid", "Ayman Sowaid", "ar.aymanswoaid", 64)
         )
     }
 }

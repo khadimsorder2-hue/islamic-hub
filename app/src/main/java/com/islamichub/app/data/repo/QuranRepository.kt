@@ -135,6 +135,23 @@ class QuranRepository(
     }
 
     /**
+     * v5.18.0 — Latin (English) transliteration map for one surah, adopted
+     * from the Muslimeen reference app. Shown under the Bangla uccharon
+     * when the reader toggle is on.
+     */
+    suspend fun latinTranslitMap(surah: Int): Map<Int, String> = withContext(Dispatchers.IO) {
+        if (assetSource == null) return@withContext emptyMap()
+        try {
+            assetSource.loadLatinTranslit()[surah]
+                ?.filterKeys { it > 0 }
+                ?.filterValues { it.isNotBlank() }
+                ?: emptyMap()
+        } catch (_: Exception) {
+            emptyMap()
+        }
+    }
+
+    /**
      * v5.15.0 — REAL word-by-word pairs for one surah (ayah → ordered
      * [arabic, Bangla] list) straight from the ported wbw database.
      */

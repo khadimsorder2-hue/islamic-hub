@@ -349,6 +349,47 @@ fun IslamicHubNavGraph(container: AppContainer) {
                 )
             }
 
+            // ─── v5.18.0 — Zikr & Dua hub + Alphabet ──────────────────
+            composable(Screen.ZikrHub.route) {
+                com.islamichub.app.ui.screens.zikr.ZikrHubScreen(
+                    container = container,
+                    onBack = { navController.popBackStack() },
+                    onCategoryClick = { cat ->
+                        navController.navigate(Screen.ZikrTopics.createRoute(cat.id))
+                    }
+                )
+            }
+            composable(
+                route = Screen.ZikrTopics.route,
+                arguments = listOf(navArgument("categoryId") { type = NavType.IntType })
+            ) { backStackEntry ->
+                val catId = backStackEntry.arguments?.getInt("categoryId") ?: 0
+                com.islamichub.app.ui.screens.zikr.ZikrTopicsScreen(
+                    container = container,
+                    categoryId = catId,
+                    onBack = { navController.popBackStack() },
+                    onTopicClick = { topic ->
+                        navController.navigate(Screen.ZikrDetail.createRoute(topic.id))
+                    }
+                )
+            }
+            composable(
+                route = Screen.ZikrDetail.route,
+                arguments = listOf(navArgument("topicId") { type = NavType.IntType })
+            ) { backStackEntry ->
+                val topicId = backStackEntry.arguments?.getInt("topicId") ?: 0
+                com.islamichub.app.ui.screens.zikr.ZikrDetailScreen(
+                    container = container,
+                    topicId = topicId,
+                    onBack = { navController.popBackStack() }
+                )
+            }
+            composable(Screen.Alphabet.route) {
+                com.islamichub.app.ui.screens.alphabet.AlphabetScreen(
+                    onBack = { navController.popBackStack() }
+                )
+            }
+
             // ─── More screens ─────────────────────────────────────────
             composable(Screen.More.route) {
                 MoreScreen(onNavigate = { route -> navController.navigate(route) })

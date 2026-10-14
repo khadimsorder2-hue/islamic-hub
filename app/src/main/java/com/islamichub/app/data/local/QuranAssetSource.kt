@@ -208,6 +208,25 @@ class QuranAssetSource(private val context: Context) {
     }
 
     /**
+     * v5.18.0 — Latin (English) transliteration for every ayah, adopted
+     * from the Muslimeen reference app's QuranDto.ayahTransliteration
+     * (quran/quran_en_transliteration.json). Empty map on any failure.
+     */
+    suspend fun loadLatinTranslit(): Map<Int, Map<Int, String>> = withContext(Dispatchers.IO) {
+        latinTranslitCache?.let { return@withContext it }
+        val parsed: Map<String, Map<String, String>>? = try {
+            gson.fromJson(readAsset("quran/quran_en_transliteration.json"), uccaronType)
+        } catch (_: Exception) {
+            null
+        }
+        val mapped = parsed?.mapKeys { (k, _) -> k.toIntOrNull() ?: 0 }
+            ?.mapValues { (_, v) -> v.mapKeys { (k, _) -> k.toIntOrNull() ?: 0 } }
+            ?: emptyMap()
+        latinTranslitCache = mapped
+        mapped
+    }
+
+    /**
      * v5.15.0 — REAL Quranic word-by-word data (quran/wbw/surah_NNN.json),
      * ported from the reference app's 77,425-entry wbw database. Each ayah
      * maps to an ordered list of (arabic word, Bangla meaning) pairs taken
@@ -250,6 +269,8 @@ class QuranAssetSource(private val context: Context) {
 
     @Volatile private var andiUccharonCache: Map<Int, Map<Int, String>>? = null
     @Volatile private var andiMeaningCache: Map<Int, Map<Int, String>>? = null
+    /** v5.18.0 — LATIN transliteration (adopted from Muslimeen QuranDto.ayahTransliteration). */
+    @Volatile private var latinTranslitCache: Map<Int, Map<Int, String>>? = null
     private val wbwCache = java.util.concurrent.ConcurrentHashMap<Int, Map<Int, List<WbwWord>>>()
 
     /** v5.7.0 — parsed per-surah domain cache (surah number → Surah). */

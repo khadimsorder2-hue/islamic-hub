@@ -129,6 +129,13 @@ class AppContainer(internal val context: Context) {
     val contentRepository: ContentRepository by lazy { ContentRepository(contentAssetSource) }
     val namesRepository: NamesRepository by lazy { NamesRepository(NamesData.names) }
     val duaRepository: DuaRepository by lazy { DuaRepository(DuaData.duas, DuaData.dhikrOptions) }
+    // v5.18.0 — Zikr & Dua hub (Muslimeen adhkar dataset) + daily adhkar counter
+    val adhkarAssetSource: com.islamichub.app.data.local.AdhkarAssetSource by lazy {
+        com.islamichub.app.data.local.AdhkarAssetSource(context)
+    }
+    val zikrCounterStore: com.islamichub.app.data.repo.ZikrCounterStore by lazy {
+        com.islamichub.app.data.repo.ZikrCounterStore(context)
+    }
     val prayerRepository: PrayerRepository by lazy { PrayerRepository(aladhanApi, context) }
     val tasbihRepository: TasbihRepository by lazy { TasbihRepository(context) }
     val audioController: AudioController by lazy { AudioController(context, audioDownloadService) }
